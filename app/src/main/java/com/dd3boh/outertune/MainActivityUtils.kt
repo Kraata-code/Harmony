@@ -33,7 +33,7 @@ import com.dd3boh.outertune.playback.DownloadUtil
 import com.dd3boh.outertune.playback.PlayerConnection
 import com.dd3boh.outertune.playback.queues.ListQueue
 import com.dd3boh.outertune.ui.utils.MEDIA_PERMISSION_LEVEL
-import com.dd3boh.outertune.ui.utils.Updater
+//import com.dd3boh.outertune.ui.utils.Updater
 import com.dd3boh.outertune.ui.utils.clearDtCache
 import com.dd3boh.outertune.utils.compareVersion
 import com.dd3boh.outertune.utils.dataStore
@@ -157,10 +157,10 @@ suspend fun scanInit(
     val lastLocalScan = context.dataStore.get(LastLocalScanKey, 0L)
 
     // updater
-    val updateAvailable = context.dataStore.get(
-        UpdateAvailableKey,
-        defaultValue = false
-    )
+//    val updateAvailable = context.dataStore.get(
+//        UpdateAvailableKey,
+//        defaultValue = false
+//    )
     val lastVer = context.dataStore.get(LastVersionKey, defaultValue = "0.0.0")
 
     if (!autoScan || oobeStatus < OOBE_VERSION) {

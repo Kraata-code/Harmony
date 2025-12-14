@@ -39,7 +39,9 @@ fun OuterTuneTheme(
     highContrastCompat: Boolean,
     themeColor: Color = DefaultThemeColor,
     content: @Composable () -> Unit,
+
 ) {
+    val context = LocalContext.current
     val colorScheme = remember(darkTheme, pureBlack, themeColor) {
        if (themeColor == DefaultThemeColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             val systemTheme = if (darkTheme) {
