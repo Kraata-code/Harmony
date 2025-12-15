@@ -10,7 +10,6 @@
 package com.dd3boh.outertune.ui.screens.settings
 
 import android.content.ClipData
-import android.os.Build
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -40,7 +39,6 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -58,27 +56,15 @@ import androidx.navigation.NavController
 import com.dd3boh.outertune.BuildConfig
 import com.dd3boh.outertune.R
 import com.dd3boh.outertune.constants.ENABLE_FFMETADATAEX
-import com.dd3boh.outertune.constants.LYRIC_FETCH_TIMEOUT
-import com.dd3boh.outertune.constants.LastUpdateCheckKey
-import com.dd3boh.outertune.constants.LastVersionKey
-import com.dd3boh.outertune.constants.MAX_LM_SCANNER_JOBS
-import com.dd3boh.outertune.constants.OOBE_VERSION
-import com.dd3boh.outertune.constants.SNACKBAR_VERY_SHORT
 import com.dd3boh.outertune.constants.TopBarInsets
 import com.dd3boh.outertune.ui.component.ColumnWithContentPadding
 import com.dd3boh.outertune.ui.component.ContributorCard
 import com.dd3boh.outertune.ui.component.ContributorInfo
 import com.dd3boh.outertune.ui.component.ContributorType.CUSTOM
 import com.dd3boh.outertune.ui.component.PreferenceEntry
-import com.dd3boh.outertune.ui.component.SettingsClickToReveal
 import com.dd3boh.outertune.ui.component.button.IconButton
 import com.dd3boh.outertune.ui.component.button.IconLabelButton
 import com.dd3boh.outertune.ui.utils.backToMain
-import com.dd3boh.outertune.utils.rememberPreference
-import com.dd3boh.outertune.utils.scanners.FFmpegScanner
-import io.github.anilbeesetti.nextlib.media3ext.ffdecoder.FfmpegLibrary
-import java.text.DateFormat.getDateTimeInstance
-import java.util.Date
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -113,39 +99,58 @@ fun AboutScreen(
             verticalAlignment = Alignment.Top,
         ) {
             Text(
-                text = "OuterTune",
+                text = "Harmony",
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.padding(top = 8.dp, bottom = 4.dp)
             )
         }
 
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(
-                text = "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE}) | ${BuildConfig.FLAVOR}",
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.secondary
-            )
+        Column(
+        horizontalAlignment = Alignment.CenterHorizontally
+        ){
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE}) | ${BuildConfig.FLAVOR}",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.secondary
+                )
 
-            Spacer(Modifier.width(4.dp))
-
-            if (showDebugInfo) {
                 Spacer(Modifier.width(4.dp))
 
+                if (showDebugInfo) {
+                    Spacer(Modifier.width(4.dp))
+
+                    Text(
+                        text = BuildConfig.BUILD_TYPE.uppercase(),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.secondary,
+                        modifier = Modifier
+                            .border(
+                                width = 1.dp,
+                                color = MaterialTheme.colorScheme.secondary,
+                                shape = CircleShape
+                            )
+                            .padding(
+                                horizontal = 6.dp,
+                                vertical = 2.dp
+                            )
+                    )
+                }
+            }
+            Spacer(Modifier.height(2.dp))
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
                 Text(
-                    text = BuildConfig.BUILD_TYPE.uppercase(),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.secondary,
-                    modifier = Modifier
-                        .border(
-                            width = 1.dp,
-                            color = MaterialTheme.colorScheme.secondary,
-                            shape = CircleShape
-                        )
-                        .padding(
-                            horizontal = 6.dp,
-                            vertical = 2.dp
-                        )
+                    text = "Fork de OuterTune By",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.secondary
+                )
+                Text(
+                    text = "Jorge Natanael Castolo Gonzalez",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.secondary
                 )
             }
         }
@@ -225,65 +230,6 @@ fun AboutScreen(
             ElevatedCard(
                 modifier = Modifier.fillMaxWidth()
             ) {
-                SettingsClickToReveal(stringResource(R.string.app_info_title)) {
-                    val info = mutableListOf<String>(
-                        "FFMetadataEx: $ENABLE_FFMETADATAEX",
-                        "LM scanner concurrency: $MAX_LM_SCANNER_JOBS",
-                        "LYRIC_FETCH_TIMEOUT: $LYRIC_FETCH_TIMEOUT",
-                        "OOBE_VERSION: $OOBE_VERSION",
-                        "LYRIC_FETCH_TIMEOUT: $LYRIC_FETCH_TIMEOUT",
-                        "SNACKBAR_VERY_SHORT: $SNACKBAR_VERY_SHORT"
-                    )
-                    if (ENABLE_FFMETADATAEX) {
-                        info.add("FFMetadataEx version: ${FFmpegScanner.VERSION_STRING}")
-                        info.add("FFmpeg version: ${FfmpegLibrary.getVersion()}")
-                        info.add("FFmpeg isAvailable: ${FfmpegLibrary.isAvailable()}")
-                    }
-
-                    Column(
-                        modifier = Modifier.padding(16.dp)
-                    ) {
-                        info.forEach {
-                            Text(
-                                text = it,
-                                style = MaterialTheme.typography.bodySmall,
-                            )
-                        }
-                    }
-                }
-
-                SettingsClickToReveal(stringResource(R.string.device_info_title)) {
-                    ElevatedCard(
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        val info = mutableListOf<String>(
-                            "Device: ${Build.BRAND} ${Build.DEVICE} (${Build.MODEL})",
-                            "Manufacturer: ${Build.MANUFACTURER}",
-                            "HW: ${Build.BOARD} (${Build.HARDWARE})",
-                            "ABIs: ${Build.SUPPORTED_ABIS.joinToString()})",
-                            "Android: ${Build.VERSION.SDK_INT} (${Build.ID})",
-                            Build.DISPLAY,
-                            Build.PRODUCT,
-                            Build.FINGERPRINT,
-                            Build.VERSION.SECURITY_PATCH
-                        )
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                            info.add("SOC: ${Build.SOC_MODEL} (${Build.SOC_MANUFACTURER})")
-                            info.add("SKU: ${Build.SKU} (${Build.ODM_SKU})")
-                        }
-
-                        Column(
-                            modifier = Modifier.padding(16.dp)
-                        ) {
-                            info.forEach {
-                                Text(
-                                    text = it,
-                                    style = MaterialTheme.typography.bodySmall,
-                                )
-                            }
-                        }
-                    }
-                }
             }
             Spacer(modifier = Modifier.height(16.dp))
 
