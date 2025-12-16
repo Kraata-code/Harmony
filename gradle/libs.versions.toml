@@ -14,6 +14,7 @@ room = "2.8.3"
 hilt = "2.57.2"
 ktor = "3.3.1"
 ksp = "2.3.1"
+runtime = "1.10.0"
 
 [libraries]
 annotation = { module = "androidx.annotation:annotation", version.ref = "annotation" }
@@ -81,6 +82,7 @@ desugaring = { group = "com.android.tools", name = "desugar_jdk_libs", version =
 junit = { group = "junit", name = "junit", version = "4.13.2" }
 
 newpipe-extractor = { group = "com.github.TeamNewPipe", name = "NewPipeExtractor",  version = "v0.23.1" }
+runtime = { group = "androidx.compose.runtime", name = "runtime", version.ref = "runtime" }
 
 [plugins]
 aboutlibraries = { id = "com.mikepenz.aboutlibraries.plugin", version.ref = "aboutLibraries" }
