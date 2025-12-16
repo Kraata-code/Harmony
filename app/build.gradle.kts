@@ -238,6 +238,7 @@ dependencies {
     implementation(libs.media3.workmanager)
 
     implementation(libs.room.runtime)
+    implementation(libs.runtime)
     ksp(libs.room.compiler)
     implementation(libs.room.ktx)
 

@@ -10,6 +10,13 @@
 package com.dd3boh.outertune.ui.player
 
 import android.annotation.SuppressLint
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
@@ -38,6 +45,7 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -46,6 +54,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -157,14 +166,35 @@ fun MiniMediaInfo(
     mediaMetadata: MediaMetadata,
     error: PlaybackException?,
     modifier: Modifier = Modifier,
+
 ) {
+
     val density = LocalDensity.current
     val playerConnection = LocalPlayerConnection.current
     val isWaitingForNetwork by playerConnection?.waitingForNetworkConnection?.collectAsState(initial = false)
         ?: remember { mutableStateOf(false) }
 
     val px = (ListThumbnailSize.value * density.density).roundToInt()
+    val isPlaying by playerConnection?.isPlaying
+        ?.collectAsState(initial = false)
+        ?: remember { mutableStateOf(false) }
 
+    // Usar rememberInfiniteTransition en lugar de LaunchedEffect con while loop
+    val shouldRotate = isPlaying && error == null && !isWaitingForNetwork
+
+    val infiniteTransition = rememberInfiniteTransition(label = "ThumbnailRotation")
+    val rotation by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = if (shouldRotate) 360f else 0f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(
+                durationMillis = 8000,
+                easing = LinearEasing
+            ),
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "RotationAnimation"
+    )
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = modifier
@@ -173,6 +203,7 @@ fun MiniMediaInfo(
             modifier = Modifier
                 .padding(6.dp)
                 .size(48.dp)
+                .graphicsLayer(rotationZ = if (shouldRotate) rotation else 0f)
         ) {
             AsyncImage(
                 model = mediaMetadata.getThumbnailModel(px, px),
