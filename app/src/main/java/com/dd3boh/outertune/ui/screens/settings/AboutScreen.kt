@@ -199,32 +199,32 @@ fun AboutScreen(
             }
             Spacer(modifier = Modifier.height(16.dp))
 
-            ElevatedCard(
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                PreferenceEntry(
-                    title = { Text(stringResource(R.string.help_bug_report_action)) },
-                    onClick = {
-                        uriHandler.openUri("https://github.com/OuterTune/OuterTune/issues")
-                    }
-                )
-                PreferenceEntry(
-                    title = { Text(stringResource(R.string.help_support_forum)) },
-                    onClick = {
-                        uriHandler.openUri("https://github.com/OuterTune/OuterTune/discussions")
-                    }
-                )
-                PreferenceEntry(
-                    title = { Text(stringResource(R.string.help_contact_email_inquiries)) },
-                    onClick = {
-                        val clipData = ClipData.newPlainText(
-                            context.getString(R.string.app_name),
-                            AnnotatedString("outertune@protonmail.com")
-                        )
-                        clipboardManager.nativeClipboard.setPrimaryClip(clipData)
-                    }
-                )
-            }
+//            ElevatedCard(
+//                modifier = Modifier.fillMaxWidth()
+//            ) {
+//                PreferenceEntry(
+//                    title = { Text(stringResource(R.string.help_bug_report_action)) },
+//                    onClick = {
+//                        uriHandler.openUri("https://github.com/OuterTune/OuterTune/issues")
+//                    }
+//                )
+//                PreferenceEntry(
+//                    title = { Text(stringResource(R.string.help_support_forum)) },
+//                    onClick = {
+//                        uriHandler.openUri("https://github.com/OuterTune/OuterTune/discussions")
+//                    }
+//                )
+//                PreferenceEntry(
+//                    title = { Text(stringResource(R.string.help_contact_email_inquiries)) },
+//                    onClick = {
+//                        val clipData = ClipData.newPlainText(
+//                            context.getString(R.string.app_name),
+//                            AnnotatedString("outertune@protonmail.com")
+//                        )
+//                        clipboardManager.nativeClipboard.setPrimaryClip(clipData)
+//                    }
+//                )
+//            }
             Spacer(modifier = Modifier.height(16.dp))
 
             ElevatedCard(

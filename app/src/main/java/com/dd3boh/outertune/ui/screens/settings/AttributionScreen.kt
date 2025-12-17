@@ -36,6 +36,7 @@ import com.dd3boh.outertune.ui.component.ContributorInfo
 import com.dd3boh.outertune.ui.component.ContributorType.CUSTOM
 import com.dd3boh.outertune.ui.component.ContributorType.LEAD_DEVELOPER
 import com.dd3boh.outertune.ui.component.ContributorType.MAINTAINER
+import com.dd3boh.outertune.ui.component.ContributorType.ICON_DESIGNER
 import com.dd3boh.outertune.ui.component.button.IconButton
 import com.dd3boh.outertune.ui.utils.backToMain
 
@@ -60,6 +61,19 @@ fun AttributionScreen(
         }
         Spacer(modifier = Modifier.height(16.dp))
 
+
+
+        ElevatedCard(
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            OuterTune.map {
+                ContributorCard(
+                    contributor = it,
+                    descriptionColour = MaterialTheme.colorScheme.secondary
+                )
+            }
+        }
+        Spacer(modifier = Modifier.height(16.dp))
         ElevatedCard(
             modifier = Modifier.fillMaxWidth()
         ) {
@@ -69,19 +83,6 @@ fun AttributionScreen(
                     descriptionColour = MaterialTheme.colorScheme.secondary
                 )
             }
-        }
-        Spacer(modifier = Modifier.height(16.dp))
-
-        ElevatedCard(
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            ContributorCard(
-                contributor = ContributorInfo (
-                    name = stringResource(R.string.all_contributors),
-                    type = listOf(CUSTOM),
-                    url = "https://github.com/OuterTune/OuterTune/graphs/contributors"
-                )
-            )
         }
     }
 
@@ -105,15 +106,30 @@ fun AttributionScreen(
 
 val maintainers = mutableListOf(
     ContributorInfo(
+        name = "Jorge Natanael Castolo Gonzalez",
+        alias = "Kraata",
+        type = listOf(LEAD_DEVELOPER),
+        description = "Un estudiante que inteta triunfar",
+        url = "https://github.com/Kraata-code"
+    ),
+    ContributorInfo(
+        name = "Erick Giovanni Villegas Cabrera",
+        type = listOf(ICON_DESIGNER),
+    ),
+)
+val OuterTune = mutableListOf(
+    ContributorInfo(
         name = "Davide Garberi",
         alias = "DD3Boh",
-        type = listOf(LEAD_DEVELOPER),
+        type = listOf(LEAD_DEVELOPER,CUSTOM),
+        description = "OuterTune creator",
         url = "https://github.com/DD3Boh"
     ),
     ContributorInfo(
         name = "Michael Zh",
         alias = "mikooomich",
-        type = listOf(LEAD_DEVELOPER, MAINTAINER),
+        type = listOf(LEAD_DEVELOPER, MAINTAINER,CUSTOM),
+        description = "OuterTune creator and Maintainer",
         url = "https://github.com/mikooomich"
     ),
 )
