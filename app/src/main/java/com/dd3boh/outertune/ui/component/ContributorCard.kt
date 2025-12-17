@@ -112,21 +112,30 @@ data class ContributorInfo(
 enum class ContributorType {
     // General code contributor
     CONTRIBUTOR,
+
     // Main developers, in charge of the general project direction
     LEAD_DEVELOPER,
+
     // Maintains the project. (ex. pull requests, bug fixes, documentation, etc)
     MAINTAINER,
+
     // Non-code related contributions to the project
     PROJECT_SUPPORT,
+
     // Translation(s) contributor
     TRANSLATOR,
+
     // Miscellaneous contributions. Anything that does not fit into any of the above categories or requiring custom text
     CUSTOM,
 
     ICON_DESIGNER;
 
     companion object {
-        fun getString(context: Context, contributorType: ContributorType, extraContent: String? = null) =
+        fun getString(
+            context: Context,
+            contributorType: ContributorType,
+            extraContent: String? = null
+        ) =
             when (contributorType) {
                 CONTRIBUTOR -> context.getString(R.string.att_contributor)
                 LEAD_DEVELOPER -> context.getString(R.string.att_lead_developer)

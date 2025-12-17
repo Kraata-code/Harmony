@@ -121,14 +121,14 @@ val OuterTune = mutableListOf(
     ContributorInfo(
         name = "Davide Garberi",
         alias = "DD3Boh",
-        type = listOf(LEAD_DEVELOPER,CUSTOM),
+        type = listOf(LEAD_DEVELOPER, CUSTOM),
         description = "OuterTune creator",
         url = "https://github.com/DD3Boh"
     ),
     ContributorInfo(
         name = "Michael Zh",
         alias = "mikooomich",
-        type = listOf(LEAD_DEVELOPER, MAINTAINER,CUSTOM),
+        type = listOf(LEAD_DEVELOPER, MAINTAINER, CUSTOM),
         description = "OuterTune creator and Maintainer",
         url = "https://github.com/mikooomich"
     ),

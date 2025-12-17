@@ -162,10 +162,19 @@ fun SetupWizard(
     val (ytmSync, onYtmSyncChange) = rememberPreference(LyricTrimKey, defaultValue = true)
 
     // local media prefs
-    val (localLibEnable, onLocalLibEnableChange) = rememberPreference(LocalLibraryEnableKey, defaultValue = true)
+    val (localLibEnable, onLocalLibEnableChange) = rememberPreference(
+        LocalLibraryEnableKey,
+        defaultValue = true
+    )
     val (autoScan, onAutoScanChange) = rememberPreference(AutomaticScannerKey, defaultValue = true)
-    val (enabledTabs, onEnabledTabsChange) = rememberPreference(EnabledTabsKey, defaultValue = DEFAULT_ENABLED_TABS)
-    val (enabledFilters, onEnabledFiltersChange) = rememberPreference(EnabledFiltersKey, defaultValue = DEFAULT_ENABLED_FILTERS)
+    val (enabledTabs, onEnabledTabsChange) = rememberPreference(
+        EnabledTabsKey,
+        defaultValue = DEFAULT_ENABLED_TABS
+    )
+    val (enabledFilters, onEnabledFiltersChange) = rememberPreference(
+        EnabledFiltersKey,
+        defaultValue = DEFAULT_ENABLED_FILTERS
+    )
 
     LaunchedEffect(localLibEnable) {
         var containsFolders = enabledTabs.contains('F')
@@ -296,14 +305,21 @@ fun SetupWizard(
                     .verticalScroll(rememberScrollState()),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Spacer(Modifier.height(WindowInsets.systemBars.asPaddingValues().calculateTopPadding() + 16.dp))
+                Spacer(
+                    Modifier.height(
+                        WindowInsets.systemBars.asPaddingValues().calculateTopPadding() + 16.dp
+                    )
+                )
 
                 when (oobeStatus) {
                     0 -> { // landing page
                         Image(
                             painter = painterResource(R.drawable.launcher_monochrome),
                             contentDescription = null,
-                            colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.primary, BlendMode.SrcIn),
+                            colorFilter = ColorFilter.tint(
+                                MaterialTheme.colorScheme.primary,
+                                BlendMode.SrcIn
+                            ),
                             modifier = Modifier
                                 .clip(CircleShape)
                                 .background(
@@ -560,12 +576,18 @@ fun SetupWizard(
                     // downloads
                     4 -> {
                         val downloadUtil = LocalDownloadUtil.current
-                        val (downloadPath, onDownloadPathChange) = rememberPreference(DownloadPathKey, "")
+                        val (downloadPath, onDownloadPathChange) = rememberPreference(
+                            DownloadPathKey,
+                            ""
+                        )
                         val (maxSongCacheSize, onMaxSongCacheSizeChange) = rememberPreference(
                             key = MaxSongCacheSizeKey,
                             defaultValue = 0
                         )
-                        val (scanPaths, onScanPathsChange) = rememberPreference(ScanPathsKey, defaultValue = "")
+                        val (scanPaths, onScanPathsChange) = rememberPreference(
+                            ScanPathsKey,
+                            defaultValue = ""
+                        )
 
                         var showDlPathDialog: Boolean by remember {
                             mutableStateOf(false)

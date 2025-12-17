@@ -79,7 +79,10 @@ fun SettingsScreen(
     val uriHandler = LocalUriHandler.current
 
     val lastVer by rememberPreference(LastVersionKey, defaultValue = "0.0.0")
-    val (updateAvailable, onUpdateAvailableChange) = rememberPreference(UpdateAvailableKey, defaultValue = false)
+    val (updateAvailable, onUpdateAvailableChange) = rememberPreference(
+        UpdateAvailableKey,
+        defaultValue = false
+    )
 
     var newVersion by remember { mutableStateOf("") }
     ColumnWithContentPadding(

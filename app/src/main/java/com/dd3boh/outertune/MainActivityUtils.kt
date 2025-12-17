@@ -213,7 +213,13 @@ suspend fun scanInit(
                     context, scannerImpl, SCANNER_OWNER_LM
                 )
                 val uris = scanner.scanLocal(scanPaths, excludedScanPaths)
-                scanner.quickSync(database, uris, scannerSensitivity, strictExtensions, strictFilePaths)
+                scanner.quickSync(
+                    database,
+                    uris,
+                    scannerSensitivity,
+                    strictExtensions,
+                    strictFilePaths
+                )
 
                 // start artist linking job
                 if (lookupYtmArtists && scannerState.value <= 0) {
