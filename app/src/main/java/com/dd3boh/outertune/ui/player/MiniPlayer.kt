@@ -31,6 +31,7 @@ import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Info
@@ -157,7 +158,6 @@ fun MiniPlayer(
                 }
             }
 
-
             IconButton(onClick = onPlayPauseClick) {
                 Icon(
                     imageVector = playPauseIcon,
@@ -259,8 +259,11 @@ fun MiniMediaInfo(
                 model = mediaMetadata.getThumbnailModel(px, px),
                 contentDescription = null,
                 modifier = Modifier
-                    .aspectRatio(1f)
-                    .clip(RoundedCornerShape(ThumbnailCornerRadius))
+//              Por si alguna vez lo necesito y quiero regresar
+//                    .aspectRatio(1f)
+//                    .clip(RoundedCornerShape(ThumbnailCornerRadius))
+                    .fillMaxSize()
+                    .clip(CircleShape)
             )
 
             androidx.compose.animation.AnimatedVisibility(
