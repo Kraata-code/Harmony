@@ -107,8 +107,8 @@ fun AboutScreen(
         }
 
         Column(
-        horizontalAlignment = Alignment.CenterHorizontally
-        ){
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
                     text = "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE}) | ${BuildConfig.FLAVOR}",
@@ -198,7 +198,7 @@ fun AboutScreen(
                 )
             }
             Spacer(modifier = Modifier.height(16.dp))
-
+//          Esto conecta directo con el git pero no se si implementarlo o no
 //            ElevatedCard(
 //                modifier = Modifier.fillMaxWidth()
 //            ) {

@@ -3,6 +3,7 @@
     <string name="err_stop_on_too_many_errors">Daha çox səhvlər. Səslənmə dayandırıldı</string>
     <string name="folders">Qovluqlar</string>
     <string name="library">Kitabxana</string>
+    <string name="AI">AI</string>
     <string name="recent_activity">Son fəaliyyət</string>
     <string name="local_history">Yerli</string>
     <string name="queue_local_history">Tarixçə (yerli)</string>

@@ -225,7 +225,11 @@ class MainActivity : ComponentActivity() {
             if (isGranted) {
 //                Toast.makeText(this, "Granted", Toast.LENGTH_SHORT).show()
             } else {
-                Toast.makeText(this, getString(R.string.scanner_missing_storage_perm), Toast.LENGTH_SHORT).show()
+                Toast.makeText(
+                    this,
+                    getString(R.string.scanner_missing_storage_perm),
+                    Toast.LENGTH_SHORT
+                ).show()
             }
         }
 
@@ -287,7 +291,10 @@ class MainActivity : ComponentActivity() {
 
             var filter by rememberEnumPreference(LibraryFilterKey, Screens.LibraryFilter.ALL)
             val (slimNav) = rememberPreference(SlimNavBarKey, defaultValue = false)
-            val (enabledTabs) = rememberPreference(EnabledTabsKey, defaultValue = DEFAULT_ENABLED_TABS)
+            val (enabledTabs) = rememberPreference(
+                EnabledTabsKey,
+                defaultValue = DEFAULT_ENABLED_TABS
+            )
             val navigationItems = Screens.getScreens(enabledTabs)
             val (defaultOpenTab, onDefaultOpenTabChange) = rememberPreference(
                 DefaultOpenTabKey,
@@ -333,7 +340,8 @@ class MainActivity : ComponentActivity() {
                     coroutineScope.launch(coilCoroutine) {
                         var ret = DefaultThemeColor
                         if (song != null) {
-                            val uri = (if (song.isLocal) song.localPath else song.thumbnailUrl)?.toUri()
+                            val uri =
+                                (if (song.isLocal) song.localPath else song.thumbnailUrl)?.toUri()
                             if (uri != null) {
                                 val model = if (uri.toString().startsWith("/storage/")) {
                                     LocalArtworkPath(uri.toString(), 100, 100)
@@ -348,7 +356,8 @@ class MainActivity : ComponentActivity() {
                                         .build()
                                 )
 
-                                ret = result.image?.toBitmap()?.extractThemeColor() ?: DefaultThemeColor
+                                ret = result.image?.toBitmap()?.extractThemeColor()
+                                    ?: DefaultThemeColor
                             }
                         }
                         themeColor = ret
@@ -418,7 +427,8 @@ class MainActivity : ComponentActivity() {
                             playerBottomSheetState.isDismissed,
                         ) {
                             // TODO: Navbar is shown in all screens except for oobe (which doesn't use these insets). Idk what do to tbh
-                            var bottom = bottomInset + if (!useNavRail) NavigationBarHeight else 0.dp
+                            var bottom =
+                                bottomInset + if (!useNavRail) NavigationBarHeight else 0.dp
 
                             if (!playerBottomSheetState.isDismissed) bottom += MiniPlayerHeight
                             windowsInsets
@@ -569,6 +579,9 @@ class MainActivity : ComponentActivity() {
                                         LibraryPlaylistsScreen(navController)
                                     }
                                     composable(Screens.Library.route) {
+                                        LibraryScreen(navController, scrollBehavior)
+                                    }
+                                    composable(Screens.AI.route) {
                                         LibraryScreen(navController, scrollBehavior)
                                     }
                                     composable("history") {
@@ -799,7 +812,9 @@ class MainActivity : ComponentActivity() {
                                                 )
                                             }
                                         },
-                                    containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(6.dp)
+                                    containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(
+                                        6.dp
+                                    )
                                 ) {
                                     navigationItems.fastForEach { screen ->
                                         // TODO: display selection when based on root page user entered
@@ -868,7 +883,9 @@ class MainActivity : ComponentActivity() {
                                     }
                                 }
                                 NavigationRail(
-                                    containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(6.dp),
+                                    containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(
+                                        6.dp
+                                    ),
                                     header = {
                                         Spacer(Modifier.height(8.dp))
                                         Image(
@@ -892,7 +909,10 @@ class MainActivity : ComponentActivity() {
                                             } else {
                                                 val slideOffset =
                                                     (bottomInset + NavigationBarHeight + leftInset.value) *
-                                                            playerBottomSheetState.progress.coerceIn(0f, 1f)
+                                                            playerBottomSheetState.progress.coerceIn(
+                                                                0f,
+                                                                1f
+                                                            )
                                                 val hideOffset =
                                                     (bottomInset + NavigationBarHeight) * (1 - navigationBarHeight / NavigationBarHeight)
                                                 IntOffset(
@@ -1033,7 +1053,8 @@ class MainActivity : ComponentActivity() {
 
         // sdk24 support
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
-            window.navigationBarColor = (if (isDark) Color.Transparent else Color.Black.copy(alpha = 0.2f)).toArgb()
+            window.navigationBarColor =
+                (if (isDark) Color.Transparent else Color.Black.copy(alpha = 0.2f)).toArgb()
         }
     }
 
@@ -1047,9 +1068,13 @@ class MainActivity : ComponentActivity() {
 
 val LocalDatabase = staticCompositionLocalOf<MusicDatabase> { error("No database provided") }
 val LocalMenuState = staticCompositionLocalOf<MenuState> { error("No menu state provided") }
-val LocalPlayerConnection = staticCompositionLocalOf<PlayerConnection?> { error("No PlayerConnection provided") }
-val LocalPlayerAwareWindowInsets = compositionLocalOf<WindowInsets> { error("No player WindowInsets provided") }
+val LocalPlayerConnection =
+    staticCompositionLocalOf<PlayerConnection?> { error("No PlayerConnection provided") }
+val LocalPlayerAwareWindowInsets =
+    compositionLocalOf<WindowInsets> { error("No player WindowInsets provided") }
 val LocalDownloadUtil = staticCompositionLocalOf<DownloadUtil> { error("No DownloadUtil provided") }
 val LocalSyncUtils = staticCompositionLocalOf<SyncUtils> { error("No SyncUtils provided") }
-val LocalNetworkConnected = staticCompositionLocalOf<Boolean> { error("No Network Status provided") }
-val LocalSnackbarHostState = staticCompositionLocalOf<SnackbarHostState> { error("No SnackbarHostState provided") }
+val LocalNetworkConnected =
+    staticCompositionLocalOf<Boolean> { error("No Network Status provided") }
+val LocalSnackbarHostState =
+    staticCompositionLocalOf<SnackbarHostState> { error("No SnackbarHostState provided") }
