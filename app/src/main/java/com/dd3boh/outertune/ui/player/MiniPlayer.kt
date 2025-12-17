@@ -13,9 +13,7 @@ import android.annotation.SuppressLint
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -47,6 +45,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -88,6 +87,44 @@ fun MiniPlayer(
     val mediaMetadata by playerConnection.mediaMetadata.collectAsState()
     val canSkipNext by playerConnection.canSkipNext.collectAsState()
 
+    val onPlayPauseClick = remember(playbackState) {
+        {
+            when {
+                playerConnection.player.currentMediaItem == null -> {
+                    playerConnection.service.queueBoard.setCurrQueue()
+                    playerConnection.player.togglePlayPause()
+                }
+
+                playbackState == Player.STATE_ENDED -> {
+                    playerConnection.player.seekTo(0, 0)
+                    playerConnection.player.playWhenReady = true
+                }
+
+                else -> playerConnection.player.togglePlayPause()
+            }
+        }
+    }
+
+    val onSkipNextClick = remember {
+        {
+            if (playerConnection.player.currentMediaItem == null) {
+                playerConnection.service.queueBoard.setCurrQueue()
+                playerConnection.player.playWhenReady = true
+            }
+            playerConnection.player.seekToNext()
+        }
+    }
+
+    val playPauseIcon by remember {
+        derivedStateOf {
+            when {
+                playbackState == Player.STATE_ENDED -> Icons.Rounded.Replay
+                isPlaying -> Icons.Rounded.Pause
+                else -> Icons.Rounded.PlayArrow
+            }
+        }
+    }
+
     Box(
         modifier = modifier
             .fillMaxWidth()
@@ -120,21 +157,10 @@ fun MiniPlayer(
                 }
             }
 
-            IconButton(
-                onClick = {
-                    if (playerConnection.player.currentMediaItem == null) {
-                        playerConnection.service.queueBoard.setCurrQueue()
-                        playerConnection.player.togglePlayPause()
-                    } else if (playbackState == Player.STATE_ENDED) {
-                        playerConnection.player.seekTo(0, 0)
-                        playerConnection.player.playWhenReady = true
-                    } else {
-                        playerConnection.player.togglePlayPause()
-                    }
-                }
-            ) {
+
+            IconButton(onClick = onPlayPauseClick) {
                 Icon(
-                    imageVector = if (playbackState == Player.STATE_ENDED) Icons.Rounded.Replay else if (isPlaying) Icons.Rounded.Pause else Icons.Rounded.PlayArrow,
+                    imageVector = playPauseIcon,
                     tint = iconButtonColor,
                     contentDescription = null
                 )
@@ -142,17 +168,11 @@ fun MiniPlayer(
 
             IconButton(
                 enabled = canSkipNext,
-                onClick = {
-                    if (playerConnection.player.currentMediaItem == null) {
-                        playerConnection.service.queueBoard.setCurrQueue()
-                        playerConnection.player.playWhenReady = true
-                    }
-                    playerConnection.player.seekToNext()
-                }
+                onClick = onSkipNextClick
             ) {
                 Icon(
                     painter = painterResource(R.drawable.skip_next),
-                    tint = iconButtonColor.copy(alpha = (if (canSkipNext) 1f else 0.5f)),
+                    tint = iconButtonColor.copy(alpha = if (canSkipNext) 1f else 0.5f),
                     contentDescription = null
                 )
             }
@@ -167,34 +187,64 @@ fun MiniMediaInfo(
     error: PlaybackException?,
     modifier: Modifier = Modifier,
 
-) {
+    ) {
 
     val density = LocalDensity.current
     val playerConnection = LocalPlayerConnection.current
-    val isWaitingForNetwork by playerConnection?.waitingForNetworkConnection?.collectAsState(initial = false)
-        ?: remember { mutableStateOf(false) }
+    val isWaitingForNetwork by playerConnection?.waitingForNetworkConnection
+        ?.collectAsState(initial = false)
+        ?: remember { derivedStateOf { false } }
 
-    val px = (ListThumbnailSize.value * density.density).roundToInt()
+    val px = remember(density) {
+        (ListThumbnailSize.value * density.density).roundToInt()
+    }
     val isPlaying by playerConnection?.isPlaying
         ?.collectAsState(initial = false)
         ?: remember { mutableStateOf(false) }
+    val shouldRotate by remember {
+        derivedStateOf {
+            isPlaying && error == null && !isWaitingForNetwork
+        }
+    }
+    val rotation = remember { Animatable(0f) }
 
-    // Usar rememberInfiniteTransition en lugar de LaunchedEffect con while loop
-    val shouldRotate = isPlaying && error == null && !isWaitingForNetwork
+    LaunchedEffect(shouldRotate) {
+        if (shouldRotate) {
+            rotation.animateTo(
+                targetValue = rotation.value + 360f,
+                animationSpec = infiniteRepeatable(
+                    animation = tween(
+                        durationMillis = 8000,
+                        easing = LinearEasing
+                    ),
+                    repeatMode = RepeatMode.Restart
+                )
+            )
+        } else {
+            rotation.stop()
+        }
+    }
 
-    val infiniteTransition = rememberInfiniteTransition(label = "ThumbnailRotation")
-    val rotation by infiniteTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = if (shouldRotate) 360f else 0f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(
-                durationMillis = 8000,
-                easing = LinearEasing
-            ),
-            repeatMode = RepeatMode.Restart
-        ),
-        label = "RotationAnimation"
-    )
+//    val infiniteTransition = rememberInfiniteTransition(label = "ThumbnailRotation")
+//    val rotation by infiniteTransition.animateFloat(
+//        initialValue = 0f,
+//        targetValue = if (shouldRotate) 360f else 0f,
+//        animationSpec = infiniteRepeatable(
+//            animation = tween(
+//                durationMillis = 8000,
+//                easing = LinearEasing
+//            ),
+//            repeatMode = RepeatMode.Restart
+//        ),
+//        label = "RotationAnimation"
+//    )
+
+    val showOverlay by remember {
+        derivedStateOf {
+            error != null || isWaitingForNetwork
+        }
+    }
+
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = modifier
@@ -203,7 +253,7 @@ fun MiniMediaInfo(
             modifier = Modifier
                 .padding(6.dp)
                 .size(48.dp)
-                .graphicsLayer(rotationZ = if (shouldRotate) rotation else 0f)
+                .graphicsLayer(rotationZ = rotation.value)
         ) {
             AsyncImage(
                 model = mediaMetadata.getThumbnailModel(px, px),
@@ -214,7 +264,7 @@ fun MiniMediaInfo(
             )
 
             androidx.compose.animation.AnimatedVisibility(
-                visible = error != null || isWaitingForNetwork,
+                visible = showOverlay,
                 enter = fadeIn(),
                 exit = fadeOut()
             ) {
@@ -245,27 +295,37 @@ fun MiniMediaInfo(
                 }
             }
         }
-
-        Column(
+        MediaInfoText(
+            title = mediaMetadata.title,
+            artists = mediaMetadata.artists.joinToString { it.name },
             modifier = Modifier
                 .weight(1f)
                 .padding(horizontal = 6.dp)
-        ) {
-            Text(
-                text = mediaMetadata.title,
-                color = MaterialTheme.colorScheme.onSurface,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-            Text(
-                text = mediaMetadata.artists.joinToString { it.name },
-                color = MaterialTheme.colorScheme.secondary,
-                fontSize = 12.sp,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-        }
+        )
+    }
+}
+
+@Composable
+fun MediaInfoText(
+    title: String,
+    artists: String,
+    modifier: Modifier = Modifier
+) {
+    Column(modifier = modifier) {
+        Text(
+            text = title,
+            color = MaterialTheme.colorScheme.onSurface,
+            fontSize = 16.sp,
+            fontWeight = FontWeight.Bold,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
+        Text(
+            text = artists,
+            color = MaterialTheme.colorScheme.secondary,
+            fontSize = 12.sp,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
     }
 }
