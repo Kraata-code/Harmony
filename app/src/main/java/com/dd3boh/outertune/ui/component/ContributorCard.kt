@@ -121,7 +121,9 @@ enum class ContributorType {
     // Translation(s) contributor
     TRANSLATOR,
     // Miscellaneous contributions. Anything that does not fit into any of the above categories or requiring custom text
-    CUSTOM;
+    CUSTOM,
+
+    ICON_DESIGNER;
 
     companion object {
         fun getString(context: Context, contributorType: ContributorType, extraContent: String? = null) =
@@ -132,6 +134,7 @@ enum class ContributorType {
                 PROJECT_SUPPORT -> context.getString(R.string.att_project_support)
                 TRANSLATOR -> context.getString(R.string.att_translator, extraContent)
                 CUSTOM -> ""
+                ICON_DESIGNER -> "Icon designer"
             }
     }
 }
