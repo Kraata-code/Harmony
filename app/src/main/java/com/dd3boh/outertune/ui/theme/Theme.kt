@@ -30,7 +30,7 @@ import com.google.material.color.scheme.SchemeTonalSpot
 import com.google.material.color.score.Score
 
 // TODO: support for custom accent
-val DefaultThemeColor = Color(0xFFED5564)
+val DefaultThemeColor = Color(0xFF363636)
 
 @Composable
 fun OuterTuneTheme(

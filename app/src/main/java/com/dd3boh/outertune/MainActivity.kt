@@ -140,6 +140,7 @@ import com.dd3boh.outertune.ui.menu.BottomSheetMenu
 import com.dd3boh.outertune.ui.menu.MenuState
 import com.dd3boh.outertune.ui.player.BottomSheetPlayer
 import com.dd3boh.outertune.ui.screens.AccountScreen
+import com.dd3boh.outertune.ui.screens.AiScreen
 import com.dd3boh.outertune.ui.screens.AlbumScreen
 import com.dd3boh.outertune.ui.screens.BrowseScreen
 import com.dd3boh.outertune.ui.screens.HistoryScreen
@@ -582,7 +583,7 @@ class MainActivity : ComponentActivity() {
                                         LibraryScreen(navController, scrollBehavior)
                                     }
                                     composable(Screens.AI.route) {
-                                        LibraryScreen(navController, scrollBehavior)
+                                        AiScreen(navController,scrollBehavior)
                                     }
                                     composable("history") {
                                         HistoryScreen(navController)
