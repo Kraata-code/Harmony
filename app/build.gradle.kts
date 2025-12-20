@@ -239,6 +239,7 @@ dependencies {
 
     implementation(libs.room.runtime)
     implementation(libs.runtime)
+    implementation(libs.constraintlayout)
     ksp(libs.room.compiler)
     implementation(libs.room.ktx)
 
