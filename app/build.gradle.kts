@@ -5,7 +5,6 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import java.io.FileInputStream
 import java.util.Properties
 
-
 plugins {
     id("com.android.application")
     kotlin("android")
@@ -15,41 +14,50 @@ plugins {
     alias(libs.plugins.aboutlibraries)
 }
 
+// Configuración de keystore con manejo seguro
 val keystorePropertiesFile = rootProject.file("keystore.properties")
 val keystoreProperties = Properties()
-if (keystorePropertiesFile.exists()) {
-    keystoreProperties.load(FileInputStream(keystorePropertiesFile))
-}
 
 android {
     namespace = "com.dd3boh.outertune"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.dd3boh.outertune"
+        applicationId = "com.dd3boh.harmony"
         minSdk = 24
         targetSdk = 36
         versionCode = 70
         versionName = "0.10.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        ndk {
+            //noinspection ChromeOsAbiSupport
+            abiFilters.addAll(listOf("arm64-v8a"))
+        }
     }
 
+    // Configuración de firma con validación mejorada
     signingConfigs {
-        if (!keystoreProperties.isEmpty) {
-            create("ot_release") {
-                storeFile = file(keystoreProperties["storeFile"] as String)
-                (keystoreProperties["keyAlias"] as? String)?.let {
-                    keyAlias = it
+        create("ot_release") {
+            if (keystorePropertiesFile.exists()) {
+                keystoreProperties.load(FileInputStream(keystorePropertiesFile))
+
+                val storeFilePath = keystoreProperties["storeFile"] as? String
+                val storePass = keystoreProperties["storePassword"] as? String
+                val alias = keystoreProperties["keyAlias"] as? String
+                val keyPass = keystoreProperties["keyPassword"] as? String
+
+                if (storeFilePath != null && storePass != null && alias != null && keyPass != null) {
+                    storeFile = rootProject.file(storeFilePath)
+                    storePassword = storePass
+                    keyAlias = alias
+                    keyPassword = keyPass
+                } else {
+                    throw GradleException("Faltan propiedades requeridas en keystore.properties")
                 }
-                (keystoreProperties["keyPassword"] as? String)?.let {
-                    keyPassword = it
-                }
-                (keystoreProperties["storePassword"] as? String)?.let {
-                    storePassword = it
-                }
+            } else {
+                logger.warn("keystore.properties no encontrado. La firma de release no estará disponible.")
             }
-        } else {
-            create("ot_release") { }
         }
     }
 
@@ -58,21 +66,28 @@ android {
             isMinifyEnabled = true
             isShrinkResources = true
             isCrunchPngs = false
-            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
-            signingConfig = signingConfigs.getByName("ot_release")
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
+
+            // Solo aplicar signingConfig si existe el archivo keystore
+            if (keystorePropertiesFile.exists()) {
+                signingConfig = signingConfigs.getByName("ot_release")
+            }
         }
+
         debug {
             applicationIdSuffix = ".debug"
         }
 
-        // userdebug is release builds without minify
+        // Build variant userdebug: similar a release pero sin minificación
         create("userdebug") {
             initWith(getByName("release"))
             isMinifyEnabled = false
             isShrinkResources = false
-//            isDebuggable = true
             isProfileable = true
-            matchingFallbacks += listOf("release")
+            matchingFallbacks.addAll(listOf("release"))
         }
     }
 
@@ -81,38 +96,36 @@ android {
         buildConfig = true
     }
 
-// build variants and stuff
+    // Configuración de splits por ABI
     splits {
         abi {
             isEnable = true
             reset()
-
             include("x86_64", "x86", "armeabi-v7a", "arm64-v8a")
             isUniversalApk = true
         }
     }
 
+    // Dimensiones de flavor
     flavorDimensions.add("abi")
 
     productFlavors {
-        // main version
         create("core") {
             isDefault = true
             dimension = "abi"
         }
 
-        // fully featured version, large file size
         create("full") {
             dimension = "abi"
         }
     }
 
+    // Personalización de nombres de output APK
     applicationVariants.all {
-        val variant = this
-        variant.outputs
-            .map { it as com.android.build.gradle.internal.api.BaseVariantOutputImpl }
+        outputs
+            .filterIsInstance<com.android.build.gradle.internal.api.BaseVariantOutputImpl>()
             .forEach { output ->
-                var outputFileName = "OuterTune-${variant.versionName}-${output.baseName}-${output.versionCode}.apk"
+                val outputFileName = "Harmony-${versionName}-${output.baseName}-${versionCode}.apk"
                 output.outputFileName = outputFileName
             }
     }
@@ -122,17 +135,20 @@ android {
         sourceCompatibility = JavaVersion.VERSION_21
         targetCompatibility = JavaVersion.VERSION_21
     }
+
     kotlin {
         jvmToolchain(21)
         compilerOptions {
             jvmTarget.set(JvmTarget.JVM_21)
             freeCompilerArgs.add("-Xannotation-default-target=param-property")
-
         }
     }
 
-    tasks.withType<KotlinCompile> {
-        if (!name.substringAfter("compile").lowercase().startsWith("full")) {
+    // Exclusión condicional de archivos según build variant
+    tasks.withType<KotlinCompile>().configureEach {
+        val taskName = name.substringAfter("compile").lowercase()
+
+        if (!taskName.startsWith("full")) {
             exclude("**/*FFmpegScanner.kt")
             exclude("**/*NextRendersFactory.kt")
         } else {
@@ -141,7 +157,7 @@ android {
         }
     }
 
-
+    // Configuración de aboutLibraries
     aboutLibraries {
         offlineMode = true
 
@@ -152,18 +168,23 @@ android {
         }
 
         export {
-            // Remove the "generated" timestamp to allow for reproducible builds
+            // Excluir timestamp para builds reproducibles
             excludeFields = listOf("generated")
         }
 
         license {
-            // Define the strict mode, will fail if the project uses licenses not allowed
             strictMode = com.mikepenz.aboutlibraries.plugin.StrictMode.FAIL
-            // Allowed set of licenses, this project will be able to use without build failure
-            allowedLicenses.addAll("Apache-2.0", "BSD-3-Clause", "GNU LESSER GENERAL PUBLIC LICENSE, Version 2.1", "GPL-3.0-only", "EPL-2.0", "MIT", "MPL-2.0", "Public Domain")
-
-            // Full license text for license IDs mentioned here will be included, even if no detected dependency uses them.
-             additionalLicenses.addAll("apache_2_0", "gpl_2_1") // taglib, ffMpeg in ffMetadataEx
+            allowedLicenses.addAll(
+                "Apache-2.0",
+                "BSD-3-Clause",
+                "GNU LESSER GENERAL PUBLIC LICENSE, Version 2.1",
+                "GPL-3.0-only",
+                "EPL-2.0",
+                "MIT",
+                "MPL-2.0",
+                "Public Domain"
+            )
+            additionalLicenses.addAll("apache_2_0", "gpl_2_1")
         }
 
         library {
@@ -172,17 +193,17 @@ android {
         }
     }
 
-    // for RB
+    // Configuración para builds reproducibles
     dependenciesInfo {
-        // Disables dependency metadata when building APKs.
         includeInApk = false
-        // Disables dependency metadata when building Android App Bundles.
         includeInBundle = false
     }
 
     testOptions {
-        unitTests.isIncludeAndroidResources = true
-        unitTests.isReturnDefaultValues = true
+        unitTests {
+            isIncludeAndroidResources = true
+            isReturnDefaultValues = true
+        }
     }
 
     lint {
@@ -192,22 +213,35 @@ android {
     androidResources {
         generateLocaleConfig = true
     }
+
+    externalNativeBuild {
+        cmake {
+            path = file("src/main/llama.cpp/CMakeLists.txt")
+            version = "3.22.1"
+        }
+    }
 }
 
+// Configuración de KSP
 ksp {
     arg("room.schemaLocation", "$projectDir/schemas")
 }
 
 dependencies {
+    // Utilidades de concurrencia
     implementation(libs.guava)
     implementation(libs.coroutines.guava)
     implementation(libs.concurrent.futures)
 
+    // Android Core
     implementation(libs.activity)
     implementation(libs.hilt.navigation)
     implementation(libs.datastore)
 
-    // compose
+    // Machine Learning
+    implementation(libs.onnxruntime.android)
+
+    // Compose
     implementation(libs.compose.runtime)
     implementation(libs.compose.foundation)
     implementation(libs.compose.ui)
@@ -217,57 +251,67 @@ dependencies {
     implementation(libs.compose.reorderable)
     implementation(libs.compose.icons.extended)
 
-    // ui
+    // UI
     implementation(libs.coil)
     implementation(libs.coil.network.okhttp)
     implementation(libs.lazycolumnscrollbar)
     implementation(libs.shimmer)
 
-    // material
+    // Material Design
     implementation(libs.adaptive)
     implementation(libs.material3)
     implementation(libs.palette)
 
-    // viewmodel
+    // ViewModel
     implementation(libs.viewmodel)
     implementation(libs.viewmodel.compose)
 
+    // Media3
     implementation(libs.media3)
     implementation(libs.media3.okhttp)
     implementation(libs.media3.session)
     implementation(libs.media3.workmanager)
 
+    // Room
     implementation(libs.room.runtime)
     implementation(libs.runtime)
-    implementation(libs.constraintlayout)
     ksp(libs.room.compiler)
     implementation(libs.room.ktx)
 
+    // Apache Commons
     implementation(libs.apache.lang3)
 
+    // Dependency Injection
     implementation(libs.hilt)
     ksp(libs.hilt.compiler)
 
+    // Desugaring para compatibilidad con APIs modernas
     coreLibraryDesugaring(libs.desugaring)
 
+    // Networking
     implementation(libs.ktor.client.core)
     implementation(libs.ktor.serialization.json)
 
-    // modules
+    // Módulos del proyecto
     implementation(project(":innertube"))
     implementation(project(":kugou"))
     implementation(project(":lrclib"))
     implementation(project(":material-color-utilities"))
     implementation(project(":taglib"))
 
-    // misc
+    // UI adicionales
+    implementation(libs.constraintlayout)
+    implementation(libs.foundation)
+
+    // Bibliotecas de información
     implementation(libs.aboutlibraries.compose.m3)
 
-    // sdk24 support
-    // Support for N is officially unsupported even it the app should still work. Leave this outside of the version catalog.
+    // Soporte para Android N (SDK 24)
+    // WebKit 1.14.0 es la última versión compatible con minSdk 24
     implementation("androidx.webkit:webkit:1.14.0")
 }
 
+// Dependencias específicas del flavor "full"
 afterEvaluate {
     dependencies {
         add("fullImplementation", project(":ffMetadataEx"))
