@@ -350,15 +350,16 @@ fun BottomSheetPlayer(
                 }
             }
         },
-        collapsedBackgroundColor = MaterialTheme.colorScheme.surfaceColorAtElevation(6.dp),
+        // collapsedBackgroundColor = MaterialTheme.colorScheme.surfaceColorAtElevation(6.dp),
+        collapsedBackgroundColor = Color.Transparent,
         onDismiss = {
             playerConnection.softKillPlayer()
         },
         collapsedContent = {
-            MiniPlayer(
-                position = position,
-                duration = duration
-            )
+            // MiniPlayer(
+            //     position = position,
+            //     duration = duration
+            // )
         }
     ) {
         Log.v(TAG, "PLR-3.1")

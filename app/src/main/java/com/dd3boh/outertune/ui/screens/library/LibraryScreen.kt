@@ -113,12 +113,21 @@ fun LibraryScreen(
     val coroutineScope = rememberCoroutineScope()
 
     var viewType by rememberEnumPreference(LibraryViewTypeKey, LibraryViewType.GRID)
-    val enabledFilters by rememberPreference(EnabledFiltersKey, defaultValue = DEFAULT_ENABLED_FILTERS)
+    val enabledFilters by rememberPreference(
+        EnabledFiltersKey,
+        defaultValue = DEFAULT_ENABLED_FILTERS
+    )
     var filter by rememberEnumPreference(LibraryFilterKey, LibraryFilter.ALL)
     val localLibEnable by rememberPreference(LocalLibraryEnableKey, defaultValue = true)
 
-    val (sortType, onSortTypeChange) = rememberEnumPreference(LibrarySortTypeKey, LibrarySortType.CREATE_DATE)
-    val (sortDescending, onSortDescendingChange) = rememberPreference(LibrarySortDescendingKey, true)
+    val (sortType, onSortTypeChange) = rememberEnumPreference(
+        LibrarySortTypeKey,
+        LibrarySortType.CREATE_DATE
+    )
+    val (sortDescending, onSortDescendingChange) = rememberPreference(
+        LibrarySortDescendingKey,
+        true
+    )
     val (showLikedAndDownloadedPlaylist) = rememberPreference(ShowLikedAndDownloadedPlaylist, true)
 
     val allItems by viewModel.allItems.collectAsState()
@@ -130,13 +139,16 @@ fun LibraryScreen(
     val isSyncingRemoteLikedSongs by viewModel.isSyncingRemoteLikedSongs.collectAsState()
     val pullRefreshState = rememberPullToRefreshState()
 
-    val likedPlaylist = PlaylistEntity(id = "liked", name = stringResource(id = R.string.liked_songs))
-    val downloadedPlaylist = PlaylistEntity(id = "downloaded", name = stringResource(id = R.string.downloaded_songs))
+    val likedPlaylist =
+        PlaylistEntity(id = "liked", name = stringResource(id = R.string.liked_songs))
+    val downloadedPlaylist =
+        PlaylistEntity(id = "downloaded", name = stringResource(id = R.string.downloaded_songs))
 
     val lazyListState = rememberLazyListState()
     val lazyGridState = rememberLazyGridState()
     val backStackEntry by navController.currentBackStackEntryAsState()
-    val scrollToTop = backStackEntry?.savedStateHandle?.getStateFlow("scrollToTop", false)?.collectAsState()
+    val scrollToTop =
+        backStackEntry?.savedStateHandle?.getStateFlow("scrollToTop", false)?.collectAsState()
 
     val filterString = when (filter) {
         LibraryFilter.ALBUMS -> stringResource(R.string.albums)
@@ -147,16 +159,17 @@ fun LibraryScreen(
         LibraryFilter.ALL -> ""
     }
 
-    val defaultFilter: Collection<Pair<LibraryFilter, String>> = Screens.getFilters(enabledFilters).map {
-        when (it) {
-            LibraryFilter.ALBUMS -> LibraryFilter.ALBUMS to stringResource(R.string.albums)
-            LibraryFilter.ARTISTS -> LibraryFilter.ARTISTS to stringResource(R.string.artists)
-            LibraryFilter.PLAYLISTS -> LibraryFilter.PLAYLISTS to stringResource(R.string.playlists)
-            LibraryFilter.SONGS -> LibraryFilter.SONGS to stringResource(R.string.songs)
-            LibraryFilter.FOLDERS -> LibraryFilter.FOLDERS to stringResource(R.string.folders)
-            else -> LibraryFilter.ALL to stringResource(R.string.home) // there is no all filter, use as null value
-        }
-    }.filterNot { it.first == LibraryFilter.ALL }
+    val defaultFilter: Collection<Pair<LibraryFilter, String>> =
+        Screens.getFilters(enabledFilters).map {
+            when (it) {
+                LibraryFilter.ALBUMS -> LibraryFilter.ALBUMS to stringResource(R.string.albums)
+                LibraryFilter.ARTISTS -> LibraryFilter.ARTISTS to stringResource(R.string.artists)
+                LibraryFilter.PLAYLISTS -> LibraryFilter.PLAYLISTS to stringResource(R.string.playlists)
+                LibraryFilter.SONGS -> LibraryFilter.SONGS to stringResource(R.string.songs)
+                LibraryFilter.FOLDERS -> LibraryFilter.FOLDERS to stringResource(R.string.folders)
+                else -> LibraryFilter.ALL to stringResource(R.string.home) // there is no all filter, use as null value
+            }
+        }.filterNot { it.first == LibraryFilter.ALL }
 
     val chips = remember { SnapshotStateList<Pair<LibraryFilter, String>>() }
 

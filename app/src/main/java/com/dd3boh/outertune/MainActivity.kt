@@ -28,8 +28,8 @@ import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
@@ -37,17 +37,16 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.add
-import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.displayCutout
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -74,6 +73,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -96,10 +96,13 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.util.fastForEach
 import androidx.core.net.toUri
 import androidx.core.util.Consumer
 import androidx.core.view.WindowCompat
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -139,6 +142,7 @@ import com.dd3boh.outertune.ui.component.shimmer.ShimmerTheme
 import com.dd3boh.outertune.ui.menu.BottomSheetMenu
 import com.dd3boh.outertune.ui.menu.MenuState
 import com.dd3boh.outertune.ui.player.BottomSheetPlayer
+import com.dd3boh.outertune.ui.player.MiniPlayer
 import com.dd3boh.outertune.ui.screens.AccountScreen
 import com.dd3boh.outertune.ui.screens.AiScreen
 import com.dd3boh.outertune.ui.screens.AlbumScreen
@@ -194,9 +198,13 @@ import com.dd3boh.outertune.utils.coilCoroutine
 import com.dd3boh.outertune.utils.lmScannerCoroutine
 import com.dd3boh.outertune.utils.rememberEnumPreference
 import com.dd3boh.outertune.utils.rememberPreference
+import com.dd3boh.outertune.viewmodels.LlamaEngine
 import com.valentinilk.shimmer.LocalShimmerTheme
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -206,6 +214,8 @@ class MainActivity : ComponentActivity() {
 
     @Inject
     lateinit var database: MusicDatabase
+
+    private lateinit var llama: LlamaEngine
 
     @Inject
     lateinit var downloadUtil: DownloadUtil
@@ -263,6 +273,13 @@ class MainActivity : ComponentActivity() {
         WindowCompat.setDecorFitsSystemWindows(window, false)
 
         activityLauncher = ActivityLauncherHelper(this)
+
+        llama = LlamaEngine(this)
+
+        lifecycleScope.launch(Dispatchers.IO) {
+            val ok = llama.init()
+            Log.d("LLAMA", "Initialized = $ok")
+        }
 
         setContent {
             Log.v(MAIN_TAG, "RC-1")
@@ -422,16 +439,42 @@ class MainActivity : ComponentActivity() {
                         expandedBound = maxHeight,
                     )
 
+//                    val playerAwareWindowInsets =
+//                        remember(
+//                            bottomInset,
+//                            playerBottomSheetState.isDismissed,
+//                        ) {
+//                            // TODO: Navbar is shown in all screens except for oobe (which doesn't use these insets). Idk what do to tbh
+//                            var bottom =
+//                                bottomInset + if (!useNavRail) NavigationBarHeight else 0.dp
+//
+//                            // if (!playerBottomSheetState.isDismissed) bottom += MiniPlayerHeight
+//                            windowsInsets
+//                                .only(WindowInsetsSides.Horizontal + WindowInsetsSides.Top)
+//                                .add(cutoutInsets.only(WindowInsetsSides.Horizontal))
+//                                .add(
+//                                    WindowInsets(
+//                                        left = if (!useNavRail) 0.dp else NavigationBarHeight,
+//                                        top = AppBarHeight,
+//                                        bottom = bottom
+//                                    )
+//                                )
+//                        }
                     val playerAwareWindowInsets =
                         remember(
                             bottomInset,
                             playerBottomSheetState.isDismissed,
+                            playerBottomSheetState.isCollapsed,
                         ) {
                             // TODO: Navbar is shown in all screens except for oobe (which doesn't use these insets). Idk what do to tbh
                             var bottom =
                                 bottomInset + if (!useNavRail) NavigationBarHeight else 0.dp
 
-                            if (!playerBottomSheetState.isDismissed) bottom += MiniPlayerHeight
+                            // when mini player is visible (sheet collapsed), add extra bottom padding
+                            if (playerBottomSheetState.isCollapsed && !playerBottomSheetState.isDismissed) {
+                                bottom += MiniPlayerHeight + 8.dp
+                            }
+
                             windowsInsets
                                 .only(WindowInsetsSides.Horizontal + WindowInsetsSides.Top)
                                 .add(cutoutInsets.only(WindowInsetsSides.Horizontal))
@@ -583,7 +626,7 @@ class MainActivity : ComponentActivity() {
                                         LibraryScreen(navController, scrollBehavior)
                                     }
                                     composable(Screens.AI.route) {
-                                        AiScreen(navController,scrollBehavior)
+                                        AiScreen(navController, scrollBehavior)
                                     }
                                     composable("history") {
                                         HistoryScreen(navController)
@@ -984,16 +1027,151 @@ class MainActivity : ComponentActivity() {
 
                             SearchBarContainer(navController, scrollBehavior)
 
+                            // if (oobeStatus >= OOBE_VERSION) {
+                            //     BottomSheetPlayer(
+                            //         state = playerBottomSheetState,
+                            //         navController = navController
+                            //     )
+
+                            //     if (!useNavRail) {
+                            //         navbar()
+                            //     } else {
+                            //         navRail(if (LocalLayoutDirection.current == LayoutDirection.Rtl) Alignment.BottomEnd else Alignment.BottomStart)
+                            //     }
+                            // }
+                            // REEMPLAZA COMPLETAMENTE EL if (oobeStatus >= OOBE_VERSION) { ... }
+
                             if (oobeStatus >= OOBE_VERSION) {
+                                // 1. BottomSheetPlayer (reproductor expandido)
                                 BottomSheetPlayer(
                                     state = playerBottomSheetState,
                                     navController = navController
                                 )
+                                val isMiniPlayerVisible by remember {
+                                    derivedStateOf {
+                                        playerBottomSheetState.isCollapsed && !playerBottomSheetState.isDismissed
+                                    }
+                                }
+                                androidx.compose.animation.AnimatedVisibility(
+                                    visible = isMiniPlayerVisible,
+                                    enter = androidx.compose.animation.fadeIn(
+                                        animationSpec = tween(durationMillis = 150)
+                                    ) + androidx.compose.animation.slideInVertically(
+                                        initialOffsetY = { it },
+                                        animationSpec = tween(durationMillis = 150)
+                                    ),
+                                    exit = androidx.compose.animation.fadeOut(
+                                        animationSpec = tween(durationMillis = 100)
+                                    ) + androidx.compose.animation.slideOutVertically(
+                                        targetOffsetY = { it },
+                                        animationSpec = tween(durationMillis = 100)
+                                    ),
+                                    modifier = Modifier
+                                        .align(Alignment.BottomCenter)
+                                        .offset(y = -(NavigationBarHeight + bottomInset + 8.dp))
+                                ) {
+                                    // 2. MiniPlayer FLOTANTE (solo cuando está colapsado)
+//                        androidx.compose.animation.AnimatedVisibility(
+//                            visible = playerBottomSheetState.isCollapsed && !playerBottomSheetState.isDismissed,
+//                            enter = androidx.compose.animation.fadeIn() + androidx.compose.animation.slideInVertically { it },
+//                            exit = androidx.compose.animation.fadeOut() + androidx.compose.animation.slideOutVertically { it },
+//                            modifier = Modifier
+//                                .align(Alignment.BottomCenter)
+//                                .offset(
+//                                    y = -(NavigationBarHeight + bottomInset + 8.dp) // 8.dp de separación
+//                                )
+//                        ) {
+                                    // Obtener posición y duración del reproductor
+//                            val playerConnection = LocalPlayerConnection.current
+                                    val playerConnection =
+                                        LocalPlayerConnection.current ?: return@AnimatedVisibility
+                                    var position by remember { mutableLongStateOf(0L) }
+                                    var duration by remember { mutableLongStateOf(0L) }
+
+                                    // Actualizar posición cada segundo
+//                            LaunchedEffect(playerConnection) {
+//                                while (true) {
+//                                    playerConnection?.player?.let { player ->
+//                                        position = player.currentPosition
+//                                        duration = player.duration.takeIf { it > 0 } ?: 0L
+//                                    }
+//                                    kotlinx.coroutines.delay(1000)
+//                                }
+//                            }
+                                    DisposableEffect(playerConnection) {
+                                        val job = coroutineScope.launch {
+                                            while (isActive) {
+                                                playerConnection.player?.let { player ->
+                                                    position = player.currentPosition
+                                                    duration =
+                                                        player.duration.takeIf { it > 0 } ?: 0L
+                                                }
+                                                delay(1000)
+                                            }
+                                        }
+
+                                        onDispose {
+                                            job.cancel()
+                                        }
+                                    }
+
+                                    // MiniPlayer flotante con sombra
+                                    val horizontalPadding = 8.dp
+                                    val miniPlayerHeight = 64.dp
+                                    val cornerRadius = 12.dp
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(horizontal = horizontalPadding)
+                                    ) {
+                                        // fondo oscuro semitransparente con blur
+//                                Box(
+//                                    modifier = Modifier
+//                                        .fillMaxWidth()
+//                                        .height(MiniPlayerHeight)
+//                                        .clip(RoundedCornerShape(12.dp))
+//                                        .background(Color.Black.copy(alpha = 0.85f))
+//                                        .blur(8.dp)
+//                                )
+                                        androidx.compose.foundation.layout.Spacer(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .height(miniPlayerHeight)
+                                                .graphicsLayer {
+                                                    shape = RoundedCornerShape(cornerRadius)
+                                                    clip = true
+                                                    shadowElevation = 8.dp.toPx()
+                                                }
+                                                .background(Color.Black.copy(alpha = 0.85f))
+                                        )
+                                        val interactionSource =
+                                            remember { androidx.compose.foundation.interaction.MutableInteractionSource() }
+                                        MiniPlayer(
+                                            position = position,
+                                            duration = duration,
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .clickable(
+                                                    interactionSource = interactionSource,
+                                                    indication = null
+                                                ) {
+                                                    coroutineScope.launch {
+                                                        playerBottomSheetState.expandSoft()
+                                                    }
+                                                }
+                                        )
+                                    }
+                                }
 
                                 if (!useNavRail) {
                                     navbar()
                                 } else {
-                                    navRail(if (LocalLayoutDirection.current == LayoutDirection.Rtl) Alignment.BottomEnd else Alignment.BottomStart)
+                                    navRail(
+                                        if (LocalLayoutDirection.current == LayoutDirection.Rtl)
+                                            Alignment.BottomEnd
+                                        else
+                                            Alignment.BottomStart
+                                    )
                                 }
                             }
                             bottomSheetMenu()
