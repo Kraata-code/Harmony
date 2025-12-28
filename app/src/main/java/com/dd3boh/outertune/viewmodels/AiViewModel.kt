@@ -17,7 +17,11 @@ import javax.inject.Inject
 @HiltViewModel
 class AiViewModel @Inject constructor() : ViewModel() {
 
-    private val TAG = "AiViewModel"
+    private companion object {
+        const val TAG = "AiViewModel"
+        // Límite de tokens optimizado para respuestas rápidas
+        const val MAX_TOKENS_PER_RESPONSE = 80
+    }
 
     private val _messages = MutableStateFlow<List<ChatMessage>>(emptyList())
     val messages: StateFlow<List<ChatMessage>> = _messages.asStateFlow()
@@ -31,7 +35,6 @@ class AiViewModel @Inject constructor() : ViewModel() {
     private val _errorMessage = MutableStateFlow<String?>(null)
     val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
 
-    // Motor de IA - se mantiene como nullable hasta que se inicialice
     private var llamaEngine: LlamaEngine? = null
 
     /**
@@ -39,7 +42,6 @@ class AiViewModel @Inject constructor() : ViewModel() {
      * Must be called before sending messages
      */
     fun initEngine(context: MainActivity) {
-        // Prevenir múltiples inicializaciones
         if (_isInitialized.value || llamaEngine != null) {
             Log.i(TAG, "Engine already initialized or initializing")
             return
@@ -49,13 +51,9 @@ class AiViewModel @Inject constructor() : ViewModel() {
             try {
                 Log.i(TAG, "Starting engine initialization...")
 
-                // Crear instancia del motor
                 llamaEngine = LlamaEngine(context)
-
-                // Inicializar en background
                 val success = llamaEngine!!.init()
 
-                // Actualizar UI en Main thread
                 withContext(Dispatchers.Main) {
                     _isInitialized.value = success
 
@@ -63,10 +61,9 @@ class AiViewModel @Inject constructor() : ViewModel() {
                         Log.i(TAG, "LLM Engine initialized successfully")
                         _errorMessage.value = null
 
-                        // Mensaje de bienvenida
                         _messages.value = listOf(
                             ChatMessage(
-                                text = "¡Hola! Soy tu asistente de IA. ¿En qué puedo ayudarte hoy?",
+                                text = "¡Hola! Soy tu asistente. ¿En qué puedo ayudarte?",
                                 isFromMe = false
                             )
                         )
@@ -76,12 +73,11 @@ class AiViewModel @Inject constructor() : ViewModel() {
 
                         _messages.value = listOf(
                             ChatMessage(
-                                text = "Error: No se pudo inicializar el modelo. Verifica que el archivo del modelo esté en la carpeta correcta.",
+                                text = "Error: No se pudo inicializar el modelo. Verifica que el archivo esté en la carpeta correcta.",
                                 isFromMe = false
                             )
                         )
 
-                        // Limpiar referencia si falló
                         llamaEngine = null
                     }
                 }
@@ -114,11 +110,9 @@ class AiViewModel @Inject constructor() : ViewModel() {
             return
         }
 
-        // Verificar que el motor esté inicializado
         if (!_isInitialized.value) {
             Log.w(TAG, "Engine not initialized")
 
-            // Agregar mensaje de error visible para el usuario
             val errorMsg = ChatMessage(
                 text = "Por favor espera a que el modelo se inicialice antes de enviar mensajes.",
                 isFromMe = false
@@ -127,7 +121,6 @@ class AiViewModel @Inject constructor() : ViewModel() {
             return
         }
 
-        // Verificar que la instancia del motor existe
         if (llamaEngine == null) {
             Log.e(TAG, "Engine instance is null despite initialized flag")
 
@@ -141,28 +134,27 @@ class AiViewModel @Inject constructor() : ViewModel() {
 
         viewModelScope.launch {
             try {
-                // Agregar mensaje del usuario inmediatamente
+                // Agregar mensaje del usuario
                 val userMessage = ChatMessage(
                     text = text,
                     isFromMe = true
                 )
                 _messages.value = _messages.value + userMessage
 
-                // Indicar que está cargando
                 _isLoading.value = true
                 _errorMessage.value = null
 
                 Log.d(TAG, "Generating response for: ${text.take(50)}...")
 
-                // Generar respuesta en IO dispatcher
+                // Generar respuesta con límite optimizado
                 val response = withContext(Dispatchers.IO) {
                     try {
-                        // Doble verificación dentro del contexto IO
                         val engine = llamaEngine
                         if (engine == null || !engine.isInitialized()) {
                             "Error: El motor no está disponible"
                         } else {
-                            engine.generateResponse(text)
+                            // Usar límite de tokens optimizado
+                            engine.generateResponse(text, maxTokens = MAX_TOKENS_PER_RESPONSE)
                         }
                     } catch (e: Exception) {
                         Log.e(TAG, "Error in generation coroutine", e)
@@ -203,7 +195,6 @@ class AiViewModel @Inject constructor() : ViewModel() {
         _messages.value = emptyList()
         _errorMessage.value = null
 
-        // Agregar mensaje de bienvenida si está inicializado
         if (_isInitialized.value) {
             _messages.value = listOf(
                 ChatMessage(
@@ -220,14 +211,12 @@ class AiViewModel @Inject constructor() : ViewModel() {
     fun retryInitialization(context: MainActivity) {
         Log.i(TAG, "Retrying initialization...")
 
-        // Limpiar estado anterior
         llamaEngine?.release()
         llamaEngine = null
         _isInitialized.value = false
         _errorMessage.value = null
         _messages.value = emptyList()
 
-        // Reintentar
         initEngine(context)
     }
 
