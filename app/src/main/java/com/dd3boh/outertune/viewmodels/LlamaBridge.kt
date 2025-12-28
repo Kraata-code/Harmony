@@ -29,7 +29,7 @@ class LlamaBridge {
 
     companion object {
         init {
-            System.loadLibrary("llama-lib")
+            System.loadLibrary("llama-jni-lib")
         }
     }
 }
