@@ -34,6 +34,21 @@ android {
             //noinspection ChromeOsAbiSupport
             abiFilters.addAll(listOf("arm64-v8a"))
         }
+        externalNativeBuild {
+            cmake {
+                cppFlags("-std=c++17")
+               arguments(
+            "-DGGML_USE_CPU=ON",
+            "-DLLAMA_BUILD_EXAMPLES=OFF", // Desactiva ejemplos
+            "-DLLAMA_BUILD_TESTS=OFF",     // Desactiva tests
+            "-DLLAMA_BUILD_SERVER=OFF",    // Desactiva el servidor HTTP
+            "-DLLAMA_CURL=OFF",            // Ya lo teníamos
+            "-DLLAMA_BUILD_COMMON=ON",     // Solo lo necesario para la lib
+            "-DLLAMA_BUILD_CLI=OFF",       // <--- ESTO ES CLAVE: Desactiva llama-cli
+            "-DLLAMA_BUILD_MTMD=OFF"       // <--- ESTO ELIMINA EL ERROR DE 'mtmd.h'
+        )
+            }
+        }
     }
 
     // Configuración de firma con validación mejorada
@@ -216,7 +231,7 @@ android {
 
     externalNativeBuild {
         cmake {
-            path = file("src/main/llama.cpp/CMakeLists.txt")
+            path = file("CMakeLists.txt")
             version = "3.22.1"
         }
     }
