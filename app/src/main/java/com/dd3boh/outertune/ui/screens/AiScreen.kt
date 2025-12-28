@@ -1,5 +1,7 @@
 package com.dd3boh.outertune.ui.screens
 
+import android.annotation.SuppressLint
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -7,6 +9,8 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.Send
+import androidx.compose.material.icons.rounded.Refresh
+import androidx.compose.material.icons.rounded.Warning
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -18,10 +22,12 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.dd3boh.outertune.LocalPlayerAwareWindowInsets
+import com.dd3boh.outertune.MainActivity
 import com.dd3boh.outertune.models.ChatMessage
 import com.dd3boh.outertune.viewmodels.AiViewModel
 import kotlinx.coroutines.launch
 
+@SuppressLint("ContextCastToActivity")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AiScreen(
@@ -30,9 +36,21 @@ fun AiScreen(
 ) {
     val viewModel: AiViewModel = viewModel()
     val messages by viewModel.messages.collectAsState()
+    val isLoading by viewModel.isLoading.collectAsState()
+    val isInitialized by viewModel.isInitialized.collectAsState()
+    val errorMessage by viewModel.errorMessage.collectAsState()
+
     val listState = rememberLazyListState()
     val coroutineScope = rememberCoroutineScope()
     var isInputFocused by remember { mutableStateOf(false) }
+
+    // Inicializar el motor cuando se crea la pantalla
+    val context = androidx.compose.ui.platform.LocalContext.current as MainActivity
+    LaunchedEffect(Unit) {
+        if (!isInitialized) {
+            viewModel.initEngine(context)
+        }
+    }
 
     // Auto-scroll cuando llegan nuevos mensajes
     LaunchedEffect(messages.size) {
@@ -43,7 +61,7 @@ fun AiScreen(
         }
     }
 
-    // Auto-scroll cuando el teclado aparece (usuario enfoca el input)
+    // Auto-scroll cuando el teclado aparece
     LaunchedEffect(isInputFocused) {
         if (isInputFocused && messages.isNotEmpty()) {
             coroutineScope.launch {
@@ -58,41 +76,182 @@ fun AiScreen(
             .windowInsetsPadding(LocalPlayerAwareWindowInsets.current)
             .nestedScroll(scrollBehavior.nestedScrollConnection)
     ) {
-        // Lista de mensajes
-        LazyColumn(
-            state = listState,
-            modifier = Modifier.weight(1f),
-            contentPadding = PaddingValues(
-                start = 16.dp,
-                end = 16.dp,
-                top = 16.dp,
-                bottom = 8.dp
-            ),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            if (messages.isEmpty()) {
-                item {
-                    EmptyState()
+        // Banner de error si hay alguno
+        AnimatedVisibility(visible = errorMessage != null) {
+            ErrorBanner(
+                message = errorMessage ?: "",
+                onDismiss = { viewModel.clearError() },
+                onRetry = { viewModel.retryInitialization(context) }
+            )
+        }
+
+        // Indicador de inicialización
+        if (!isInitialized && messages.isEmpty()) {
+            InitializingIndicator()
+        } else {
+            // Contenido del chat
+            LazyColumn(
+                state = listState,
+                modifier = Modifier.weight(1f),
+                contentPadding = PaddingValues(
+                    start = 16.dp,
+                    end = 16.dp,
+                    top = 16.dp,
+                    bottom = 8.dp
+                ),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                if (messages.isEmpty()) {
+                    item {
+                        EmptyState()
+                    }
+                }
+
+                items(
+                    items = messages,
+                    key = { message -> message.id }
+                ) { message ->
+                    ChatBubble(message = message)
+                }
+
+                // Indicador de carga al final de la lista
+                if (isLoading) {
+                    item {
+                        LoadingIndicator()
+                    }
                 }
             }
 
-            items(
-                items = messages,
-                key = { message -> message.id }
-            ) { message ->
-                ChatBubble(message = message)
+            // Input box
+            ChatInputBox(
+                onSend = { text ->
+                    viewModel.sendMessage(text)
+                },
+                onFocusChanged = { focused ->
+                    isInputFocused = focused
+                },
+                enabled = isInitialized && !isLoading
+            )
+        }
+    }
+}
+
+@Composable
+fun InitializingIndicator() {
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            CircularProgressIndicator()
+            Text(
+                text = "Inicializando modelo de IA...",
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Text(
+                text = "Esto puede tomar unos segundos",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+}
+
+@Composable
+fun ErrorBanner(
+    message: String,
+    onDismiss: () -> Unit,
+    onRetry: () -> Unit
+) {
+    Surface(
+        color = MaterialTheme.colorScheme.errorContainer,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Row(
+            modifier = Modifier
+                .padding(16.dp)
+                .fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Row(
+                modifier = Modifier.weight(1f),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    imageVector = Icons.Rounded.Warning,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onErrorContainer
+                )
+                Text(
+                    text = message,
+                    color = MaterialTheme.colorScheme.onErrorContainer,
+                    style = MaterialTheme.typography.bodySmall
+                )
+            }
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                IconButton(onClick = onRetry) {
+                    Icon(
+                        imageVector = Icons.Rounded.Refresh,
+                        contentDescription = "Reintentar",
+                        tint = MaterialTheme.colorScheme.onErrorContainer
+                    )
+                }
+                TextButton(onClick = onDismiss) {
+                    Text(
+                        "OK",
+                        color = MaterialTheme.colorScheme.onErrorContainer
+                    )
+                }
             }
         }
+    }
+}
 
-        // Input box
-        ChatInputBox(
-            onSend = { text ->
-                viewModel.sendMessage(text)
-            },
-            onFocusChanged = { focused ->
-                isInputFocused = focused
+@Composable
+fun LoadingIndicator() {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp),
+        horizontalArrangement = Arrangement.Start
+    ) {
+        Surface(
+            color = MaterialTheme.colorScheme.secondaryContainer,
+            shape = RoundedCornerShape(
+                topStart = 16.dp,
+                topEnd = 16.dp,
+                bottomStart = 4.dp,
+                bottomEnd = 16.dp
+            ),
+            modifier = Modifier.padding(start = 0.dp)
+        ) {
+            Row(
+                modifier = Modifier.padding(
+                    horizontal = 16.dp,
+                    vertical = 10.dp
+                ),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(16.dp),
+                    strokeWidth = 2.dp
+                )
+                Text(
+                    text = "Generando respuesta...",
+                    color = MaterialTheme.colorScheme.onSecondaryContainer,
+                    style = MaterialTheme.typography.bodyMedium
+                )
             }
-        )
+        }
     }
 }
 
@@ -147,6 +306,7 @@ fun ChatBubble(message: ChatMessage) {
 fun ChatInputBox(
     onSend: (String) -> Unit,
     onFocusChanged: (Boolean) -> Unit = {},
+    enabled: Boolean = true,
     modifier: Modifier = Modifier
 ) {
     var text by remember { mutableStateOf("") }
@@ -177,8 +337,12 @@ fun ChatInputBox(
                         onFocusChanged(focusState.isFocused)
                     },
                 placeholder = {
-                    Text("Escribe un mensaje...")
+                    Text(
+                        if (enabled) "Escribe un mensaje..."
+                        else "Esperando inicialización..."
+                    )
                 },
+                enabled = enabled,
                 maxLines = 4,
                 shape = RoundedCornerShape(24.dp)
             )
@@ -190,7 +354,7 @@ fun ChatInputBox(
                         text = ""
                     }
                 },
-                enabled = isTextNotEmpty,
+                enabled = enabled && isTextNotEmpty,
                 modifier = Modifier.size(56.dp)
             ) {
                 Icon(
@@ -218,7 +382,7 @@ fun EmptyState() {
         )
         Spacer(modifier = Modifier.height(8.dp))
         Text(
-            text = "¿Que quieres que haga?",
+            text = "¿En qué puedo ayudarte hoy?",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )

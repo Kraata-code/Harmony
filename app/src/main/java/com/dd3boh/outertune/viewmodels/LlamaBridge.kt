@@ -19,7 +19,7 @@ class LlamaBridge {
      * @param maxTokens Maximum number of tokens to generate (default: 128)
      * @return Generated text response
      */
-    external fun generateText(prompt: String, maxTokens: Int = 128): String
+    external fun generateText(prompt: String, maxTokens: Int = 50): String
 
     /**
      * Release model resources

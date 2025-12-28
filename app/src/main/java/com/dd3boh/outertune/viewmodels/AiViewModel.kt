@@ -28,6 +28,10 @@ class AiViewModel @Inject constructor() : ViewModel() {
     private val _isInitialized = MutableStateFlow(false)
     val isInitialized: StateFlow<Boolean> = _isInitialized.asStateFlow()
 
+    private val _errorMessage = MutableStateFlow<String?>(null)
+    val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
+
+    // Motor de IA - se mantiene como nullable hasta que se inicialice
     private var llamaEngine: LlamaEngine? = null
 
     /**
@@ -35,44 +39,67 @@ class AiViewModel @Inject constructor() : ViewModel() {
      * Must be called before sending messages
      */
     fun initEngine(context: MainActivity) {
+        // Prevenir múltiples inicializaciones
+        if (_isInitialized.value || llamaEngine != null) {
+            Log.i(TAG, "Engine already initialized or initializing")
+            return
+        }
+
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                if (llamaEngine == null) {
-                    llamaEngine = LlamaEngine(context)
-                    val success = llamaEngine!!.init()
+                Log.i(TAG, "Starting engine initialization...")
 
-                    withContext(Dispatchers.Main) {
-                        _isInitialized.value = success
-                        if (success) {
-                            Log.i(TAG, "LLM Engine initialized successfully")
-                            // Add welcome message
-                            _messages.value = listOf(
-                                ChatMessage(
-                                    text = "¡Hola! Soy tu asistente de IA. ¿En qué puedo ayudarte hoy?",
-                                    isFromMe = false
-                                )
+                // Crear instancia del motor
+                llamaEngine = LlamaEngine(context)
+
+                // Inicializar en background
+                val success = llamaEngine!!.init()
+
+                // Actualizar UI en Main thread
+                withContext(Dispatchers.Main) {
+                    _isInitialized.value = success
+
+                    if (success) {
+                        Log.i(TAG, "LLM Engine initialized successfully")
+                        _errorMessage.value = null
+
+                        // Mensaje de bienvenida
+                        _messages.value = listOf(
+                            ChatMessage(
+                                text = "¡Hola! Soy tu asistente de IA. ¿En qué puedo ayudarte hoy?",
+                                isFromMe = false
                             )
-                        } else {
-                            Log.e(TAG, "Failed to initialize LLM Engine")
-                            _messages.value = listOf(
-                                ChatMessage(
-                                    text = "Error: No se pudo inicializar el modelo de IA",
-                                    isFromMe = false
-                                )
+                        )
+                    } else {
+                        Log.e(TAG, "Failed to initialize LLM Engine")
+                        _errorMessage.value = "No se pudo inicializar el modelo de IA"
+
+                        _messages.value = listOf(
+                            ChatMessage(
+                                text = "Error: No se pudo inicializar el modelo. Verifica que el archivo del modelo esté en la carpeta correcta.",
+                                isFromMe = false
                             )
-                        }
+                        )
+
+                        // Limpiar referencia si falló
+                        llamaEngine = null
                     }
                 }
             } catch (e: Exception) {
                 Log.e(TAG, "Exception initializing engine", e)
+
                 withContext(Dispatchers.Main) {
                     _isInitialized.value = false
+                    _errorMessage.value = e.message ?: "Error desconocido"
+
                     _messages.value = listOf(
                         ChatMessage(
-                            text = "Error: ${e.message}",
+                            text = "Error durante la inicialización: ${e.message}",
                             isFromMe = false
                         )
                     )
+
+                    llamaEngine = null
                 }
             }
         }
@@ -82,42 +109,87 @@ class AiViewModel @Inject constructor() : ViewModel() {
      * Send a message and get AI response
      */
     fun sendMessage(text: String) {
-        if (text.isBlank()) return
+        if (text.isBlank()) {
+            Log.w(TAG, "Attempted to send blank message")
+            return
+        }
+
+        // Verificar que el motor esté inicializado
         if (!_isInitialized.value) {
             Log.w(TAG, "Engine not initialized")
+
+            // Agregar mensaje de error visible para el usuario
+            val errorMsg = ChatMessage(
+                text = "Por favor espera a que el modelo se inicialice antes de enviar mensajes.",
+                isFromMe = false
+            )
+            _messages.value = _messages.value + errorMsg
+            return
+        }
+
+        // Verificar que la instancia del motor existe
+        if (llamaEngine == null) {
+            Log.e(TAG, "Engine instance is null despite initialized flag")
+
+            val errorMsg = ChatMessage(
+                text = "Error interno: El motor no está disponible. Intenta reiniciar la aplicación.",
+                isFromMe = false
+            )
+            _messages.value = _messages.value + errorMsg
             return
         }
 
         viewModelScope.launch {
             try {
-                // Add user message
+                // Agregar mensaje del usuario inmediatamente
                 val userMessage = ChatMessage(
                     text = text,
                     isFromMe = true
                 )
                 _messages.value = _messages.value + userMessage
 
+                // Indicar que está cargando
                 _isLoading.value = true
+                _errorMessage.value = null
 
-                // Generate response in background
+                Log.d(TAG, "Generating response for: ${text.take(50)}...")
+
+                // Generar respuesta en IO dispatcher
                 val response = withContext(Dispatchers.IO) {
-                    llamaEngine?.generateResponse(text) ?: "Error: Engine not available"
+                    try {
+                        // Doble verificación dentro del contexto IO
+                        val engine = llamaEngine
+                        if (engine == null || !engine.isInitialized()) {
+                            "Error: El motor no está disponible"
+                        } else {
+                            engine.generateResponse(text)
+                        }
+                    } catch (e: Exception) {
+                        Log.e(TAG, "Error in generation coroutine", e)
+                        "Error: ${e.message}"
+                    }
                 }
 
-                // Add bot response
+                // Agregar respuesta del bot
                 val botResponse = ChatMessage(
                     text = response,
                     isFromMe = false
                 )
                 _messages.value = _messages.value + botResponse
 
+                Log.d(TAG, "Response added to messages")
+
             } catch (e: Exception) {
                 Log.e(TAG, "Error generating response", e)
+
                 val errorMessage = ChatMessage(
-                    text = "Error: ${e.message}",
+                    text = "Error generando respuesta: ${e.message}",
                     isFromMe = false
                 )
                 _messages.value = _messages.value + errorMessage
+
+                _errorMessage.value = e.message
+
             } finally {
                 _isLoading.value = false
             }
@@ -129,7 +201,9 @@ class AiViewModel @Inject constructor() : ViewModel() {
      */
     fun clearMessages() {
         _messages.value = emptyList()
-        // Add welcome message back
+        _errorMessage.value = null
+
+        // Agregar mensaje de bienvenida si está inicializado
         if (_isInitialized.value) {
             _messages.value = listOf(
                 ChatMessage(
@@ -141,12 +215,44 @@ class AiViewModel @Inject constructor() : ViewModel() {
     }
 
     /**
+     * Retry initialization if failed
+     */
+    fun retryInitialization(context: MainActivity) {
+        Log.i(TAG, "Retrying initialization...")
+
+        // Limpiar estado anterior
+        llamaEngine?.release()
+        llamaEngine = null
+        _isInitialized.value = false
+        _errorMessage.value = null
+        _messages.value = emptyList()
+
+        // Reintentar
+        initEngine(context)
+    }
+
+    /**
+     * Clear error message
+     */
+    fun clearError() {
+        _errorMessage.value = null
+    }
+
+    /**
      * Clean up resources when ViewModel is cleared
      */
     override fun onCleared() {
         super.onCleared()
-        llamaEngine?.release()
-        llamaEngine = null
+
+        Log.i(TAG, "ViewModel clearing, releasing resources...")
+
+        try {
+            llamaEngine?.release()
+            llamaEngine = null
+        } catch (e: Exception) {
+            Log.e(TAG, "Error releasing engine in onCleared", e)
+        }
+
         Log.i(TAG, "ViewModel cleared, resources released")
     }
 }
