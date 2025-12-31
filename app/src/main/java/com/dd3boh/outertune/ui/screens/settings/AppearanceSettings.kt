@@ -47,10 +47,12 @@ import com.dd3boh.outertune.ui.component.PreferenceEntry
 import com.dd3boh.outertune.ui.component.PreferenceGroupTitle
 import com.dd3boh.outertune.ui.component.button.IconButton
 import com.dd3boh.outertune.ui.screens.LayoutOptionCard
+import com.dd3boh.outertune.constants.FloatingMiniplayerKey
 import com.dd3boh.outertune.ui.screens.settings.fragments.AppearanceMiscFrag
 import com.dd3boh.outertune.ui.screens.settings.fragments.ThemeAppFrag
 import com.dd3boh.outertune.ui.screens.settings.fragments.ThemePlayerFrag
 import com.dd3boh.outertune.ui.utils.backToMain
+import com.dd3boh.outertune.utils.rememberPreference
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
@@ -94,19 +96,22 @@ fun AppearanceSettings(
             horizontalArrangement = Arrangement.Center
         ) {
             // Opción 1: Diseño por defecto
-            var selectedLayout by remember { mutableStateOf<Int?>(null) }
+            val (isFloatingMiniplayer, onFloatingMiniplayerChange) = rememberPreference(
+                FloatingMiniplayerKey,
+                defaultValue = false
+            )
             LayoutOptionCard(
                 title = "Diseño Clásico",
-                isSelected = selectedLayout == 0,
-                onClick = { selectedLayout = 0 },
+                isSelected = !isFloatingMiniplayer,
+                onClick = { onFloatingMiniplayerChange(false) },
                 preview = R.drawable.miniplayer_default
             )
             Spacer(modifier = Modifier.width(12.dp))
             // Opción 2: Diseño flotante
             LayoutOptionCard(
                 title = "Flotante",
-                isSelected = selectedLayout == 1,
-                onClick = { selectedLayout = 1 },
+                isSelected = isFloatingMiniplayer,
+                onClick = { onFloatingMiniplayerChange(true) },
                 preview = R.drawable.miniplayer_floating
             )
         }

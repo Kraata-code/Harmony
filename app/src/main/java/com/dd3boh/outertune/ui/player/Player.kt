@@ -151,6 +151,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.withContext
 import kotlin.math.max
+import com.dd3boh.outertune.constants.FloatingMiniplayerKey
 
 @SuppressLint("UnusedBoxWithConstraintsScope")
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
@@ -167,6 +168,10 @@ fun BottomSheetPlayer(
     val playerConnection = LocalPlayerConnection.current ?: return
     val menuState = LocalMenuState.current
     val context = LocalContext.current
+    val (isFloatingMiniplayer) = rememberPreference(
+        FloatingMiniplayerKey,
+        defaultValue = false
+    )
 
     val playbackState by playerConnection.playbackState.collectAsState()
     val isPlaying by playerConnection.isPlaying.collectAsState()
@@ -281,6 +286,11 @@ fun BottomSheetPlayer(
         collapsedBound = dismissedBound + QueuePeekHeight,
         initialAnchor = 1
     )
+    val collapsedBgColor =
+        if (!isFloatingMiniplayer)
+            MaterialTheme.colorScheme.surfaceColorAtElevation(6.dp)
+        else
+            Color.Transparent
 
 
     BottomSheet(
@@ -288,6 +298,9 @@ fun BottomSheetPlayer(
         modifier = modifier,
         background = {
             Log.v(TAG, "PLR-2.1")
+            val shouldShowBackground = !isFloatingMiniplayer ||
+                    state.isExpanded ||
+                    !state.isDismissed
             Box(
                 modifier = Modifier
                     .background(MaterialTheme.colorScheme.surfaceColorAtElevation(NavigationBarDefaults.Elevation))
@@ -351,15 +364,18 @@ fun BottomSheetPlayer(
             }
         },
         // collapsedBackgroundColor = MaterialTheme.colorScheme.surfaceColorAtElevation(6.dp),
-        collapsedBackgroundColor = Color.Transparent,
+
+        collapsedBackgroundColor = collapsedBgColor,
         onDismiss = {
             playerConnection.softKillPlayer()
         },
         collapsedContent = {
-            // MiniPlayer(
-            //     position = position,
-            //     duration = duration
-            // )
+            if(!isFloatingMiniplayer){
+                MiniPlayer(
+                    position = position,
+                    duration = duration
+                )
+            }
         }
     ) {
         Log.v(TAG, "PLR-3.1")
