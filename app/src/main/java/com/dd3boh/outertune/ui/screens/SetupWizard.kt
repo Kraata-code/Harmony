@@ -10,6 +10,7 @@ package com.dd3boh.outertune.ui.screens
 
 import android.content.Intent
 import android.net.Uri
+import android.widget.Space
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -29,6 +30,7 @@ import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -137,6 +139,8 @@ import com.dd3boh.outertune.utils.scanners.uriListFromString
 import com.zionhuang.innertube.utils.parseCookieString
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.ui.layout.ContentScale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -452,6 +456,30 @@ fun SetupWizard(
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             LocalizationFrag()
+                        }
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Center
+                        ) {
+                            // Opción 1: Diseño por defecto
+                            var selectedLayout by remember { mutableStateOf<Int?>(null) }
+                            LayoutOptionCard(
+                                title = "Diseño Clásico",
+                                isSelected = selectedLayout == 0,
+                                onClick = { selectedLayout = 0 },
+                                preview = R.drawable.miniplayer_default // <-- Aquí usamos el drawable
+                            )
+                            Spacer(modifier = Modifier.width(12.dp))
+                            // Opción 2: Diseño flotante
+                            LayoutOptionCard(
+                                title = "Flotante",
+                                isSelected = selectedLayout == 1,
+                                onClick = { selectedLayout = 1 },
+                                preview = R.drawable.miniplayer_floating
+                            )
                         }
                     }
 
@@ -873,6 +901,102 @@ fun SetupWizard(
                         contentDescription = null
                     )
                 }
+            }
+        }
+    }
+}
+
+@Composable
+fun HorizontalScrollView(
+    modifier: Modifier = Modifier,
+    content: @Composable () -> Unit
+) {
+    Row(
+        modifier = modifier
+            .horizontalScroll(rememberScrollState())
+            .padding(horizontal = 16.dp),
+        horizontalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        content()
+    }
+}
+
+@Composable
+fun LayoutOptionCard(
+    title: String,
+    isSelected: Boolean,
+    onClick: () -> Unit,
+    preview: Int? = null
+) {
+    val haptic = LocalHapticFeedback.current
+
+    ElevatedCard(
+        modifier = Modifier
+            .width(140.dp)
+            .clickable {
+                haptic.performHapticFeedback(HapticFeedbackType.ContextClick)
+                onClick()
+            }
+            .then(
+                if (isSelected) {
+                    Modifier.border(
+                        width = 2.dp,
+                        color = MaterialTheme.colorScheme.primary,
+                        shape = RoundedCornerShape(12.dp)
+                    )
+                } else {
+                    Modifier
+                }
+            )
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            // Preview de la imagen si existe
+            preview?.let {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(120.dp)
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(MaterialTheme.colorScheme.surfaceVariant),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Image(
+                        painter = painterResource(id = it),
+                        contentDescription = title,
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
+                }
+
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Text(
+                text = title,
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                textAlign = TextAlign.Center,
+                color = if (isSelected) {
+                    MaterialTheme.colorScheme.primary
+                } else {
+                    MaterialTheme.colorScheme.onSurface
+                }
+            )
+
+            if (isSelected) {
+                Spacer(modifier = Modifier.height(4.dp))
+                Icon(
+                    imageVector = Icons.Rounded.Check,
+                    contentDescription = "Selected",
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(20.dp)
+                )
             }
         }
     }

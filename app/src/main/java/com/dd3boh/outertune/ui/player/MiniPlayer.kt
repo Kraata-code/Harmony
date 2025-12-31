@@ -133,14 +133,14 @@ fun MiniPlayer(
             .windowInsetsPadding(LocalPlayerAwareWindowInsets.current.only(WindowInsetsSides.Horizontal))
 //            .background(MaterialTheme.colorScheme.surfaceColorAtElevation(6.dp))
     ) {
-        LinearProgressIndicator(
-            progress = { (position.toFloat() / duration).coerceIn(0f, 1f) },
-            drawStopIndicator = { },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(2.dp)
-                .align(Alignment.BottomCenter),
-        )
+//        LinearProgressIndicator(
+//            progress = { (position.toFloat() / duration).coerceIn(0f, 1f) },
+//            drawStopIndicator = { },
+//            modifier = Modifier
+//                .fillMaxWidth()
+//                .height(2.dp)
+//                .align(Alignment.BottomCenter),
+//        )
         Row(
             verticalAlignment = Alignment.CenterVertically,
             modifier = modifier
@@ -153,7 +153,9 @@ fun MiniPlayer(
                     MiniMediaInfo(
                         mediaMetadata = it,
                         error = error,
-                        modifier = Modifier.padding(horizontal = 6.dp)
+                        modifier = Modifier.padding(horizontal = 6.dp),
+                        position = position,
+                        duration = duration
                     )
                 }
             }
@@ -186,8 +188,10 @@ fun MiniMediaInfo(
     mediaMetadata: MediaMetadata,
     error: PlaybackException?,
     modifier: Modifier = Modifier,
+    position: Long,
+    duration: Long
 
-    ) {
+) {
 
     val density = LocalDensity.current
     val playerConnection = LocalPlayerConnection.current
@@ -244,59 +248,84 @@ fun MiniMediaInfo(
             error != null || isWaitingForNetwork
         }
     }
+    val progress = remember(position, duration) {
+        if (duration > 0) (position.toFloat() / duration).coerceIn(0f, 1f) else 0f
+    }
 
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = modifier
     ) {
-        BoxWithConstraints(
+        Box(
+            contentAlignment = Alignment.Center,
             modifier = Modifier
                 .padding(6.dp)
-                .size(48.dp)
-                .graphicsLayer(rotationZ = rotation.value)
+                .size(56.dp)
+                //.graphicsLayer(rotationZ = rotation.value)
         ) {
-            AsyncImage(
-                model = mediaMetadata.getThumbnailModel(px, px),
-                contentDescription = null,
-                modifier = Modifier
-//              Por si alguna vez lo necesito y quiero regresar
-//                    .aspectRatio(1f)
-//                    .clip(RoundedCornerShape(ThumbnailCornerRadius))
-                    .fillMaxSize()
-                    .clip(CircleShape)
+            VinylDiscPlayer(
+                imageModel = mediaMetadata.getThumbnailModel(px, px),
+                progress = progress,
+                rotation = rotation.value,
+                showError = error != null,
+                showLoading = isWaitingForNetwork,
+                size = 56.dp,
+                modifier = Modifier.fillMaxSize()
             )
+//            CircularProgressThumbnail(
+//                progress = progress,
+//                showError = error != null,
+//                showLoading = isWaitingForNetwork,
+//                //modifier = Modifier.padding(6.dp),
+//                size = 56.dp,
+//                strokeWidth = 3.dp,
+//                progressColor = MaterialTheme.colorScheme.primary,
+//                modifier = Modifier.fillMaxSize()
+//            )
+//            AsyncImage(
+//                model = mediaMetadata.getThumbnailModel(px, px),
+//                contentDescription = null,
+//                modifier = Modifier
+////              Por si alguna vez lo necesito y quiero regresar
+////                    .aspectRatio(1f)
+////                    .clip(RoundedCornerShape(ThumbnailCornerRadius))
+//                    .size(46.dp)
+//                    .fillMaxSize()
+//                    .clip(CircleShape)
+//                    .graphicsLayer(rotationZ = rotation.value)
+//            )
 
-            androidx.compose.animation.AnimatedVisibility(
-                visible = showOverlay,
-                enter = fadeIn(),
-                exit = fadeOut()
-            ) {
-                Box(
-                    Modifier
-                        .background(
-                            color = Color.Black.copy(alpha = 0.6f),
-                            shape = RoundedCornerShape(ThumbnailCornerRadius)
-                        )
-                ) {
-                    if (isWaitingForNetwork) {
-                        CircularProgressIndicator(
-                            modifier = Modifier
-                                .align(Alignment.Center)
-                                .size(24.dp),
-                            strokeWidth = 2.dp,
-                            color = Color.White
-                        )
-                    } else {
-                        Icon(
-                            imageVector = Icons.Rounded.Info,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.error,
-                            modifier = Modifier
-                                .align(Alignment.Center)
-                        )
-                    }
-                }
-            }
+//            androidx.compose.animation.AnimatedVisibility(
+//                visible = showOverlay,
+//                enter = fadeIn(),
+//                exit = fadeOut()
+//            ) {
+//                Box(
+//                    Modifier
+//                        .background(
+//                            color = Color.Black.copy(alpha = 0.6f),
+//                            shape = RoundedCornerShape(ThumbnailCornerRadius)
+//                        )
+//                ) {
+//                    if (isWaitingForNetwork) {
+//                        CircularProgressIndicator(
+//                            modifier = Modifier
+//                                .align(Alignment.Center)
+//                                .size(24.dp),
+//                            strokeWidth = 2.dp,
+//                            color = Color.White
+//                        )
+//                    } else {
+//                        Icon(
+//                            imageVector = Icons.Rounded.Info,
+//                            contentDescription = null,
+//                            tint = MaterialTheme.colorScheme.error,
+//                            modifier = Modifier
+//                                .align(Alignment.Center)
+//                        )
+//                    }
+//                }
+//            }
         }
         MediaInfoText(
             title = mediaMetadata.title,

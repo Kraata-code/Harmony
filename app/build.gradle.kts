@@ -290,6 +290,8 @@ dependencies {
     // Room
     implementation(libs.room.runtime)
     implementation(libs.runtime)
+    implementation(libs.foundation.layout)
+    implementation(libs.ui)
     ksp(libs.room.compiler)
     implementation(libs.room.ktx)
 

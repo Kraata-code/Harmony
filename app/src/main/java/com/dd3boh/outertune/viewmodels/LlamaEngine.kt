@@ -40,14 +40,9 @@ class LlamaEngine(private val context: Context) {
         }
 
         try {
-            val modelFile = File(context.filesDir, MODEL_FILE_NAME)
-
-            if (!modelFile.exists()) {
-                Log.e(TAG, "Model file not found: ${modelFile.absolutePath}")
-                return@withContext false
-            }
-
-            val modelPath = modelFile.absolutePath
+            // Prepare model by copying from assets to app files directory if needed
+            Log.i(TAG, "Preparing model from assets...")
+            val modelPath = ModelManager.prepareModel(context)
             Log.i(TAG, "Initializing model from: $modelPath")
 
             val success = llamaBridge.initModel(modelPath)
