@@ -109,6 +109,7 @@ import com.dd3boh.outertune.constants.DEFAULT_ENABLED_TABS
 import com.dd3boh.outertune.constants.DownloadPathKey
 import com.dd3boh.outertune.constants.EnabledFiltersKey
 import com.dd3boh.outertune.constants.EnabledTabsKey
+import com.dd3boh.outertune.constants.FloatingMiniplayerKey
 import com.dd3boh.outertune.constants.InnerTubeCookieKey
 import com.dd3boh.outertune.constants.LibraryFilterKey
 import com.dd3boh.outertune.constants.LocalLibraryEnableKey
@@ -178,6 +179,10 @@ fun SetupWizard(
     val (enabledFilters, onEnabledFiltersChange) = rememberPreference(
         EnabledFiltersKey,
         defaultValue = DEFAULT_ENABLED_FILTERS
+    )
+    val (isFloatingMiniplayer, onFloatingMiniplayerChange) = rememberPreference(
+        FloatingMiniplayerKey,
+        defaultValue = false
     )
 
     LaunchedEffect(localLibEnable) {
@@ -465,19 +470,18 @@ fun SetupWizard(
                             horizontalArrangement = Arrangement.Center
                         ) {
                             // Opción 1: Diseño por defecto
-                            var selectedLayout by remember { mutableStateOf<Int?>(null) }
                             LayoutOptionCard(
                                 title = "Diseño Clásico",
-                                isSelected = selectedLayout == 0,
-                                onClick = { selectedLayout = 0 },
+                                isSelected = !isFloatingMiniplayer,
+                                onClick = { onFloatingMiniplayerChange(false) },
                                 preview = R.drawable.miniplayer_default // <-- Aquí usamos el drawable
                             )
                             Spacer(modifier = Modifier.width(12.dp))
                             // Opción 2: Diseño flotante
                             LayoutOptionCard(
                                 title = "Flotante",
-                                isSelected = selectedLayout == 1,
-                                onClick = { selectedLayout = 1 },
+                                isSelected = isFloatingMiniplayer,
+                                onClick = { onFloatingMiniplayerChange(true) },
                                 preview = R.drawable.miniplayer_floating
                             )
                         }
@@ -903,21 +907,6 @@ fun SetupWizard(
                 }
             }
         }
-    }
-}
-
-@Composable
-fun HorizontalScrollView(
-    modifier: Modifier = Modifier,
-    content: @Composable () -> Unit
-) {
-    Row(
-        modifier = modifier
-            .horizontalScroll(rememberScrollState())
-            .padding(horizontal = 16.dp),
-        horizontalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        content()
     }
 }
 

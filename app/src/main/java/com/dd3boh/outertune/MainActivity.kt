@@ -207,6 +207,7 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import com.dd3boh.outertune.constants.FloatingMiniplayerKey
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -295,6 +296,10 @@ class MainActivity : ComponentActivity() {
             val useDarkTheme = remember(darkTheme, isSystemInDarkTheme) {
                 if (darkTheme == DarkMode.AUTO) isSystemInDarkTheme else darkTheme == DarkMode.ON
             }
+            val (isFloatingMiniplayer) = rememberPreference(
+                FloatingMiniplayerKey,
+                defaultValue = false
+            )
 
             val windowSizeClass = currentWindowAdaptiveInfo().windowSizeClass
 //            val tabMode = this@MainActivity.tabMode()
@@ -1047,30 +1052,31 @@ class MainActivity : ComponentActivity() {
                                     state = playerBottomSheetState,
                                     navController = navController
                                 )
-                                val isMiniPlayerVisible by remember {
-                                    derivedStateOf {
-                                        playerBottomSheetState.isCollapsed && !playerBottomSheetState.isDismissed
+                                if (isFloatingMiniplayer) {
+                                    val isMiniPlayerVisible by remember {
+                                        derivedStateOf {
+                                            playerBottomSheetState.isCollapsed && !playerBottomSheetState.isDismissed
+                                        }
                                     }
-                                }
-                                androidx.compose.animation.AnimatedVisibility(
-                                    visible = isMiniPlayerVisible,
-                                    enter = androidx.compose.animation.fadeIn(
-                                        animationSpec = tween(durationMillis = 150)
-                                    ) + androidx.compose.animation.slideInVertically(
-                                        initialOffsetY = { it },
-                                        animationSpec = tween(durationMillis = 150)
-                                    ),
-                                    exit = androidx.compose.animation.fadeOut(
-                                        animationSpec = tween(durationMillis = 100)
-                                    ) + androidx.compose.animation.slideOutVertically(
-                                        targetOffsetY = { it },
-                                        animationSpec = tween(durationMillis = 100)
-                                    ),
-                                    modifier = Modifier
-                                        .align(Alignment.BottomCenter)
-                                        .offset(y = -(NavigationBarHeight + bottomInset + 8.dp))
-                                ) {
-                                    // 2. MiniPlayer FLOTANTE (solo cuando está colapsado)
+                                    androidx.compose.animation.AnimatedVisibility(
+                                        visible = isMiniPlayerVisible,
+                                        enter = androidx.compose.animation.fadeIn(
+                                            animationSpec = tween(durationMillis = 150)
+                                        ) + androidx.compose.animation.slideInVertically(
+                                            initialOffsetY = { it },
+                                            animationSpec = tween(durationMillis = 150)
+                                        ),
+                                        exit = androidx.compose.animation.fadeOut(
+                                            animationSpec = tween(durationMillis = 100)
+                                        ) + androidx.compose.animation.slideOutVertically(
+                                            targetOffsetY = { it },
+                                            animationSpec = tween(durationMillis = 100)
+                                        ),
+                                        modifier = Modifier
+                                            .align(Alignment.BottomCenter)
+                                            .offset(y = -(NavigationBarHeight + bottomInset + 8.dp))
+                                    ) {
+                                        // 2. MiniPlayer FLOTANTE (solo cuando está colapsado)
 //                        androidx.compose.animation.AnimatedVisibility(
 //                            visible = playerBottomSheetState.isCollapsed && !playerBottomSheetState.isDismissed,
 //                            enter = androidx.compose.animation.fadeIn() + androidx.compose.animation.slideInVertically { it },
@@ -1081,14 +1087,15 @@ class MainActivity : ComponentActivity() {
 //                                    y = -(NavigationBarHeight + bottomInset + 8.dp) // 8.dp de separación
 //                                )
 //                        ) {
-                                    // Obtener posición y duración del reproductor
+                                        // Obtener posición y duración del reproductor
 //                            val playerConnection = LocalPlayerConnection.current
-                                    val playerConnection =
-                                        LocalPlayerConnection.current ?: return@AnimatedVisibility
-                                    var position by remember { mutableLongStateOf(0L) }
-                                    var duration by remember { mutableLongStateOf(0L) }
+                                        val playerConnection =
+                                            LocalPlayerConnection.current
+                                                ?: return@AnimatedVisibility
+                                        var position by remember { mutableLongStateOf(0L) }
+                                        var duration by remember { mutableLongStateOf(0L) }
 
-                                    // Actualizar posición cada segundo
+                                        // Actualizar posición cada segundo
 //                            LaunchedEffect(playerConnection) {
 //                                while (true) {
 //                                    playerConnection?.player?.let { player ->
@@ -1098,33 +1105,33 @@ class MainActivity : ComponentActivity() {
 //                                    kotlinx.coroutines.delay(1000)
 //                                }
 //                            }
-                                    DisposableEffect(playerConnection) {
-                                        val job = coroutineScope.launch {
-                                            while (isActive) {
-                                                playerConnection.player?.let { player ->
-                                                    position = player.currentPosition
-                                                    duration =
-                                                        player.duration.takeIf { it > 0 } ?: 0L
+                                        DisposableEffect(playerConnection) {
+                                            val job = coroutineScope.launch {
+                                                while (isActive) {
+                                                    playerConnection.player?.let { player ->
+                                                        position = player.currentPosition
+                                                        duration =
+                                                            player.duration.takeIf { it > 0 } ?: 0L
+                                                    }
+                                                    delay(1000)
                                                 }
-                                                delay(1000)
+                                            }
+
+                                            onDispose {
+                                                job.cancel()
                                             }
                                         }
 
-                                        onDispose {
-                                            job.cancel()
-                                        }
-                                    }
-
-                                    // MiniPlayer flotante con sombra
-                                    val horizontalPadding = 8.dp
-                                    val miniPlayerHeight = 64.dp
-                                    val cornerRadius = 12.dp
-                                    Box(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(horizontal = horizontalPadding)
-                                    ) {
-                                        // fondo oscuro semitransparente con blur
+                                        // MiniPlayer flotante con sombra
+                                        val horizontalPadding = 8.dp
+                                        val miniPlayerHeight = 64.dp
+                                        val cornerRadius = 12.dp
+                                        Box(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(horizontal = horizontalPadding)
+                                        ) {
+                                            // fondo oscuro semitransparente con blur
 //                                Box(
 //                                    modifier = Modifier
 //                                        .fillMaxWidth()
@@ -1133,35 +1140,42 @@ class MainActivity : ComponentActivity() {
 //                                        .background(Color.Black.copy(alpha = 0.85f))
 //                                        .blur(8.dp)
 //                                )
-                                        androidx.compose.foundation.layout.Spacer(
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .height(miniPlayerHeight)
-                                                .graphicsLayer {
-                                                    shape = RoundedCornerShape(cornerRadius)
-                                                    clip = true
-                                                    shadowElevation = 8.dp.toPx()
-                                                }
-                                                .background(Color.Black.copy(alpha = 0.85f))
-                                        )
-                                        val interactionSource =
-                                            remember { androidx.compose.foundation.interaction.MutableInteractionSource() }
-                                        MiniPlayer(
-                                            position = position,
-                                            duration = duration,
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .clickable(
-                                                    interactionSource = interactionSource,
-                                                    indication = null
-                                                ) {
-                                                    coroutineScope.launch {
-                                                        playerBottomSheetState.expandSoft()
+                                            androidx.compose.foundation.layout.Spacer(
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .height(miniPlayerHeight)
+                                                    .graphicsLayer {
+                                                        shape = RoundedCornerShape(cornerRadius)
+                                                        clip = true
+                                                        shadowElevation = 8.dp.toPx()
                                                     }
-                                                }
-                                        )
+                                                    .background(Color.Black.copy(alpha = 0.85f))
+                                            )
+                                            val interactionSource =
+                                                remember { androidx.compose.foundation.interaction.MutableInteractionSource() }
+                                            MiniPlayer(
+                                                position = position,
+                                                duration = duration,
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .clickable(
+                                                        interactionSource = interactionSource,
+                                                        indication = null
+                                                    ) {
+                                                        coroutineScope.launch {
+                                                            playerBottomSheetState.expandSoft()
+                                                        }
+                                                    }
+                                            )
+                                        }
                                     }
+                                } else {
+                                    BottomSheetPlayer(
+                                        state = playerBottomSheetState,
+                                        navController = navController
+                                    )
                                 }
+
 
                                 if (!useNavRail) {
                                     navbar()
