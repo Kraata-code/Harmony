@@ -18,6 +18,8 @@ ksp = "2.3.1"
 runtime = "1.10.0"
 constraintlayout = "2.2.1"
 foundation = "1.10.0"
+foundationLayout = "1.10.0"
+ui = "1.10.0"
 
 [libraries]
 annotation = { module = "androidx.annotation:annotation", version.ref = "annotation" }
@@ -89,6 +91,8 @@ newpipe-extractor = { group = "com.github.TeamNewPipe", name = "NewPipeExtractor
 runtime = { group = "androidx.compose.runtime", name = "runtime", version.ref = "runtime" }
 constraintlayout = { group = "androidx.constraintlayout", name = "constraintlayout", version.ref = "constraintlayout" }
 foundation = { group = "androidx.compose.foundation", name = "foundation", version.ref = "foundation" }
+foundation-layout = { group = "androidx.compose.foundation", name = "foundation-layout", version.ref = "foundationLayout" }
+ui = { group = "androidx.compose.ui", name = "ui", version.ref = "ui" }
 
 [plugins]
 aboutlibraries = { id = "com.mikepenz.aboutlibraries.plugin", version.ref = "aboutLibraries" }
