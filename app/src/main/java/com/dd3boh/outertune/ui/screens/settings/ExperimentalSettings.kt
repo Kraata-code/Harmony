@@ -207,12 +207,12 @@ fun ExperimentalSettings(
                 onCheckedChange = onAudioGaplessOffloadChange,
                 isEnabled = audioOffload // media3 supports only > SDK 32
             )
-            PreferenceEntry(
-                title = { Text("Important: About audio offload compatibility and issues") },
-                onClick = {
-                    uriHandler.openUri("https://github.com/OuterTune/OuterTune/wiki/Audio-offload")
-                }
-            )
+//            PreferenceEntry(
+//                title = { Text("Important: About audio offload compatibility and issues") },
+//                onClick = {
+//                    uriHandler.openUri("https://github.com/OuterTune/OuterTune/wiki/Audio-offload")
+//                }
+//            )
 
             Spacer(Modifier.height(20.dp))
 

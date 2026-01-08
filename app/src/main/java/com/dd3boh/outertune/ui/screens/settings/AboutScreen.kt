@@ -164,16 +164,16 @@ fun AboutScreen(
             IconLabelButton(
                 text = "GitHub",
                 painter = painterResource(R.drawable.github),
-                onClick = { uriHandler.openUri("https://github.com/OuterTune/OuterTune") },
+                onClick = { uriHandler.openUri("https://github.com/Kraata-code/Harmony") },
                 modifier = Modifier.padding(horizontal = 8.dp)
             )
 
-            IconLabelButton(
+ /*           IconLabelButton(
                 text = stringResource(R.string.wiki),
                 icon = Icons.Outlined.Info,
                 onClick = { uriHandler.openUri("https://github.com/OuterTune/OuterTune/wiki") },
                 modifier = Modifier.padding(horizontal = 8.dp)
-            )
+            )*/
         }
 
         Spacer(Modifier.height(96.dp))
