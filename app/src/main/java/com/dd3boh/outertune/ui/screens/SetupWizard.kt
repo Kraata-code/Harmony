@@ -863,16 +863,16 @@ fun SetupWizard(
                                 IconLabelButton(
                                     text = "GitHub",
                                     icon = Icons.Rounded.Code,
-                                    onClick = { uriHandler.openUri("https://github.com/OuterTune/OuterTune") },
+                                    onClick = { uriHandler.openUri("https://github.com/Kraata-code/Harmony") },
                                     modifier = Modifier.padding(horizontal = 8.dp)
                                 )
 
-                                IconLabelButton(
-                                    text = "Wiki",
-                                    icon = Icons.Outlined.Info,
-                                    onClick = { uriHandler.openUri("https://github.com/OuterTune/OuterTune/wiki") },
-                                    modifier = Modifier.padding(horizontal = 8.dp)
-                                )
+//                                IconLabelButton(
+//                                    text = "Wiki",
+//                                    icon = Icons.Outlined.Info,
+//                                    onClick = { uriHandler.openUri("https://github.com/OuterTune/OuterTune/wiki") },
+//                                    modifier = Modifier.padding(horizontal = 8.dp)
+//                                )
                             }
                             Text(
                                 text = "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE}) | ${BuildConfig.FLAVOR}",

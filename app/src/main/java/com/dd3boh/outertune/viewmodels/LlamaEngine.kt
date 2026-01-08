@@ -2,33 +2,38 @@ package com.dd3boh.outertune.viewmodels
 
 import android.content.Context
 import android.util.Log
-import java.io.File
-import java.util.concurrent.atomic.AtomicBoolean
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.util.concurrent.atomic.AtomicBoolean
+import com.dd3boh.outertune.viewmodels.AiViewModel
 
 /**
- * Engine wrapper for llama.cpp integration with Gemma 3
- * Implements thread-safe LLM operations with official Gemma 3 configuration
+ * Engine wrapper for llama.cpp integration with Qwen2
+ * Implements thread-safe LLM operations with ChatML format
  *
  * @property context Android application context
  */
 class LlamaEngine(private val context: Context) {
 
-    private companion object {
+    companion object {
         const val TAG = "LlamaEngine"
-        const val MODEL_FILE_NAME = "gemma-3-270m-it-Q8_0.gguf"
+        const val MODEL_FILE_NAME = "Qwen2-500M-Instruct-IQ4_XS.gguf"
 
-        // Configuración recomendada por el equipo de Gemma 3
-        const val MAX_TOKENS_DEFAULT = 128  // Reducido para respuestas más concisas
+        // Parámetros optimizados para Qwen2
+        const val MAX_TOKENS_DEFAULT = 128
         const val MAX_TOKENS_LIMIT = 256
     }
 
     private val llamaBridge = LlamaBridge()
     private val isInitialized = AtomicBoolean(false)
 
+    data class ToolCall(
+        val name: String,
+        val arguments: Map<String, String>
+    )
+
     /**
-     * Initialize the LLM model with Gemma 3 configuration
+     * Initialize the LLM model with Qwen2 configuration
      * Must be called from a coroutine with IO dispatcher
      *
      * @return true if initialization successful, false otherwise
@@ -40,16 +45,15 @@ class LlamaEngine(private val context: Context) {
         }
 
         try {
-            // Prepare model by copying from assets to app files directory if needed
             Log.i(TAG, "Preparing model from assets...")
             val modelPath = ModelManager.prepareModel(context)
-            Log.i(TAG, "Initializing model from: $modelPath")
+            Log.i(TAG, "Initializing Qwen2 model from: $modelPath")
 
             val success = llamaBridge.initModel(modelPath)
 
             if (success) {
                 isInitialized.set(true)
-                Log.i(TAG, "Model initialized successfully with Gemma 3 config")
+                Log.i(TAG, "Qwen2 model initialized successfully")
             } else {
                 Log.e(TAG, "Failed to initialize model via JNI")
             }
@@ -65,15 +69,16 @@ class LlamaEngine(private val context: Context) {
 
     /**
      * Generate response from user prompt
-     * Uses official Gemma 3 chat format and configuration
+     * Uses ChatML format (Qwen2's official format)
      *
      * @param prompt User input text
      * @param maxTokens Maximum tokens to generate (default: 128)
+     * @param allowedTools User input text
      * @return Generated text response
      */
     suspend fun generateResponse(
         prompt: String,
-        maxTokens: Int = MAX_TOKENS_DEFAULT
+        maxTokens: Int = MAX_TOKENS_DEFAULT,
     ): String = withContext(Dispatchers.IO) {
         if (!isInitialized.get()) {
             Log.e(TAG, "Cannot generate: model not initialized")
@@ -83,59 +88,167 @@ class LlamaEngine(private val context: Context) {
         try {
             Log.d(TAG, "Generating response for: ${prompt.take(50)}...")
 
-            // Formato oficial de Gemma 3
-            val formattedPrompt = formatPromptForGemma3(prompt)
+            // Formato ChatML oficial de Qwen2
+            val formattedPrompt = formatPromptForQwen2(prompt)
             val limitedMaxTokens = maxTokens.coerceIn(1, MAX_TOKENS_LIMIT)
 
             val response = llamaBridge.generateText(formattedPrompt, limitedMaxTokens)
+            val tools = AIToolsViewModel()
+            if (tools.isToolCall(response)) {
+                val toolCall = tools.parseToolCall(response)
+                if (toolCall == null) {
+                    return@withContext "Error procesando la herramienta"
+                }
+                Log.i(TAG, "Tool name: ${toolCall.name}")
+                Log.i(TAG, "Tool arguments: ${toolCall.arguments}")
+                when (toolCall.name) {
+                    "get_date_info" -> {
+                        val result = tools.getDateInfo()
+                        val secondFormattedPrompt = formatFinalAnswerPrompt(prompt, result)
+                        val finalResponse = llamaBridge.generateText(
+                            secondFormattedPrompt,
+                            limitedMaxTokens
+                        )
+                        return@withContext cleanResponse(finalResponse)
+                    }
+
+                    "get_internet_info" -> {
+                        Log.i(TAG, "Usando informacion de internet")
+                        val query = toolCall.arguments["query"] ?: ""
+                        val result = tools.getInternetInfo(query)
+                        val secondFormattedPrompt = formatFinalAnswerPrompt(prompt, result)
+                        val finalResponse = llamaBridge.generateText(
+                            secondFormattedPrompt,
+                            limitedMaxTokens
+                        )
+                        return@withContext cleanResponse(finalResponse)
+                    }
+
+                    else -> {
+                    }
+                }
+            }
+
             val cleanedResponse = cleanResponse(response)
 
             Log.d(TAG, "Response generated: ${cleanedResponse.take(50)}...")
             cleanedResponse
 
         } catch (e: Exception) {
-            Log.e(TAG, "Exception during generation", e)
             "Error: ${e.message ?: "Error desconocido"}"
         }
     }
 
     /**
-     * Format user prompt for Gemma 3 instruction format
+     * Format user prompt for Qwen2 ChatML format
      *
-     * Formato oficial según documentación de Gemma 3:
-     * <bos><start_of_turn>user\n{message}<end_of_turn>\n<start_of_turn>model\n
+     * Formato oficial ChatML de Qwen2:
+     * <|im_start|>system
+     * {system_message}<|im_end|>
+     * <|im_start|>user
+     * {user_message}<|im_end|>
+     * <|im_start|>assistant
      *
-     * IMPORTANTE: Los \n son requeridos por el modelo
+     * Referencias:
+     * - https://qwen.readthedocs.io/en/latest/getting_started/concepts.html
+     * - https://huggingface.co/Qwen/Qwen2-7B-Instruct
      *
      * @param userMessage User's message text
-     * @return Formatted prompt string
+     * @return Formatted prompt string in ChatML format
      */
-    private fun formatPromptForGemma3(userMessage: String): String {
-        // Nota: <bos> se agrega automáticamente con add_bos=true en llama_tokenize
+    private fun formatPromptForQwen2(userMessage: String): String {
+        // ChatML format con system message opcional
         return buildString {
-            append("<start_of_turn>user\n")
+            // System message (opcional)
+            append("<|im_start|>system\n")
+            append(
+                "You are a helpful assistant.\n" +
+                        "\n" +
+                        "You have access to the following tools:\n" +
+                        "\n" +
+                        "1. get_date_info(query: string)\n" +
+                        "   - Use this tool when the user asks for today's date, time, or temporal information\n" +
+                        "\n" +
+                        "2. get_internet_info(query: string)\n" +
+                        "   - Use this tool when the user asks for real-world information about music, artists, albums, or metadata.\n" +
+                        "\n" +
+                        "INSTRUCTIONS FOR TOOL CALLING:\n" +
+                        "If you need to use a tool, respond ONLY with a JSON object in the following format:\n" +
+                        "{\n" +
+                        "  \"tool\": \"<tool_name>\",\n" +
+                        "  \"arguments\": {\n" +
+                        "    \"<param>\": \"<value>\"\n" +
+                        "  }\n" +
+                        "}\n" +
+                        "\n" +
+                        "Do not add any extra text outside the JSON.\n"
+            )
+            append("<|im_end|>\n")
+
+            // User message
+            append("<|im_start|>user\n")
             append(userMessage.trim())
-            append("<end_of_turn>\n")
-            append("<start_of_turn>model\n")
+            append("<|im_end|>\n")
+
+            // Assistant turn (sin contenido, para que el modelo genere)
+            append("<|im_start|>assistant\n")
+        }
+    }
+
+    /**
+     * Formatea el prompt para que el modelo genere una respuesta final
+     * después de haber ejecutado una herramienta.
+     *
+     * Muestra al modelo el contexto completo:
+     * 1. La pregunta original del usuario
+     * 2. El tool call que ya ejecutó
+     * 3. El resultado de la herramienta
+     * 4. Que ahora debe responder en lenguaje natural
+     *
+     * @param originalUserPrompt La pregunta original del usuario
+     * @param toolResult El resultado obtenido de ejecutar la herramienta
+     * @return Prompt formateado en ChatML listo para generar respuesta final
+     */
+    private fun formatFinalAnswerPrompt(originalUserPrompt: String, toolResult: String): String {
+        return buildString {
+            append("<|im_start|>system\n")
+            append("You are a helpful assistant. Provide a final answer in natural language.\n")
+            append("<|im_end|>\n")
+
+            append("<|im_start|>user\n")
+            append(originalUserPrompt.trim())
+            append("<|im_end|>\n")
+
+            append("<|im_start|>assistant\n")
+            append("<tool_call>\n")
+            append("{\"name\": \"get_day_info\", \"arguments\": {\"query\": \"dia\"}}\n")
+            append("</tool_call>\n")
+            append("<|im_end|>\n")
+
+            append("<|im_start|>tool\n")
+            append(toolResult.trim())
+            append("<|im_end|>\n")
+
+            append("<|im_start|>assistant\n")
         }
     }
 
     /**
      * Clean the model's response
-     * Removes special tokens and formatting artifacts
+     * Removes ChatML special tokens and formatting artifacts
      *
      * @param response Raw response from model
      * @return Cleaned response text
      */
     private fun cleanResponse(response: String): String {
         var cleaned = response
-            .replace("<start_of_turn>", "")
-            .replace("<end_of_turn>", "")
-            .replace("<eos>", "")
-            .replace("</s>", "")
-            .replace("<bos>", "")
+            // Remover tokens especiales de ChatML
+            .replace("<|im_start|>", "")
+            .replace("<|im_end|>", "")
+            .replace("<|endoftext|>", "")
+            .replace("system\n", "")
             .replace("user\n", "")
-            .replace("model\n", "")
+            .replace("assistant\n", "")
             .trim()
 
         // Remover líneas vacías múltiples
@@ -174,7 +287,8 @@ class LlamaEngine(private val context: Context) {
             // Verificar si la misma palabra aparece 3+ veces consecutivas
             if (i + 2 < words.size &&
                 words[i] == words[i + 1] &&
-                words[i + 1] == words[i + 2]) {
+                words[i + 1] == words[i + 2]
+            ) {
                 return true
             }
         }
