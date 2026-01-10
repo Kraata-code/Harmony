@@ -116,6 +116,7 @@ class LlamaEngine(private val context: Context) {
                         Log.i(TAG, "Usando informacion de internet")
                         val query = toolCall.arguments["query"] ?: ""
                         val result = tools.getInternetInfo(query)
+                        Log.i(TAG, "resultado de internet $result")
                         val secondFormattedPrompt = formatFinalAnswerPrompt(prompt, result)
                         val finalResponse = llamaBridge.generateText(
                             secondFormattedPrompt,
@@ -166,14 +167,30 @@ class LlamaEngine(private val context: Context) {
                         "\n" +
                         "You have access to the following tools:\n" +
                         "\n" +
-                        "1. get_date_info(query: string)\n" +
-                        "   - Use this tool when the user asks for today's date, time, or temporal information\n" +
+                        "1. get_date_info()\n" +
+                        "   - Use this tool ONLY when the user asks about the current date, time, or temporal information.\n" +
                         "\n" +
                         "2. get_internet_info(query: string)\n" +
-                        "   - Use this tool when the user asks for real-world information about music, artists, albums, or metadata.\n" +
+                        "   - You MUST ALWAYS use this tool for ANY real-world, factual, external, or up-to-date information.\n" +
+                        "   - This includes ANY question involving: music, artists, songs, albums, discographies, releases, metadata, biographies, history, definitions, events, companies, products, technologies, places, people, or anything tied to real-world facts.\n" +
+                        "   - You are NOT allowed to answer such questions from memory.\n" +
+                        "   - Convert the user's request into a short keyword-based query.\n" +
+                        "   - NEVER include URLs in the query.\n" +
                         "\n" +
-                        "INSTRUCTIONS FOR TOOL CALLING:\n" +
-                        "If you need to use a tool, respond ONLY with a JSON object in the following format:\n" +
+                        "   Examples of CORRECT queries:\n" +
+                        "     * Imagine Dragons latest album\n" +
+                        "     * weather today\n" +
+                        "     * Python programming language\n" +
+                        "     * Shakira biography\n" +
+                        "\n" +
+                        "   Examples of INCORRECT queries (FORBIDDEN):\n" +
+                        "     * imaginedragons.com/albums\n" +
+                        "     * https://wikipedia.org/ImagineDragons\n" +
+                        "\n" +
+                        "INSTRUCTIONS FOR TOOL CALLING (MANDATORY):\n" +
+                        "If the user asks for ANY real-world or factual information, you MUST call the appropriate tool.\n" +
+                        "\n" +
+                        "When using a tool, respond ONLY with the following JSON format:\n" +
                         "{\n" +
                         "  \"tool\": \"<tool_name>\",\n" +
                         "  \"arguments\": {\n" +
@@ -181,7 +198,9 @@ class LlamaEngine(private val context: Context) {
                         "  }\n" +
                         "}\n" +
                         "\n" +
-                        "Do not add any extra text outside the JSON.\n"
+                        "Do NOT add any other text outside the JSON.\n" +
+                        "Do NOT provide explanations.\n" +
+                        "Do NOT answer directly for questions requiring real-world knowledge. Doing so is INVALID.\n"
             )
             append("<|im_end|>\n")
 
@@ -211,24 +230,27 @@ class LlamaEngine(private val context: Context) {
      */
     private fun formatFinalAnswerPrompt(originalUserPrompt: String, toolResult: String): String {
         return buildString {
+            // System message enfatizando que debe responder en lenguaje natural
             append("<|im_start|>system\n")
-            append("You are a helpful assistant. Provide a final answer in natural language.\n")
+            append(
+                "You are a helpful assistant. " +
+                        "You have just received information from a tool. " +
+                        "Now provide a clear, natural language response to the user's question using this information. " +
+                        "Do NOT call any more tools. Just answer the question directly.\n"
+            )
             append("<|im_end|>\n")
 
+            // Pregunta original del usuario
             append("<|im_start|>user\n")
             append(originalUserPrompt.trim())
             append("<|im_end|>\n")
 
-            append("<|im_start|>assistant\n")
-            append("<tool_call>\n")
-            append("{\"name\": \"get_day_info\", \"arguments\": {\"query\": \"dia\"}}\n")
-            append("</tool_call>\n")
-            append("<|im_end|>\n")
-
+            // Resultado de la herramienta (en un turno especial)
             append("<|im_start|>tool\n")
             append(toolResult.trim())
             append("<|im_end|>\n")
 
+            // Turno del asistente para responder
             append("<|im_start|>assistant\n")
         }
     }

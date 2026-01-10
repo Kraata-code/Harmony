@@ -120,7 +120,7 @@ class ConversationHistory(
         }
     }
 
-    /**
+    /**z
      * Limpia el historial
      */
     fun clear() {
