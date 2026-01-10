@@ -106,3 +106,4 @@ lint/tmp/
 .DS_Store
 
 /ffMetadataEx
+/app/src/main/llama.cpp/.git.bak

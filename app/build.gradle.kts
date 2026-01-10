@@ -247,6 +247,17 @@ dependencies {
     implementation(libs.guava)
     implementation(libs.coroutines.guava)
     implementation(libs.concurrent.futures)
+    implementation(libs.jsoup)
+// Parser HTML[citation:4]
+
+    // Para realizar peticiones HTTP
+    implementation(libs.okhttp)
+
+    // Para manejo de JSON (si no lo tienes ya)
+    implementation(libs.json)
+
+    // Coroutines para operaciones asíncronas
+    implementation(libs.kotlinx.coroutines.android)
 
     // Android Core
     implementation(libs.activity)
