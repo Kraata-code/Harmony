@@ -275,7 +275,7 @@ class MainActivity : ComponentActivity() {
 
         activityLauncher = ActivityLauncherHelper(this)
 
-        llama = LlamaEngine(this)
+        llama = LlamaEngine(this, database)
 
         lifecycleScope.launch(Dispatchers.IO) {
             val ok = llama.init()

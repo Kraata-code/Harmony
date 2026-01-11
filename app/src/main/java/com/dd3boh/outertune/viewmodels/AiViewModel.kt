@@ -4,6 +4,7 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.dd3boh.outertune.MainActivity
+import com.dd3boh.outertune.db.MusicDatabase
 import com.dd3boh.outertune.models.ChatMessage
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
@@ -15,7 +16,7 @@ import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 @HiltViewModel
-class AiViewModel @Inject constructor() : ViewModel() {
+class AiViewModel @Inject constructor(private val database: MusicDatabase) : ViewModel() {
 
     private companion object {
         const val TAG = "AiViewModel"
@@ -51,7 +52,7 @@ class AiViewModel @Inject constructor() : ViewModel() {
             try {
                 Log.i(TAG, "Starting engine initialization...")
 
-                llamaEngine = LlamaEngine(context)
+                llamaEngine = LlamaEngine(context, database)
                 val success = llamaEngine!!.init()
 
                 withContext(Dispatchers.Main) {
