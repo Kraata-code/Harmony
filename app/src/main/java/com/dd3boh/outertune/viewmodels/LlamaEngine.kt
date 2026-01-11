@@ -2,10 +2,10 @@ package com.dd3boh.outertune.viewmodels
 
 import android.content.Context
 import android.util.Log
+import com.dd3boh.outertune.db.MusicDatabase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.util.concurrent.atomic.AtomicBoolean
-import com.dd3boh.outertune.viewmodels.AiViewModel
 
 /**
  * Engine wrapper for llama.cpp integration with Qwen2
@@ -13,7 +13,7 @@ import com.dd3boh.outertune.viewmodels.AiViewModel
  *
  * @property context Android application context
  */
-class LlamaEngine(private val context: Context) {
+class LlamaEngine(private val context: Context, private val database: MusicDatabase) {
 
     companion object {
         const val TAG = "LlamaEngine"
@@ -26,6 +26,8 @@ class LlamaEngine(private val context: Context) {
 
     private val llamaBridge = LlamaBridge()
     private val isInitialized = AtomicBoolean(false)
+
+    private val tools by lazy { AIToolsViewModel(database) }
 
     data class ToolCall(
         val name: String,
@@ -93,7 +95,6 @@ class LlamaEngine(private val context: Context) {
             val limitedMaxTokens = maxTokens.coerceIn(1, MAX_TOKENS_LIMIT)
 
             val response = llamaBridge.generateText(formattedPrompt, limitedMaxTokens)
-            val tools = AIToolsViewModel()
             if (tools.isToolCall(response)) {
                 val toolCall = tools.parseToolCall(response)
                 if (toolCall == null) {
@@ -123,6 +124,35 @@ class LlamaEngine(private val context: Context) {
                             limitedMaxTokens
                         )
                         return@withContext cleanResponse(finalResponse)
+                    }
+
+                    "create_playlist" -> {
+                        Log.i(TAG, "Entrando a funcion de playlist")
+                        // soportar varios nombres de parámetro que el modelo pueda generar
+                        val rawName = toolCall.arguments["name"] ?: ""
+                        val playlistName = rawName.trim()
+
+                        try {
+                            tools.createPlaylist(playlistName)
+                            val result = "Playlist creada: \"$playlistName\""
+                            Log.i(TAG, "antes de format Promt$result")
+                            val secondFormattedPrompt = formatFinalAnswerPrompt(prompt, result)
+                            val finalResponse = llamaBridge.generateText(
+                                secondFormattedPrompt,
+                                limitedMaxTokens
+                            )
+                            return@withContext cleanResponse(finalResponse)
+                        } catch (e: Exception) {
+                            Log.e(TAG, "Error al crear playlist", e)
+                            val errorResult =
+                                "Error al crear la playlist: ${e.message ?: "Desconocido"}"
+                            val secondFormattedPrompt = formatFinalAnswerPrompt(prompt, errorResult)
+                            val finalResponse = llamaBridge.generateText(
+                                secondFormattedPrompt,
+                                limitedMaxTokens
+                            )
+                            return@withContext cleanResponse(finalResponse)
+                        }
                     }
 
                     else -> {
@@ -190,6 +220,9 @@ class LlamaEngine(private val context: Context) {
                         "INSTRUCTIONS FOR TOOL CALLING (MANDATORY):\n" +
                         "If the user asks for ANY real-world or factual information, you MUST call the appropriate tool.\n" +
                         "\n" +
+                        "3. create_playlist(name: string)\n" +
+                        "   - Use this tool ONLY when the user tell you to create a playlist.\n" +
+                        "\n" +
                         "When using a tool, respond ONLY with the following JSON format:\n" +
                         "{\n" +
                         "  \"tool\": \"<tool_name>\",\n" +
@@ -230,27 +263,24 @@ class LlamaEngine(private val context: Context) {
      */
     private fun formatFinalAnswerPrompt(originalUserPrompt: String, toolResult: String): String {
         return buildString {
-            // System message enfatizando que debe responder en lenguaje natural
             append("<|im_start|>system\n")
             append(
-                "You are a helpful assistant. " +
-                        "You have just received information from a tool. " +
-                        "Now provide a clear, natural language response to the user's question using this information. " +
-                        "Do NOT call any more tools. Just answer the question directly.\n"
+                "You are a helpful assistant. You have just received information from a tool.\n" +
+                        "IMPORTANT: Do NOT output any JSON, tool call, or machine-readable object. Answer ONLY in plain natural language (Spanish is preferred).\n" +
+                        "If the tool result says the playlist was created, respond with a friendly confirmation sentence. Example response:\n" +
+                        "\"He creado la lista de reproducción 'beatles' correctamente. ¿Deseas que añada canciones ahora?\"\n" +
+                        "Now provide a direct, natural-language answer to the user's original question using the tool result. Do NOT call any more tools.\n"
             )
             append("<|im_end|>\n")
 
-            // Pregunta original del usuario
             append("<|im_start|>user\n")
             append(originalUserPrompt.trim())
             append("<|im_end|>\n")
 
-            // Resultado de la herramienta (en un turno especial)
             append("<|im_start|>tool\n")
             append(toolResult.trim())
             append("<|im_end|>\n")
 
-            // Turno del asistente para responder
             append("<|im_start|>assistant\n")
         }
     }

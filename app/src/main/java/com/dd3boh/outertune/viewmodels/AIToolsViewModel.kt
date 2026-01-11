@@ -1,13 +1,15 @@
 package com.dd3boh.outertune.viewmodels
 
 import android.util.Log
-import com.dd3boh.outertune.viewmodels.LlamaEngine.Companion.TAG
-import com.dd3boh.outertune.viewmodels.LlamaEngine.ToolCall
+import com.dd3boh.outertune.db.MusicDatabase
+import com.dd3boh.outertune.db.entities.PlaylistEntity
 import com.dd3boh.outertune.service.DuckDuckGoService
+import com.dd3boh.outertune.viewmodels.LlamaEngine.ToolCall
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.time.LocalDateTime
 
-class AIToolsViewModel {
+class AIToolsViewModel(private val database: MusicDatabase) {
     private val googleScrapingService = DuckDuckGoService()
 
     companion object {
@@ -53,61 +55,6 @@ class AIToolsViewModel {
         return "Internet OK – fecha: $today"
     }
 
-    //    suspend fun getInternetInfo(query: String): String {
-//        val cleanQuery =
-//            if (query.contains(".com") || query.contains(".org") || query.contains("http")) {
-//                query
-//                    .replace(Regex("https?://"), "")
-//                    .replace("www.", "")
-//                    .replace(Regex("\\.(com|org|net|tv)"), " ")
-//                    .replace("/", " ")
-//                    .replace("-", " ")
-//                    .split(Regex("\\s+"))
-//                    .filter { it.length > 2 }
-//                    .take(5)
-//                    .joinToString(" ")
-//            } else {
-//                query
-//            }
-//        return try {
-//            withContext(Dispatchers.IO) {
-//                Log.d(TAG, "Buscando en DuckDuckGo: $cleanQuery")
-//
-//                val response = duckDuckGoService.search(cleanQuery)
-//                Log.d(TAG, "Buscando en DuckDuckGo: $response")
-//
-//                if (!response.hasResults()) {
-//                    Log.w(TAG, "No se encontraron resultados para: $query")
-//                }
-//
-//                val answer = response.getBestAnswer()
-//                val source = response.getSource()
-//                val url = response.getReferenceUrl()
-//
-//                // Construir respuesta formateada
-//                val truncatedAnswer = if (answer.length > MAX_ANSWER_LENGTH) {
-//                    answer.substring(0, MAX_ANSWER_LENGTH) + "..."
-//                } else {
-//                    answer
-//                }
-//
-//                buildString {
-//                    append(truncatedAnswer)
-//
-//                    if (!source.isNullOrEmpty()) {
-//                        append("\n\nFuente: $source")
-//                    }
-//
-//                    if (!url.isNullOrEmpty()) {
-//                        append("\nMás información: $url")
-//                    }
-//                }
-//            }
-//        } catch (e: Exception) {
-//            Log.e(TAG, "Error al obtener información: ${e.message}", e)
-//            "Error: ${e.message ?: "Desconocido"}"
-//        }
-//    }
     suspend fun getInternetInfo(query: String): String = withContext(Dispatchers.IO) {
         try {
             // usa la instancia de clase en lugar de crear una nueva
@@ -128,6 +75,28 @@ class AIToolsViewModel {
             "Lo siento, no pude encontrar información sobre \"$query\". Intenta con una búsqueda más específica."
         }
     }
+
+    suspend fun createPlaylist(playlistName: String) = withContext(Dispatchers.IO) {
+        try {
+            Log.i(TAG, "Creando playlist: $playlistName")
+            database.query {
+                insert(
+                    PlaylistEntity(
+                        name = playlistName,
+                        browseId = null,
+                        bookmarkedAt = LocalDateTime.now(),
+                        isEditable = true,
+                        isLocal = true
+                    )
+                )
+            }
+            return@withContext "'$playlistName' creada exitosamente"
+        } catch (e: Exception) {
+            Log.e(TAG, "❌ Error al crear playlist '$playlistName': ${e.message}", e)
+            throw e
+        }
+    }
+
     private fun cleanQuery(query: String): String {
         return if (query.contains(".com") || query.contains(".org") || query.contains("http")) {
             query
