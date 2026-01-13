@@ -208,6 +208,12 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 import com.dd3boh.outertune.constants.FloatingMiniplayerKey
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import com.dd3boh.outertune.data.UpdateInfo
+import com.dd3boh.outertune.data.UpdateChecker
+import com.dd3boh.outertune.data.UpdateRepository
+import com.dd3boh.outertune.data.UpdateCheckState
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -267,6 +273,18 @@ class MainActivity : ComponentActivity() {
     @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // Perform an initial update check on startup and publish state to UpdateRepository
+        lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                val checker = com.dd3boh.outertune.data.UpdateChecker()
+                checker.checkForUpdates(this@MainActivity).collect { state: com.dd3boh.outertune.data.UpdateCheckState ->
+                    com.dd3boh.outertune.data.UpdateRepository.update(state)
+                }
+            } catch (e: Exception) {
+                // non-fatal
+                Log.w(MAIN_TAG, "Initial update check failed: ${e.message}")
+            }
+        }
         lifecycle.addObserver(controllerViewModel)
         controllerViewModel.addControllerCallback(lifecycle) { controller, _ ->
             playerConnection = PlayerConnection(controllerViewModel, database)
