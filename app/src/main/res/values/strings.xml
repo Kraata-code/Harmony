@@ -331,10 +331,13 @@ We recycle translations from upstream, they are pulled periodically. -->
     <string name="preview">Preview</string>
     <string name="enable_discord_rpc">Enable Rich Presence</string>
 
+    <string name="version">version</string>
     <string name="about">About</string>
     <string name="app_version">App version</string>
 
     <string name="new_version_available">New version available</string>
+    <string name="checking_for_updates">Checking for updates…</string>
+    <string name="update_check_failed">Could not check for updates (tap to retry)</string>
     <string name="translation_models">Translation Models</string>
     <string name="clear_translation_models">Clear translation models</string>
 </resources>

@@ -21,6 +21,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.automirrored.rounded.LibraryBooks
 import androidx.compose.material.icons.rounded.AccountCircle
+import androidx.compose.material.icons.rounded.Android
 import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.Interests
 import androidx.compose.material.icons.rounded.Palette
@@ -43,6 +44,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -65,6 +67,12 @@ import com.dd3boh.outertune.utils.rememberPreference
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import com.dd3boh.outertune.BuildConfig
+import com.dd3boh.outertune.data.UpdateChecker
+import com.dd3boh.outertune.data.UpdateRepository
+import com.dd3boh.outertune.data.UpdateCheckState
+import androidx.compose.runtime.collectAsState
+
 
 val SETTINGS_TAG = "Settings"
 
@@ -79,12 +87,11 @@ fun SettingsScreen(
     val uriHandler = LocalUriHandler.current
 
     val lastVer by rememberPreference(LastVersionKey, defaultValue = "0.0.0")
-    val (updateAvailable, onUpdateAvailableChange) = rememberPreference(
-        UpdateAvailableKey,
-        defaultValue = false
-    )
 
+    val coroutineScope = rememberCoroutineScope()
     var newVersion by remember { mutableStateOf("") }
+    val updateState by UpdateRepository.state.collectAsState()
+    var updateStatus by remember { mutableStateOf("") }
     ColumnWithContentPadding(
         modifier = Modifier.fillMaxHeight(),
         columnModifier = Modifier
@@ -164,6 +171,58 @@ fun SettingsScreen(
                 onClick = { navController.navigate("settings/experimental") }
             )
         }
+        Spacer(modifier = Modifier.height(16.dp))
+            ElevatedCard(modifier = Modifier.fillMaxWidth()) {
+                val descriptionText = when {
+                    updateStatus.isNotEmpty() -> updateStatus
+                    updateState is UpdateCheckState.UpdateAvailable -> {
+                        val info = (updateState as UpdateCheckState.UpdateAvailable).info
+                        stringResource(R.string.new_version_available, info.latestVersionName)
+                    }
+                    else -> BuildConfig.VERSION_NAME
+                }
+                    PreferenceEntry(
+                        title = { Text(stringResource(R.string.version)) },
+                        icon = { Icon(Icons.Rounded.Update, null) },
+                        onClick = {
+                            val checker = UpdateChecker()
+                            coroutineScope.launch {
+                                // If MainActivity already found an update, use it. Otherwise perform a manual check.
+                                if (updateState is UpdateCheckState.UpdateAvailable) {
+                                    val info = (updateState as UpdateCheckState.UpdateAvailable).info
+                                    updateStatus = "Downloading ${info.latestVersionName}..."
+                                    checker.downloadUpdate(context).collect { dstate: com.dd3boh.outertune.data.DownloadState ->
+                                        when (dstate) {
+                                            is com.dd3boh.outertune.data.DownloadState.Downloading -> updateStatus = "Downloading: ${dstate.progress}%"
+                                            is com.dd3boh.outertune.data.DownloadState.Downloaded -> {
+                                                updateStatus = "Installing..."
+                                                try {
+                                                    checker.installUpdate(context, dstate.file)
+                                                } catch (e: Exception) {
+                                                    updateStatus = "Install failed: ${e.message}"
+                                                }
+                                            }
+                                            is com.dd3boh.outertune.data.DownloadState.Error -> updateStatus = "Download error: ${dstate.exception.message}"
+                                        }
+                                    }
+                                } else {
+                                    updateStatus = "Checking for updates..."
+                                    checker.checkForUpdates(context).collect { state: com.dd3boh.outertune.data.UpdateCheckState ->
+                                        // publish state so MainActivity and others can observe
+                                        com.dd3boh.outertune.data.UpdateRepository.update(state)
+                                        when (state) {
+                                            is com.dd3boh.outertune.data.UpdateCheckState.Loading -> updateStatus = "Checking for updates..."
+                                            is com.dd3boh.outertune.data.UpdateCheckState.UpToDate -> updateStatus = "App is up to date"
+                                            is com.dd3boh.outertune.data.UpdateCheckState.UpdateAvailable -> updateStatus = "New version available"
+                                            is com.dd3boh.outertune.data.UpdateCheckState.Error -> updateStatus = "Update check failed: ${state.throwable.message}"
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        description = descriptionText
+                    )
+            }
         Spacer(modifier = Modifier.height(16.dp))
 
         ElevatedCard(
