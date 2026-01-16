@@ -7,6 +7,7 @@ import com.dd3boh.outertune.service.DuckDuckGoService
 import com.dd3boh.outertune.viewmodels.LlamaEngine.ToolCall
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.flow.firstOrNull
 import java.time.LocalDateTime
 
 class AIToolsViewModel(private val database: MusicDatabase) {
@@ -158,4 +159,87 @@ class AIToolsViewModel(private val database: MusicDatabase) {
             .trim()
     }
 
+    suspend fun insertPlaylist(artist: String, playlistName: String): String =
+        withContext(Dispatchers.IO) {
+            try {
+                Log.i(TAG, "Procesando solicitud para artista '$artist' y playlist '$playlistName'")
+
+                // 1. Normalizar el nombre de la playlist
+                val finalPlaylistName = playlistName.ifBlank { artist }
+                Log.d(TAG, "Nombre final de playlist: '$finalPlaylistName'")
+
+                // 2. Buscar canciones del artista primero (early return si no hay canciones)
+                val songs = database.songsByArtistNameExact(artist)
+                if (songs.isEmpty()) {
+                    return@withContext "No se encontraron canciones locales de '$artist'"
+                }
+                Log.d(TAG, "Se encontraron ${songs.size} canciones de '$artist'")
+
+                // 3. Validar si la playlist ya existe
+                val existingPlaylist = findPlaylistByName(finalPlaylistName)
+
+                val playlistId = if (existingPlaylist != null) {
+                    // Playlist existente - solo agregar canciones
+                    Log.d(TAG, "Playlist '$finalPlaylistName' ya existe con ID: ${existingPlaylist.id}")
+                    existingPlaylist.id
+                } else {
+                    // Playlist nueva - crear y retornar ID
+                    Log.d(TAG, "Creando nueva playlist: '$finalPlaylistName'")
+                    val newPlaylist = PlaylistEntity(
+                        name = finalPlaylistName,
+                        browseId = null,
+                        bookmarkedAt = LocalDateTime.now(),
+                        isEditable = true,
+                        isLocal = true
+                    )
+                    database.insert(newPlaylist)
+                    newPlaylist.id
+                }
+
+                // 4. Obtener IDs de las canciones
+                val songIds = songs.map { it.id }
+
+                // 5. Verificar duplicados
+                val duplicates = database.playlistDuplicates(playlistId, songIds)
+                val songsToAdd = songIds.filter { !duplicates.contains(it) }
+
+                if (songsToAdd.isEmpty()) {
+                    return@withContext "Todas las canciones de '$artist' ya están en '$finalPlaylistName'"
+                }
+
+                // 6. Obtener la playlist para agregar canciones
+                val playlist = database.playlist(playlistId).firstOrNull()
+                    ?: throw IllegalStateException("No se pudo encontrar la playlist con ID: $playlistId")
+
+                // 7. Agregar canciones a la playlist
+                database.addSongToPlaylist(playlist, songsToAdd)
+
+                // 8. Construir mensaje de resultado
+                val addedCount = songsToAdd.size
+                val skippedCount = duplicates.size
+                val playlistStatus = if (existingPlaylist != null) "existente" else "nueva"
+
+                return@withContext buildString {
+                    append("$addedCount canción${if (addedCount != 1) "es" else ""} de '$artist' ")
+                    append("agregada${if (addedCount != 1) "s" else ""} a la playlist $playlistStatus '$finalPlaylistName'")
+                    if (skippedCount > 0) {
+                        append("\n($skippedCount duplicado${if (skippedCount != 1) "s" else ""} omitido${if (skippedCount != 1) "s" else ""})")
+                    }
+                }
+
+            } catch (e: Exception) {
+                Log.e(TAG, "❌ Error al procesar playlist para artista '$artist'", e)
+                throw e
+            }
+        }
+
+    private suspend fun findPlaylistByName(playlistName: String): PlaylistEntity? {
+        return try {
+            val normalized = playlistName.trim()
+            database.playlistByName(normalized).firstOrNull()
+        } catch (e: Exception) {
+            Log.w(TAG, "Playlist '$playlistName' no encontrada o error al buscar", e)
+            null
+        }
+    }
 }

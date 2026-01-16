@@ -22,6 +22,7 @@ import com.dd3boh.outertune.db.entities.EventWithSong
 import com.dd3boh.outertune.db.entities.FormatEntity
 import com.dd3boh.outertune.db.entities.GenreEntity
 import com.dd3boh.outertune.db.entities.LyricsEntity
+import com.dd3boh.outertune.db.entities.PlaylistEntity
 import com.dd3boh.outertune.db.entities.QueueEntity
 import com.dd3boh.outertune.db.entities.QueueSongMap
 import com.dd3boh.outertune.db.entities.RecentActivityEntity
@@ -47,6 +48,19 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface DatabaseDao : SongsDao, AlbumsDao, ArtistsDao, PlaylistsDao, QueueDao {
+
+    // devuelve lista síncrona (llamada desde withContext(Dispatchers.IO) está bien)
+    @Query("""
+    SELECT song.*
+    FROM song
+    JOIN song_artist_map ON song.id = song_artist_map.songId
+    JOIN artist ON song_artist_map.artistId = artist.id
+    WHERE artist.name = :artist
+""")
+    fun songsByArtistNameExact(artist: String): List<Song>
+
+    @Query("SELECT * FROM playlist WHERE name = :name LIMIT 1")
+    fun playlistByName(name: String): kotlinx.coroutines.flow.Flow<PlaylistEntity?>
 
     @Transaction
     @Query("""

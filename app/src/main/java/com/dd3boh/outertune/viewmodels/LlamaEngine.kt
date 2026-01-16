@@ -136,23 +136,23 @@ class LlamaEngine(private val context: Context, private val database: MusicDatab
                             tools.createPlaylist(playlistName)
                             val result = "Playlist creada: \"$playlistName\""
                             Log.i(TAG, "antes de format Promt$result")
-                            val secondFormattedPrompt = formatFinalAnswerPrompt(prompt, result)
-                            val finalResponse = llamaBridge.generateText(
-                                secondFormattedPrompt,
-                                limitedMaxTokens
-                            )
-                            return@withContext cleanResponse(finalResponse)
+                            return@withContext result
                         } catch (e: Exception) {
                             Log.e(TAG, "Error al crear playlist", e)
                             val errorResult =
                                 "Error al crear la playlist: ${e.message ?: "Desconocido"}"
-                            val secondFormattedPrompt = formatFinalAnswerPrompt(prompt, errorResult)
-                            val finalResponse = llamaBridge.generateText(
-                                secondFormattedPrompt,
-                                limitedMaxTokens
-                            )
-                            return@withContext cleanResponse(finalResponse)
+                            return@withContext errorResult
                         }
+                    }
+
+                    "insert_artis_playlist" -> {
+                        Log.i(TAG, "Entrando en funcion para insertar canciones")
+                        val rawArtis =
+                            toolCall.arguments["artist"] ?: ""
+                        val rawPlaylist =
+                            toolCall.arguments["playlistName"] ?: ""
+                        val result = tools.insertPlaylist(rawArtis, rawPlaylist)
+                        return@withContext "$result ¿Deseas algo más?"
                     }
 
                     else -> {
@@ -183,7 +183,7 @@ class LlamaEngine(private val context: Context, private val database: MusicDatab
      * Referencias:
      * - https://qwen.readthedocs.io/en/latest/getting_started/concepts.html
      * - https://huggingface.co/Qwen/Qwen2-7B-Instruct
-     *
+     *prompt funcional playlist agrega las canciones de The Doors a la playlist llamada Door for ever
      * @param userMessage User's message text
      * @return Formatted prompt string in ChatML format
      */
@@ -192,48 +192,96 @@ class LlamaEngine(private val context: Context, private val database: MusicDatab
         return buildString {
             // System message (opcional)
             append("<|im_start|>system\n")
+//            append(
+//                "You are a helpful assistant.\n" +
+//                        "\n" +
+//                        "You have access to the following tools:\n" +
+//                        "\n" +
+//                        "1. get_date_info()\n" +
+//                        "   - Use this tool ONLY when the user asks about the current date, time, or temporal information.\n" +
+//                        "\n" +
+//                        "2. get_internet_info(query: string)\n" +
+//                        "   - You MUST ALWAYS use this tool for ANY real-world, factual, external, or up-to-date information.\n" +
+//                        "   - This includes ANY question involving: music, artists, songs, albums, discographies, releases, metadata, biographies, history, definitions, events, companies, products, technologies, places, people, or anything tied to real-world facts.\n" +
+//                        "   - You are NOT allowed to answer such questions from memory.\n" +
+//                        "   - Convert the user's request into a short keyword-based query.\n" +
+//                        "   - NEVER include URLs in the query.\n" +
+//                        "\n" +
+//                        "   Examples of CORRECT queries:\n" +
+//                        "     * Imagine Dragons latest album\n" +
+//                        "     * weather today\n" +
+//                        "     * Python programming language\n" +
+//                        "     * Shakira biography\n" +
+//                        "\n" +
+//                        "   Examples of INCORRECT queries (FORBIDDEN):\n" +
+//                        "     * imaginedragons.com/albums\n" +
+//                        "     * https://wikipedia.org/ImagineDragons\n" +
+//                        "\n" +
+//                        "INSTRUCTIONS FOR TOOL CALLING (MANDATORY):\n" +
+//                        "If the user asks for ANY real-world or factual information, you MUST call the appropriate tool.\n" +
+//                        "\n" +
+//                        "3. create_playlist(name: string)\n" +
+//                        "   - Use this tool ONLY when the user tell you to create a playlist.\n" +
+//                        "\n" +
+//                        "4. insert_artis_playlist(artist: String, playlistName: String)\n" +
+//                        "   - Use this tool ONLY when the user asks to add songs by a specific artist to a specific playlist.\n" +
+//                        "   - You MUST extract BOTH parameters from the user's request:\n" +
+//                        "     * artist: The exact name of the artist (e.g., 'The Doors')\n" +
+//                        "     * playlistName: The exact name of the playlist as mentioned by the user (e.g., 'Doors for ever')\n" +
+//                        "   - IMPORTANT: Extract the playlist name exactly as the user says it, including any special characters or capitalization.\n" +
+//                        "   - Example: For 'agrega las canciones de The Doors a la playlist llamada Doors for ever', use:\n" +
+//                        "     {\n" +
+//                        "       \"tool\": \"insert_artis_playlist\",\n" +
+//                        "       \"arguments\": {\n" +
+//                        "         \"artist\": \"The Doors\",\n" +
+//                        "         \"playlistName\": \"Doors for ever\"\n" +
+//                        "       }\n" +
+//                        "     }\n" +
+//                        "\n" +
+//                        "When using a tool, respond ONLY with the following JSON format:\n" +
+//                        "{\n" +
+//                        "  \"tool\": \"<tool_name>\",\n" +
+//                        "  \"arguments\": {\n" +
+//                        "    \"<param>\": \"<value>\"\n" +
+//                        "  }\n" +
+//                        "}\n" +
+//                        "\n" +
+//                        "Do NOT add any other text outside the JSON.\n" +
+//                        "Do NOT provide explanations.\n" +
+//                        "Do NOT answer directly for questions requiring real-world knowledge. Doing so is INVALID.\n"
+//            )
             append(
-                "You are a helpful assistant.\n" +
+                "You are a helpful assistant with access to these tools:\n" +
                         "\n" +
-                        "You have access to the following tools:\n" +
-                        "\n" +
-                        "1. get_date_info()\n" +
-                        "   - Use this tool ONLY when the user asks about the current date, time, or temporal information.\n" +
+                        "1. get_date_info() - Use ONLY for current date/time queries\n" +
                         "\n" +
                         "2. get_internet_info(query: string)\n" +
-                        "   - You MUST ALWAYS use this tool for ANY real-world, factual, external, or up-to-date information.\n" +
-                        "   - This includes ANY question involving: music, artists, songs, albums, discographies, releases, metadata, biographies, history, definitions, events, companies, products, technologies, places, people, or anything tied to real-world facts.\n" +
-                        "   - You are NOT allowed to answer such questions from memory.\n" +
-                        "   - Convert the user's request into a short keyword-based query.\n" +
-                        "   - NEVER include URLs in the query.\n" +
+                        "   - MANDATORY for:\n" +
+                        "     * ANY question about real people, bands, artists, companies, places\n" +
+                        "     * ANY question with 'search', 'look up', 'find', 'who is', 'what is'\n" +
+                        "     * Current events, presidents, officials, celebrities\n" +
+                        "     * Music: songs, albums, discographies, band members\n" +
+                        "     * Definitions, facts, statistics, historical data\n" +
+                        "   - Use short keyword queries (e.g., 'Los Tigres del Norte band', 'current Mexico president')\n" +
+                        "   - NO URLs in queries\n" +
+                        "   - When user says 'search internet' or 'look up', ALWAYS use this tool\n" +
                         "\n" +
-                        "   Examples of CORRECT queries:\n" +
-                        "     * Imagine Dragons latest album\n" +
-                        "     * weather today\n" +
-                        "     * Python programming language\n" +
-                        "     * Shakira biography\n" +
+                        "3. create_playlist(name: string) - Use when user requests playlist creation\n" +
                         "\n" +
-                        "   Examples of INCORRECT queries (FORBIDDEN):\n" +
-                        "     * imaginedragons.com/albums\n" +
-                        "     * https://wikipedia.org/ImagineDragons\n" +
+                        "4. insert_artis_playlist(artist: String, playlistName: String)\n" +
+                        "   - Use when adding artist songs to a playlist\n" +
+                        "   - Extract BOTH parameters from user request:\n" +
+                        "     * artist: Exact artist name\n" +
+                        "     * playlistName: Exact playlist name as user states it\n" +
+                        "   - Example: 'add The Doors to playlist Doors for ever' →\n" +
+                        "     {\"tool\": \"insert_artis_playlist\", \"arguments\": {\"artist\": \"The Doors\", \"playlistName\": \"Doors for ever\"}}\n" +
                         "\n" +
-                        "INSTRUCTIONS FOR TOOL CALLING (MANDATORY):\n" +
-                        "If the user asks for ANY real-world or factual information, you MUST call the appropriate tool.\n" +
-                        "\n" +
-                        "3. create_playlist(name: string)\n" +
-                        "   - Use this tool ONLY when the user tell you to create a playlist.\n" +
-                        "\n" +
-                        "When using a tool, respond ONLY with the following JSON format:\n" +
+                        "RESPONSE FORMAT:\n" +
+                        "For tool calls, respond ONLY with JSON (no extra text):\n" +
                         "{\n" +
                         "  \"tool\": \"<tool_name>\",\n" +
-                        "  \"arguments\": {\n" +
-                        "    \"<param>\": \"<value>\"\n" +
-                        "  }\n" +
-                        "}\n" +
-                        "\n" +
-                        "Do NOT add any other text outside the JSON.\n" +
-                        "Do NOT provide explanations.\n" +
-                        "Do NOT answer directly for questions requiring real-world knowledge. Doing so is INVALID.\n"
+                        "  \"arguments\": {\"<param>\": \"<value>\"}\n" +
+                        "}\n"
             )
             append("<|im_end|>\n")
 
