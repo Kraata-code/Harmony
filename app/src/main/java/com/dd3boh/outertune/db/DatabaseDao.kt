@@ -50,20 +50,34 @@ import kotlinx.coroutines.flow.Flow
 interface DatabaseDao : SongsDao, AlbumsDao, ArtistsDao, PlaylistsDao, QueueDao {
 
     // devuelve lista síncrona (llamada desde withContext(Dispatchers.IO) está bien)
-    @Query("""
+    @Query(
+        """
     SELECT song.*
     FROM song
     JOIN song_artist_map ON song.id = song_artist_map.songId
     JOIN artist ON song_artist_map.artistId = artist.id
-    WHERE artist.name = :artist
-""")
+    WHERE artist.name COLLATE NOCASE = :artist COLLATE NOCASE
+"""
+    )
     fun songsByArtistNameExact(artist: String): List<Song>
 
-    @Query("SELECT * FROM playlist WHERE name = :name LIMIT 1")
+    @Query("SELECT * FROM playlist WHERE name COLLATE NOCASE = :name COLLATE NOCASE LIMIT 1")
     fun playlistByName(name: String): kotlinx.coroutines.flow.Flow<PlaylistEntity?>
 
+    @Query(
+        """
+    SELECT DISTINCT song.*
+    FROM song
+    JOIN song_artist_map ON song.id = song_artist_map.songId
+    JOIN artist ON song_artist_map.artistId = artist.id
+    WHERE artist.name LIKE '%' || :artistPartial || '%' COLLATE NOCASE
+"""
+    )
+    fun songsByArtistNamePartial(artistPartial: String): List<Song>
+
     @Transaction
-    @Query("""
+    @Query(
+        """
         SELECT song.*
         FROM (SELECT *, COUNT(1) AS referredCount
               FROM related_song_map
@@ -89,7 +103,8 @@ interface DatabaseDao : SongsDao, AlbumsDao, ArtistsDao, PlaylistsDao, QueueDao 
                                LIMIT 10))
         ORDER BY referredCount DESC
         LIMIT 100
-    """)
+    """
+    )
     fun quickPicks(now: Long = System.currentTimeMillis()): Flow<List<Song>>
 
     @Query("SELECT * FROM format WHERE id = :id")
@@ -129,11 +144,13 @@ interface DatabaseDao : SongsDao, AlbumsDao, ArtistsDao, PlaylistsDao, QueueDao 
     )
     fun relatedSongs(songId: String): List<Song>
 
-    @Query("""
+    @Query(
+        """
         SELECT * FROM genre
         WHERE genre.isLocal = 1
         ORDER BY genre.title ASC
-    LIMIT :previewSize""")
+    LIMIT :previewSize"""
+    )
     fun allLocalGenresByName(previewSize: Int = Int.MAX_VALUE): List<GenreEntity>
 
     @Query("SELECT * FROM genre WHERE id = :id")
@@ -181,7 +198,8 @@ interface DatabaseDao : SongsDao, AlbumsDao, ArtistsDao, PlaylistsDao, QueueDao 
     fun insert(mediaMetadata: MediaMetadata, block: (SongEntity) -> SongEntity = { it }) {
         if (insert(mediaMetadata.toSongEntity().let(block)) == -1L) return
         mediaMetadata.artists.forEachIndexed { index, artist ->
-            val artistId = artist.id ?: artistByName(artist.name)?.id ?: ArtistEntity.generateArtistId()
+            val artistId =
+                artist.id ?: artistByName(artist.name)?.id ?: ArtistEntity.generateArtistId()
             insert( // TODO: use upsert???
                 ArtistEntity(
                     id = artistId,
@@ -222,7 +240,7 @@ interface DatabaseDao : SongsDao, AlbumsDao, ArtistsDao, PlaylistsDao, QueueDao 
                 AlbumEntity(
                     id = albumId,
                     title = it.title,
-                    thumbnailUrl = album?.thumbnailUrl?: mediaMetadata.thumbnailUrl,
+                    thumbnailUrl = album?.thumbnailUrl ?: mediaMetadata.thumbnailUrl,
                     songCount = 1,
                     duration = (album?.duration ?: 0) + mediaMetadata.duration,
                     isLocal = it.isLocal
@@ -240,7 +258,8 @@ interface DatabaseDao : SongsDao, AlbumsDao, ArtistsDao, PlaylistsDao, QueueDao 
 
     @Transaction
     fun insert(albumPage: AlbumPage) {
-        if (insert(AlbumEntity(
+        if (insert(
+                AlbumEntity(
                 id = albumPage.album.browseId,
                 playlistId = albumPage.album.playlistId,
                 title = albumPage.album.title,
@@ -263,7 +282,8 @@ interface DatabaseDao : SongsDao, AlbumsDao, ArtistsDao, PlaylistsDao, QueueDao 
         albumPage.album.artists
             ?.map { artist ->
                 ArtistEntity(
-                    id = artist.id ?: artistByName(artist.name)?.id ?: ArtistEntity.generateArtistId(),
+                    id = artist.id ?: artistByName(artist.name)?.id
+                    ?: ArtistEntity.generateArtistId(),
                     name = artist.name
                 )
             }
@@ -304,7 +324,8 @@ interface DatabaseDao : SongsDao, AlbumsDao, ArtistsDao, PlaylistsDao, QueueDao 
         albumPage.album.artists
             ?.map { artist ->
                 ArtistEntity(
-                    id = artist.id ?: artistByName(artist.name)?.id ?: ArtistEntity.generateArtistId(),
+                    id = artist.id ?: artistByName(artist.name)?.id
+                    ?: ArtistEntity.generateArtistId(),
                     name = artist.name
                 )
             }
@@ -374,7 +395,7 @@ interface DatabaseDao : SongsDao, AlbumsDao, ArtistsDao, PlaylistsDao, QueueDao 
                     shuffledIndex = mq.queue[i].shuffleIndex.toLong()
                 )
             )
-            i ++
+            i++
         }
     }
 
@@ -456,13 +477,15 @@ interface DatabaseDao : SongsDao, AlbumsDao, ArtistsDao, PlaylistsDao, QueueDao 
     fun nukeLocalGenre()
 
     @Transaction
-    @Query("""
+    @Query(
+        """
 DELETE FROM format 
 WHERE format.id IS NOT NULL 
 AND NOT EXISTS (
     SELECT 1 FROM song WHERE song.id = format.id
 );
-    """)
+    """
+    )
     fun nukeDanglingFormatEntities()
 
     @Transaction

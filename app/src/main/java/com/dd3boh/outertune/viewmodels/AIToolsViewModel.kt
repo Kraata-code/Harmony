@@ -3,11 +3,12 @@ package com.dd3boh.outertune.viewmodels
 import android.util.Log
 import com.dd3boh.outertune.db.MusicDatabase
 import com.dd3boh.outertune.db.entities.PlaylistEntity
+import com.dd3boh.outertune.db.entities.Song
 import com.dd3boh.outertune.service.DuckDuckGoService
 import com.dd3boh.outertune.viewmodels.LlamaEngine.ToolCall
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.withContext
 import java.time.LocalDateTime
 
 class AIToolsViewModel(private val database: MusicDatabase) {
@@ -162,31 +163,53 @@ class AIToolsViewModel(private val database: MusicDatabase) {
     suspend fun insertPlaylist(artist: String, playlistName: String): String =
         withContext(Dispatchers.IO) {
             try {
-                Log.i(TAG, "Procesando solicitud para artista '$artist' y playlist '$playlistName'")
+                val normalizedArtist = artist.trim()
+                val normalizedPlaylistName = playlistName.trim().ifBlank { normalizedArtist }
 
-                // 1. Normalizar el nombre de la playlist
-                val finalPlaylistName = playlistName.ifBlank { artist }
-                Log.d(TAG, "Nombre final de playlist: '$finalPlaylistName'")
+                Log.i(
+                    TAG,
+                    "Procesando: artista='$normalizedArtist', playlist='$normalizedPlaylistName'"
+                )
 
-                // 2. Buscar canciones del artista primero (early return si no hay canciones)
-                val songs = database.songsByArtistNameExact(artist)
-                if (songs.isEmpty()) {
-                    return@withContext "No se encontraron canciones locales de '$artist'"
+                // PASO 1: Búsqueda exacta (rápida y precisa)
+                val exactSongs = database.songsByArtistNameExact(normalizedArtist)
+                Log.d(TAG, "Búsqueda exacta: ${exactSongs.size} canciones")
+
+                // PASO 2: Búsqueda parcial (completa, encuentra variaciones)
+                val partialSongs = database.songsByArtistNamePartial(normalizedArtist)
+                Log.d(TAG, "Búsqueda parcial: ${partialSongs.size} canciones")
+
+                // PASO 3: Merge inteligente - combinar sin duplicados
+                val allSongs = mergeSongs(exactSongs, partialSongs)
+                Log.d(TAG, "Total después de merge: ${allSongs.size} canciones únicas")
+
+                if (allSongs.isEmpty()) {
+                    return@withContext "No se encontraron canciones locales de '$normalizedArtist'"
                 }
-                Log.d(TAG, "Se encontraron ${songs.size} canciones de '$artist'")
 
-                // 3. Validar si la playlist ya existe
-                val existingPlaylist = findPlaylistByName(finalPlaylistName)
+                // Log detallado solo si hay diferencia significativa
+                val difference = allSongs.size - exactSongs.size
+                if (difference > 0) {
+                    Log.i(TAG, "Búsqueda parcial agregó $difference canción(es) adicional(es)")
+                    // Log de las canciones adicionales encontradas
+                    val exactIds = exactSongs.map { it.id }.toSet()
+                    allSongs.filter { !exactIds.contains(it.id) }.forEach { song ->
+                        Log.d(TAG, "  + ${song.song.title}")
+                    }
+                }
 
+                // Resto del proceso (crear/buscar playlist, agregar canciones)
+                val existingPlaylist = findPlaylistByName(normalizedPlaylistName)
                 val playlistId = if (existingPlaylist != null) {
-                    // Playlist existente - solo agregar canciones
-                    Log.d(TAG, "Playlist '$finalPlaylistName' ya existe con ID: ${existingPlaylist.id}")
+                    Log.d(
+                        TAG,
+                        "Playlist '${existingPlaylist.name}' ya existe con ID: ${existingPlaylist.id}"
+                    )
                     existingPlaylist.id
                 } else {
-                    // Playlist nueva - crear y retornar ID
-                    Log.d(TAG, "Creando nueva playlist: '$finalPlaylistName'")
+                    Log.d(TAG, "Creando nueva playlist: '$normalizedPlaylistName'")
                     val newPlaylist = PlaylistEntity(
-                        name = finalPlaylistName,
+                        name = normalizedPlaylistName,
                         browseId = null,
                         bookmarkedAt = LocalDateTime.now(),
                         isEditable = true,
@@ -196,42 +219,57 @@ class AIToolsViewModel(private val database: MusicDatabase) {
                     newPlaylist.id
                 }
 
-                // 4. Obtener IDs de las canciones
-                val songIds = songs.map { it.id }
-
-                // 5. Verificar duplicados
+                val songIds = allSongs.map { it.id }
                 val duplicates = database.playlistDuplicates(playlistId, songIds)
                 val songsToAdd = songIds.filter { !duplicates.contains(it) }
 
                 if (songsToAdd.isEmpty()) {
-                    return@withContext "Todas las canciones de '$artist' ya están en '$finalPlaylistName'"
+                    return@withContext "Todas las canciones de '$normalizedArtist' ya están en '$normalizedPlaylistName'"
                 }
 
-                // 6. Obtener la playlist para agregar canciones
                 val playlist = database.playlist(playlistId).firstOrNull()
                     ?: throw IllegalStateException("No se pudo encontrar la playlist con ID: $playlistId")
 
-                // 7. Agregar canciones a la playlist
                 database.addSongToPlaylist(playlist, songsToAdd)
 
-                // 8. Construir mensaje de resultado
                 val addedCount = songsToAdd.size
                 val skippedCount = duplicates.size
                 val playlistStatus = if (existingPlaylist != null) "existente" else "nueva"
 
                 return@withContext buildString {
-                    append("$addedCount canción${if (addedCount != 1) "es" else ""} de '$artist' ")
-                    append("agregada${if (addedCount != 1) "s" else ""} a la playlist $playlistStatus '$finalPlaylistName'")
+                    append("$addedCount canción${if (addedCount != 1) "es" else ""} de '$normalizedArtist' ")
+                    append("agregada${if (addedCount != 1) "s" else ""} a la playlist $playlistStatus '$normalizedPlaylistName'")
                     if (skippedCount > 0) {
                         append("\n($skippedCount duplicado${if (skippedCount != 1) "s" else ""} omitido${if (skippedCount != 1) "s" else ""})")
                     }
                 }
 
             } catch (e: Exception) {
-                Log.e(TAG, "❌ Error al procesar playlist para artista '$artist'", e)
+                Log.e(TAG, "Error al procesar playlist para artista '$artist'", e)
                 throw e
             }
         }
+
+    /**
+     * Combina dos listas de canciones eliminando duplicados
+     * Usa LinkedHashSet para mantener el orden (exactas primero) y eliminar duplicados
+     *
+     * @param exactSongs Canciones de búsqueda exacta (tienen prioridad)
+     * @param partialSongs Canciones de búsqueda parcial
+     * @return Lista combinada sin duplicados
+     */
+    private fun mergeSongs(exactSongs: List<Song>, partialSongs: List<Song>): List<Song> {
+        // LinkedHashSet mantiene el orden de inserción
+        val uniqueSongs = LinkedHashSet<Song>()
+
+        // Primero agregar las exactas (tienen prioridad)
+        uniqueSongs.addAll(exactSongs)
+
+        // Luego agregar las parciales (solo si no están ya)
+        uniqueSongs.addAll(partialSongs)
+
+        return uniqueSongs.toList()
+    }
 
     /**
      * Busca una playlist por nombre exacto (case-insensitive y trimmed)
@@ -244,7 +282,7 @@ class AIToolsViewModel(private val database: MusicDatabase) {
             val normalized = playlistName.trim()
             database.playlistByName(normalized).firstOrNull()
         } catch (e: Exception) {
-            Log.w(TAG, "Playlist '$playlistName' no encontrada o error al buscar", e)
+            Log.e(TAG, "Playlist '$playlistName' no encontrada o error al buscar", e)
             null
         }
     }
