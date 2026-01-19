@@ -233,6 +233,12 @@ class AIToolsViewModel(private val database: MusicDatabase) {
             }
         }
 
+    /**
+     * Busca una playlist por nombre exacto (case-insensitive y trimmed)
+     *
+     * @param playlistName Nombre de la playlist a buscar
+     * @return PlaylistEntity si existe, null en caso contrario
+     */
     private suspend fun findPlaylistByName(playlistName: String): PlaylistEntity? {
         return try {
             val normalized = playlistName.trim()
