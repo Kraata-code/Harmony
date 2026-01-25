@@ -260,14 +260,14 @@ interface DatabaseDao : SongsDao, AlbumsDao, ArtistsDao, PlaylistsDao, QueueDao 
     fun insert(albumPage: AlbumPage) {
         if (insert(
                 AlbumEntity(
-                id = albumPage.album.browseId,
-                playlistId = albumPage.album.playlistId,
-                title = albumPage.album.title,
-                year = albumPage.album.year,
-                thumbnailUrl = albumPage.album.thumbnail,
-                songCount = albumPage.songs.size,
-                duration = albumPage.songs.sumOf { it.duration ?: 0 }
-            )) == -1L
+                    id = albumPage.album.browseId,
+                    playlistId = albumPage.album.playlistId,
+                    title = albumPage.album.title,
+                    year = albumPage.album.year,
+                    thumbnailUrl = albumPage.album.thumbnail,
+                    songCount = albumPage.songs.size,
+                    duration = albumPage.songs.sumOf { it.duration ?: 0 }
+                )) == -1L
         ) return
         albumPage.songs.map(SongItem::toMediaMetadata)
             .onEach(::insert)

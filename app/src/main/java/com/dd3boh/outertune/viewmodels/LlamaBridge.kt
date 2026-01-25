@@ -26,6 +26,8 @@ class LlamaBridge {
      * Should be called when the model is no longer needed
      */
     external fun releaseModel()
+    external fun clearConversation()
+    external fun getContextInfo(): String
 
     companion object {
         init {
