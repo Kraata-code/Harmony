@@ -19,11 +19,11 @@ val keystorePropertiesFile = rootProject.file("keystore.properties")
 val keystoreProperties = Properties()
 
 android {
-    namespace = "com.dd3boh.outertune"
+    namespace = "com.kraata.harmony"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.dd3boh.harmony"
+        applicationId = "com.kraata.harmony"
         minSdk = 24
         targetSdk = 36
         versionCode = 70

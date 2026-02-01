@@ -270,7 +270,7 @@ static std::unique_ptr<LlamaContext> g_llama_context;
 extern "C" {
 
 JNIEXPORT jboolean JNICALL
-Java_com_dd3boh_outertune_viewmodels_LlamaBridge_initModel(
+Java_com_kraata_harmony_viewmodels_LlamaBridge_initModel(
         JNIEnv* env,
         jobject thiz,
         jstring modelPath
@@ -369,7 +369,7 @@ Java_com_dd3boh_outertune_viewmodels_LlamaBridge_initModel(
 }
 
 JNIEXPORT jstring JNICALL
-Java_com_dd3boh_outertune_viewmodels_LlamaBridge_generateText(
+Java_com_kraata_harmony_viewmodels_LlamaBridge_generateText(
         JNIEnv* env,
         jobject thiz,
         jstring prompt,
@@ -587,7 +587,7 @@ Java_com_dd3boh_outertune_viewmodels_LlamaBridge_generateText(
 }
 
 JNIEXPORT void JNICALL
-Java_com_dd3boh_outertune_viewmodels_LlamaBridge_releaseModel(
+Java_com_kraata_harmony_viewmodels_LlamaBridge_releaseModel(
         JNIEnv* env,
         jobject thiz
 ) {
@@ -614,7 +614,7 @@ Java_com_dd3boh_outertune_viewmodels_LlamaBridge_releaseModel(
  * Útil para iniciar una nueva conversación sin reiniciar el modelo.
  */
 JNIEXPORT void JNICALL
-Java_com_dd3boh_outertune_viewmodels_LlamaBridge_clearConversation(
+Java_com_kraata_harmony_viewmodels_LlamaBridge_clearConversation(
         JNIEnv* env,
         jobject thiz
 ) {
@@ -633,7 +633,7 @@ Java_com_dd3boh_outertune_viewmodels_LlamaBridge_clearConversation(
  * Útil para debugging y monitoreo.
  */
 JNIEXPORT jstring JNICALL
-Java_com_dd3boh_outertune_viewmodels_LlamaBridge_getContextInfo(
+Java_com_kraata_harmony_viewmodels_LlamaBridge_getContextInfo(
         JNIEnv* env,
         jobject thiz
 ) {
