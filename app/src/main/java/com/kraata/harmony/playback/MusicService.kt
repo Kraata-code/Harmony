@@ -227,6 +227,14 @@ class MusicService : MediaLibraryService(),
         Log.i(TAG, "Starting MusicService")
         super.onCreate()
 
+        // init connectivityObserver early to avoid race with data source resolution
+        try {
+            connectivityObserver.unregister()
+        } catch (e: UninitializedPropertyAccessException) {
+            // ignore
+        }
+        connectivityObserver = NetworkConnectivityObserver(this)
+
         player = ExoPlayer.Builder(this)
             .setMediaSourceFactory(DefaultMediaSourceFactory(createDataSourceFactory()))
             .setRenderersFactory(createRenderersFactory(isGaplessOffloadAllowed))
@@ -248,7 +256,7 @@ class MusicService : MediaLibraryService(),
                 addListener(sleepTimer)
                 addAnalyticsListener(PlaybackStatsListener(false, this@MusicService))
 
-                // misc
+                // restore saved offload state
                 setOffloadEnabled(dataStore.get(AudioOffloadKey, false))
             }
 
@@ -268,7 +276,6 @@ class MusicService : MediaLibraryService(),
                     PendingIntent.FLAG_IMMUTABLE
                 )
             )
-            // TODO: do i even want to have smaller art for media notification
             .setBitmapLoader(CoilBitmapLoader(this))
             .build()
 
@@ -281,6 +288,7 @@ class MusicService : MediaLibraryService(),
 
         connectivityManager = getSystemService()!!
 
+        // Update notification when currentSong changes
         currentSong.collect(scope) {
             updateNotification()
         }
@@ -297,9 +305,10 @@ class MusicService : MediaLibraryService(),
                 }
         )
 
-        // lateinit tasks
+        // Offload scope tasks (IO-heavy operations live here)
         offloadScope.launch {
             Log.i(TAG, "Launching MusicService offloadScope tasks")
+
             if (!qbInit.value) {
                 initQueue()
             }
@@ -342,15 +351,7 @@ class MusicService : MediaLibraryService(),
                 }
             }
 
-
-            // network connectivity
-            try {
-                connectivityObserver.unregister()
-            } catch (e: UninitializedPropertyAccessException) {
-                // lol
-            }
-            connectivityObserver = NetworkConnectivityObserver(this@MusicService)
-
+            // network connectivity watcher
             offloadScope.launch {
                 connectivityObserver.networkStatus.collect { isConnected ->
                     isNetworkConnected.value = isConnected
@@ -595,8 +596,22 @@ class MusicService : MediaLibraryService(),
 
     suspend fun saveQueueToDisk(currentPosition: Long) {
         val data = queueBoard.getAllQueues()
-        data.last().lastSongPos = currentPosition
-        database.updateAllQueues(data)
+        if (data.isNotEmpty()) {
+            data.last().lastSongPos = currentPosition
+            database.updateAllQueues(data)
+        }
+    }
+
+    // Convenience overload similar to original behavior
+    fun saveQueueToDisk() {
+        val pos = player.currentPosition
+        runBlocking {
+            runBlocking(Dispatchers.IO) {
+                offloadScope.launch {
+                    saveQueueToDisk(pos)
+                }.join()
+            }
+        }
     }
 
 
@@ -644,7 +659,7 @@ class MusicService : MediaLibraryService(),
                     .setCacheWriteDataSinkFactory(
                         HybridCacheDataSinkFactory(playerCache) { dataSpec ->
                             val isLocal = queueBoard.getCurrentQueue()?.findSong(dataSpec.key ?: "")?.isLocal == true
-                            Log.d(TAG, "SONG CACHE: ${!isLocal}")
+                            Log.d(TAG, "SONG CACHE: ${'$'}{!isLocal}")
                             !isLocal
                         }
                     )
@@ -658,7 +673,7 @@ class MusicService : MediaLibraryService(),
         val songUrlCache = HashMap<String, Pair<String, Long>>()
         return ResolvingDataSource.Factory(createCacheDataSource()) { dataSpec ->
             val mediaId = dataSpec.key ?: error("No media id")
-            Log.d(TAG, "PLAYING: song id = $mediaId")
+            Log.d(TAG, "PLAYING: song id = ${'$'}mediaId")
 
             var song = queueBoard.getCurrentQueue()?.findSong(dataSpec.key ?: "")
             if (song == null) { // in the case of resumption, queueBoard may not be ready yet
@@ -691,7 +706,7 @@ class MusicService : MediaLibraryService(),
                 downloadCache.isCached(mediaId, dataSpec.position, if (dataSpec.length >= 0) dataSpec.length else 1)
             val isCache = playerCache.isCached(mediaId, dataSpec.position, CHUNK_LENGTH)
             if (isDownload || isCache) {
-                Log.d(TAG, "PLAYING: remote song (cache = ${isCache}, download = ${isDownload})")
+                Log.d(TAG, "PLAYING: remote song (cache = ${'$'}{isCache}, download = ${'$'}{isDownload})")
                 offloadScope.launch { recoverSong(mediaId) }
                 return@Factory dataSpec
             }
@@ -917,9 +932,10 @@ class MusicService : MediaLibraryService(),
 
         Toast.makeText(
             this@MusicService,
-            "plr: ${error.message} (${error.errorCode}): ${error.cause?.message ?: ""} ",
+            "plr: ${error.message} (${error.errorCode}): ${error.cause?.message ?: "unknown"}",
             Toast.LENGTH_LONG
         ).show()
+
     }
 
     override fun onIsPlayingChanged(isPlaying: Boolean) {
@@ -959,7 +975,7 @@ class MusicService : MediaLibraryService(),
                 val yq = YouTubeQueue(WatchEndpoint(endpoint, continuation))
                 val mediaItems = yq.nextPage()
                 q.playlistId = mediaItems.takeLast(4).shuffled().first().id // yq.getContinuationEndpoint()
-                Log.d(TAG, "onMediaItemTransition: Got ${mediaItems.size} songs from radio")
+                Log.d(TAG, "onMediaItemTransition: Got ${'$'}{mediaItems.size} songs from radio")
                 if (player.playbackState != STATE_IDLE && songCount > 1) { // initial radio loading is handled by playQueue()
                     queueBoard.enqueueEnd(mediaItems.drop(1))
                 }
@@ -1022,7 +1038,7 @@ class MusicService : MediaLibraryService(),
 
             val playRatio =
                 playbackStats.totalPlayTimeMs.toFloat() / ((mediaItem.metadata?.duration?.times(1000)) ?: -1)
-            Log.d(TAG, "Playback ratio: $playRatio Min threshold: $minPlaybackDur")
+            Log.d(TAG, "Playback ratio: ${'$'}playRatio Min threshold: ${'$'}minPlaybackDur")
             if (playRatio >= minPlaybackDur && !dataStore.get(PauseListenHistoryKey, false)) {
                 database.query {
                     incrementPlayCount(mediaItem.mediaId)
@@ -1040,11 +1056,11 @@ class MusicService : MediaLibraryService(),
 
                 // TODO: support playlist id
                 val ytHist = mediaItem.metadata?.isLocal != true && !dataStore.get(PauseRemoteListenHistoryKey, false)
-                Log.d(TAG, "Trying to register remote history: $ytHist")
+                Log.d(TAG, "Trying to register remote history: ${'$'}ytHist")
                 if (ytHist) {
                     val playbackUrl = YTPlayerUtils.playerResponseForMetadata(mediaItem.mediaId, null)
                         .getOrNull()?.playbackTracking?.videostatsPlaybackUrl?.baseUrl
-                    Log.d(TAG, "Got playback url: $playbackUrl")
+                    Log.d(TAG, "Got playback url: ${'$'}playbackUrl")
                     playbackUrl?.let {
                         YouTube.registerPlayback(null, playbackUrl)
                             .onFailure {
