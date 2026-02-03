@@ -103,6 +103,11 @@ fun ColumnScope.BackupAndRestoreFrag(viewModel: BackupRestoreViewModel) {
             viewModel.restore(uri)
         }
     }
+    val importLauncher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        if (uri != null) {
+            viewModel.import(uri)
+        }
+    }
 
     ElevatedCard(
         modifier = Modifier.fillMaxWidth()
@@ -133,6 +138,20 @@ fun ColumnScope.BackupAndRestoreFrag(viewModel: BackupRestoreViewModel) {
             }
         )
     }
+    Spacer(modifier = Modifier.height(16.dp))
+
+    ElevatedCard(
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        PreferenceEntry(
+            title = { Text("Import") },
+            icon = { Icon(Icons.Rounded.FolderCopy, null) },
+            onClick = {
+                importLauncher.launch(arrayOf("application/octet-stream"))
+            }
+        )
+    }
+
 }
 
 @Composable
