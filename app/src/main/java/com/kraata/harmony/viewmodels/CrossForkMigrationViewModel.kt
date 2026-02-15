@@ -7,9 +7,11 @@ import android.net.Uri
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import com.kraata.harmony.db.MusicDatabase
-import com.kraata.harmony.db.entities.SongEntity
+import com.kraata.harmony.db.entities.ArtistEntity
 import com.kraata.harmony.db.entities.PlaylistEntity
 import com.kraata.harmony.db.entities.PlaylistSongMap
+import com.kraata.harmony.db.entities.SongEntity
+import com.kraata.harmony.db.entities.SongArtistMap
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
@@ -18,7 +20,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.time.LocalDateTime
-import java.util.*
+import java.time.ZoneOffset
+import java.util.UUID
 import javax.inject.Inject
 
 @HiltViewModel
@@ -30,12 +33,145 @@ class CrossForkMigrationViewModel @Inject constructor(
     companion object {
         const val TAG = "Migration"
         private const val CHUNK_SIZE = 300
+        private const val PREVIEW_ROWS_COUNT = 5
     }
 
     private val _progress = MutableStateFlow<MigrateProgress>(MigrateProgress.Idle)
     val progress: StateFlow<MigrateProgress> = _progress
 
-    suspend fun importFromOtherFork(uri: Uri, options: ImportOptions = ImportOptions()): Result<ImportResult> {
+    private suspend fun cleanSessionDependentData() {
+        Log.i(TAG, "=== LIMPIANDO DATOS DE SESIÓN POST-IMPORTACIÓN ===")
+
+        try {
+            val writable = database.openHelper.writableDatabase
+            Log.i(TAG, "🗑️ Eliminando URLs de streaming caducadas...")
+
+            val formatCountBefore = writable.query(
+                "SELECT COUNT(*) FROM format",
+                emptyArray()
+            ).use { cursor ->
+                if (cursor.moveToFirst()) cursor.getInt(0) else 0
+            }
+
+            Log.d(TAG, "📊 Registros en format antes: $formatCountBefore")
+
+            writable.execSQL("DELETE FROM format")
+
+            val formatCountAfter = writable.query(
+                "SELECT COUNT(*) FROM format",
+                emptyArray()
+            ).use { cursor ->
+                if (cursor.moveToFirst()) cursor.getInt(0) else 0
+            }
+
+            Log.i(TAG, "✅ Format limpiado: $formatCountBefore → $formatCountAfter registros")
+
+            try {
+                Log.d(TAG, "ℹ️ Invalidación de cache de metadatos no necesaria")
+            } catch (e: Exception) {
+                Log.d(TAG, "⚠️ No hay campos de cache para invalidar: ${e.message}")
+            }
+            Log.i(TAG, "🗑️ Limpiando cache de reproducción...")
+
+            val cacheDir = context.cacheDir
+            val criticalCacheDirs = listOf(
+                "exoplayer",           // Cache principal de ExoPlayer
+                "player_cache",        // Cache alternativo
+                "download_cache",      // Descargas parciales
+                "media",               // Cache de medios
+                "audio_cache",         // Cache de audio específico
+                ".ExoPlayerCacheDir"   // Directorio oculto de ExoPlayer
+            )
+
+            var deletedCount = 0
+            var totalSize = 0L
+
+            criticalCacheDirs.forEach { dirName ->
+                val dir = File(cacheDir, dirName)
+                if (dir.exists() && dir.isDirectory) {
+                    try {
+                        // Calcular tamaño antes de borrar
+                        val size = dir.walkTopDown()
+                            .filter { it.isFile }
+                            .map { it.length() }
+                            .sum()
+
+                        if (dir.deleteRecursively()) {
+                            deletedCount++
+                            totalSize += size
+                            Log.d(TAG, "  ✅ $dirName (${size / 1024}KB)")
+                        } else {
+                            Log.w(TAG, "  ⚠️ No se pudo borrar $dirName")
+                        }
+                    } catch (e: Exception) {
+                        Log.w(TAG, "  ❌ Error en $dirName: ${e.message}")
+                    }
+                }
+            }
+
+            if (deletedCount > 0) {
+                Log.i(
+                    TAG,
+                    "✅ Cache limpiado: $deletedCount directorios, ${totalSize / (1024 * 1024)}MB liberados"
+                )
+            } else {
+                Log.d(TAG, "ℹ️ No había cache de reproducción para limpiar")
+            }
+
+            Log.d(TAG, "🗑️ Limpiando archivos temporales...")
+            val tempFiles = cacheDir.listFiles { file ->
+                (file.name.startsWith("import_") ||
+                        file.name.startsWith("probe_")) &&
+                        file.extension == "db"
+            }
+
+            tempFiles?.forEach { file ->
+                try {
+                    if (file.delete()) {
+                        Log.d(TAG, "  ✅ ${file.name}")
+                    }
+                } catch (e: Exception) {
+                    Log.w(TAG, "  ⚠️ No se pudo borrar ${file.name}")
+                }
+            }
+
+            try {
+                Log.d(TAG, "🔧 Optimizando base de datos...")
+                writable.execSQL("VACUUM")
+                Log.d(TAG, "✅ Base de datos optimizada")
+            } catch (e: Exception) {
+                Log.w(TAG, "⚠️ VACUUM falló (no crítico): ${e.message}")
+            }
+
+            Log.i(TAG, "=== VERIFICACIÓN FINAL ===")
+            val finalStats = mapOf(
+                "format" to writable.query("SELECT COUNT(*) FROM format", emptyArray()).use {
+                    if (it.moveToFirst()) it.getInt(0) else -1
+                },
+                "song" to writable.query("SELECT COUNT(*) FROM song", emptyArray()).use {
+                    if (it.moveToFirst()) it.getInt(0) else -1
+                }
+            )
+
+            Log.i(TAG, "📊 Registros finales:")
+            finalStats.forEach { (table, count) ->
+                Log.i(TAG, "  - $table: $count registros")
+            }
+
+            Log.i(TAG, "=== LIMPIEZA COMPLETADA EXITOSAMENTE ===")
+            Log.w(TAG, "⚠️ IMPORTANTE: La primera reproducción regenerará las URLs de streaming")
+            Log.w(TAG, "⚠️ RECOMENDADO: Reiniciar la app para aplicar todos los cambios")
+
+        } catch (e: Exception) {
+            Log.e(TAG, "❌ Error crítico en limpieza post-importación", e)
+        }
+    }
+
+
+    suspend fun importFromOtherFork(
+        uri: Uri,
+        options: ImportOptions = ImportOptions()
+    ): Result<ImportResult> {
         return withContext(Dispatchers.IO) {
             Log.i(TAG, "Iniciando proceso de migración con URI: $uri y opciones: $options")
             var tempDb: SQLiteDatabase? = null
@@ -47,7 +183,11 @@ class CrossForkMigrationViewModel @Inject constructor(
 
                 Log.d(TAG, "Abriendo base de datos temporal...")
                 _progress.value = MigrateProgress.OpeningDatabase
-                tempDb = SQLiteDatabase.openDatabase(tempFile.absolutePath, null, SQLiteDatabase.OPEN_READONLY)
+                tempDb = SQLiteDatabase.openDatabase(
+                    tempFile.absolutePath,
+                    null,
+                    SQLiteDatabase.OPEN_READONLY
+                )
 
                 Log.d(TAG, "Detectando tipo de fork...")
                 val forkType = detectForkType(tempDb)
@@ -61,27 +201,39 @@ class CrossForkMigrationViewModel @Inject constructor(
                         Log.i(TAG, "Migrando desde InnerTune...")
                         migrateFromInnerTune(tempDb, options)
                     }
+
                     ForkType.VIMUSIC -> {
                         Log.i(TAG, "Migrando desde ViMusic...")
                         migrateFromViMusic(tempDb, options)
                     }
+
                     ForkType.RIMUSIC -> {
                         Log.i(TAG, "Migrando desde RiMusic...")
                         migrateFromRiMusic(tempDb, options)
                     }
+
                     ForkType.HARMONY -> {
                         Log.i(TAG, "Migrando desde Harmony...")
                         migrateFromHarmony(tempDb, options)
                     }
+
                     ForkType.UNKNOWN -> {
-                        Log.i(TAG, "Migrando desde fork desconocido...")
+                        Log.i(
+                            TAG,
+                            "Migrando desde fork desconocido en modo minimo (id/title/favorito)..."
+                        )
                         migrateFromUnknownFork(tempDb, options)
                     }
                 }
 
                 Log.d(TAG, "Proceso de migración completado exitosamente")
+                Log.i(TAG, "Iniciando limpieza post-importación...")
+                _progress.value = MigrateProgress.CleaningSessionData
+                cleanSessionDependentData()
+
                 _progress.value = MigrateProgress.Done
                 Result.success(result)
+
             } catch (e: Exception) {
                 Log.e(TAG, "Error durante la importación", e)
                 _progress.value = MigrateProgress.Error(e)
@@ -107,142 +259,311 @@ class CrossForkMigrationViewModel @Inject constructor(
     }
 
     // ---------- Insert Helpers ----------
-private fun insertSongsSync(songs: List<SongEntity>, overwriteExisting: Boolean = false) {
-    val writable = database.openHelper.writableDatabase
-    val sql = if (overwriteExisting) {
-        """
+    private fun insertSongsSync(songs: List<SongEntity>, overwriteExisting: Boolean = false): Int {
+        val writable = database.openHelper.writableDatabase
+        val sql = if (overwriteExisting) {
+            """
         INSERT OR REPLACE INTO song
         (id, title, duration, thumbnailUrl, albumName, liked, likedDate, localPath)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         """.trimIndent()
-    } else {
-        // IGNORE evita excepción por PK duplicada; ya controlamos generación de IDs arriba
-        """
+        } else {
+            // IGNORE evita excepción por PK duplicada; ya controlamos generación de IDs arriba
+            """
         INSERT OR IGNORE INTO song
         (id, title, duration, thumbnailUrl, albumName, liked, likedDate, localPath)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         """.trimIndent()
-    }
-
-    writable.beginTransaction()
-    val stmt = writable.compileStatement(sql)
-    try {
-        for (song in songs) {
-            stmt.clearBindings()
-
-            stmt.bindString(1, song.id)
-            stmt.bindString(2, song.title ?: "Unknown")
-
-            if (song.duration >= 0) {
-                stmt.bindLong(3, song.duration.toLong())
-            } else {
-                stmt.bindNull(3)
-            }
-
-            if (!song.thumbnailUrl.isNullOrBlank()) {
-                stmt.bindString(4, song.thumbnailUrl)
-            } else {
-                stmt.bindNull(4)
-            }
-
-            if (!song.albumName.isNullOrBlank()) {
-                stmt.bindString(5, song.albumName)
-            } else {
-                stmt.bindNull(5)
-            }
-
-            stmt.bindLong(6, if (song.liked) 1L else 0L)
-
-            if (song.likedDate != null) {
-                stmt.bindString(7, song.likedDate.toString())
-            } else {
-                stmt.bindNull(7)
-            }
-
-            if (!song.localPath.isNullOrBlank()) {
-                stmt.bindString(8, song.localPath)
-            } else {
-                stmt.bindNull(8)
-            }
-
-            try {
-                stmt.executeInsert()
-            } catch (e: Exception) {
-                Log.w(TAG, "Insert failed for song=${song.id}, continuing", e)
-                // no throw: continuamos con siguientes canciones
-            }
         }
 
-        writable.setTransactionSuccessful()
-        Log.d(TAG, "Insertadas ${songs.size} canciones exitosamente")
-    } finally {
+        var inserted = 0
+        var ignored = 0
+        var failed = 0
+
+        writable.beginTransaction()
+        val stmt = writable.compileStatement(sql)
         try {
-            stmt.close()
-        } catch (e: Exception) {
-            Log.w(TAG, "Error cerrando statement", e)
+            for (song in songs) {
+                stmt.clearBindings()
+
+                stmt.bindString(1, song.id)
+                stmt.bindString(2, song.title ?: "Unknown")
+
+                // duration es NOT NULL en la tabla song; -1 significa "desconocido".
+                stmt.bindLong(3, song.duration.toLong().coerceAtLeast(-1L))
+
+                if (!song.thumbnailUrl.isNullOrBlank()) {
+                    stmt.bindString(4, song.thumbnailUrl)
+                } else {
+                    stmt.bindNull(4)
+                }
+
+                if (!song.albumName.isNullOrBlank()) {
+                    stmt.bindString(5, song.albumName)
+                } else {
+                    stmt.bindNull(5)
+                }
+
+                stmt.bindLong(6, if (song.liked) 1L else 0L)
+
+                if (song.likedDate != null) {
+                    stmt.bindLong(
+                        7,
+                        song.likedDate.atZone(ZoneOffset.UTC).toInstant().toEpochMilli()
+                    )
+                } else {
+                    stmt.bindNull(7)
+                }
+
+                if (!song.localPath.isNullOrBlank()) {
+                    stmt.bindString(8, song.localPath)
+                } else {
+                    stmt.bindNull(8)
+                }
+
+                try {
+                    val rowId = stmt.executeInsert()
+                    if (rowId == -1L) {
+                        ignored++
+                    } else {
+                        inserted++
+                    }
+                } catch (e: Exception) {
+                    failed++
+                    Log.w(TAG, "Insert failed for song=${song.id}, continuing", e)
+                    // no throw: continuamos con siguientes canciones
+                }
+            }
+
+            writable.setTransactionSuccessful()
+            Log.d(
+                TAG,
+                "Inserción chunk canciones -> solicitadas=${songs.size}, insertadas=$inserted, ignoradas=$ignored, fallidas=$failed"
+            )
+        } finally {
+            try {
+                stmt.close()
+            } catch (e: Exception) {
+                Log.w(TAG, "Error cerrando statement", e)
+            }
+            writable.endTransaction()
         }
-        writable.endTransaction()
+        return inserted
     }
-}
 
     private fun insertPlaylistsSync(playlists: List<Pair<PlaylistEntity, List<PlaylistSongMap>>>) {
         val writable = database.openHelper.writableDatabase
 
-        for ((playlist, songMaps) in playlists) {
+        Log.i(TAG, "=== INSERTANDO ${playlists.size} PLAYLISTS ===")
+
+        // Verificar estado de foreign keys
+        try {
+            val cursor = writable.query("PRAGMA foreign_keys", emptyArray())
+            try {
+                if (cursor.moveToFirst()) {
+                    val fkEnabled = cursor.getInt(0) == 1
+                    Log.i(
+                        TAG,
+                        "Foreign keys: ${if (fkEnabled) "HABILITADAS ✅" else "DESHABILITADAS ⚠️"}"
+                    )
+                }
+            } finally {
+                cursor.close()
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "No se pudo verificar estado de foreign keys", e)
+        }
+
+        var successfulPlaylists = 0
+        var totalSongsInserted = 0
+        var totalSongsSkipped = 0
+
+        for ((index, playlistPair) in playlists.withIndex()) {
+            val (playlist, songMaps) = playlistPair
+            val playlistNumber = index + 1
+
+            Log.i(TAG, "")
+            Log.i(TAG, "[$playlistNumber/${playlists.size}] Procesando: '${playlist.name}'")
+            Log.i(TAG, "  ID: ${playlist.id}")
+            Log.i(TAG, "  Canciones a insertar: ${songMaps.size}")
+
             writable.beginTransaction()
             try {
-                // Insertar playlist
+                // 1. Insertar playlist
                 val playlistSql = """
-                    INSERT OR IGNORE INTO playlist
-                    (id, name)
-                    VALUES (?, ?)
-                """.trimIndent()
+                INSERT OR IGNORE INTO playlist
+                (id, name, isLocal, bookmarkedAt)
+                VALUES (?, ?, 1, strftime('%s','now'))
+            """.trimIndent()
 
                 val playlistStmt = writable.compileStatement(playlistSql)
                 playlistStmt.bindString(1, playlist.id)
                 playlistStmt.bindString(2, playlist.name)
-                playlistStmt.executeInsert()
+                val playlistRowId = playlistStmt.executeInsert()
                 playlistStmt.close()
 
-                // Limpiar relaciones anteriores si existen
-                val deleteSql = "DELETE FROM playlist_song_map WHERE playlistId = ?"
-                writable.compileStatement(deleteSql).apply {
-                    bindString(1, playlist.id)
-                    execute()
-                    close()
+                if (playlistRowId == -1L) {
+                    Log.w(TAG, "  ⚠️ Playlist ya existe, actualizando relaciones...")
+                } else {
+                    Log.d(TAG, "  ✅ Playlist insertada (rowId: $playlistRowId)")
                 }
 
-                // Insertar nuevas relaciones si existen
-                if (songMaps.isNotEmpty()) {
-                    val mapSql = """
+                // 2. Limpiar relaciones anteriores
+                val deleteSql = "DELETE FROM playlist_song_map WHERE playlistId = ?"
+                val deleteStmt = writable.compileStatement(deleteSql)
+                deleteStmt.bindString(1, playlist.id)
+                val deleted = deleteStmt.executeUpdateDelete()
+                if (deleted > 0) {
+                    Log.d(TAG, "  🗑️ Eliminadas $deleted relaciones anteriores")
+                }
+                deleteStmt.close()
+
+                // 3. Validar y preparar canciones para insertar
+                if (songMaps.isEmpty()) {
+                    Log.w(TAG, "  ⚠️ Playlist sin canciones")
+                    // ✅ CORRECCIÓN: Marcar transacción como exitosa antes de salir
+                    writable.setTransactionSuccessful()
+                    // ✅ NO cerrar manualmente aquí, dejar que el finally lo haga
+                    successfulPlaylists++
+                    // El finally cerrará la transacción correctamente
+                } else {
+                    Log.d(TAG, "  📝 Validando existencia de canciones...")
+
+                    // **CORRECCIÓN CRÍTICA**: Verificar qué canciones existen realmente en la BD
+                    val existingSongIds = mutableSetOf<String>()
+                    val missingSongIds = mutableListOf<String>()
+
+                    for (map in songMaps) {
+                        val checkCursor = writable.query(
+                            "SELECT 1 FROM song WHERE id = ? LIMIT 1",
+                            arrayOf(map.songId)
+                        )
+                        try {
+                            val exists = checkCursor.count > 0
+                            if (exists) {
+                                existingSongIds.add(map.songId)
+                            } else {
+                                missingSongIds.add(map.songId)
+                            }
+                        } finally {
+                            checkCursor.close()
+                        }
+                    }
+
+                    Log.d(TAG, "  ✅ Canciones existentes: ${existingSongIds.size}")
+                    if (missingSongIds.isNotEmpty()) {
+                        Log.w(TAG, "  ❌ Canciones NO encontradas: ${missingSongIds.size}")
+                        Log.w(TAG, "     Primeras 5: ${missingSongIds.take(5)}")
+                        totalSongsSkipped += missingSongIds.size
+                    }
+
+                    // 4. Insertar solo las relaciones válidas
+                    if (existingSongIds.isEmpty()) {
+                        Log.w(TAG, "  ⚠️ NINGUNA canción existe en la BD - playlist quedará vacía")
+                        // ✅ CORRECCIÓN: Marcar como exitosa y dejar que finally cierre
+                        writable.setTransactionSuccessful()
+                        // ✅ NO hacer endTransaction aquí
+                    } else {
+                        val mapSql = """
                         INSERT OR REPLACE INTO playlist_song_map
                         (playlistId, songId, position)
                         VALUES (?, ?, ?)
                     """.trimIndent()
-                    val mapStmt = writable.compileStatement(mapSql)
 
-                    for ((index, map) in songMaps.withIndex()) {
-                        mapStmt.clearBindings()
-                        mapStmt.bindString(1, map.playlistId)
-                        mapStmt.bindString(2, map.songId)
-                        // Asegurar que la posición sea válida
-                        val position = if (map.position >= 0) map.position else index
-                        mapStmt.bindLong(3, position.toLong())
-                        mapStmt.executeInsert()
+                        val mapStmt = writable.compileStatement(mapSql)
+                        var insertedCount = 0
+                        var positionCounter = 0
+
+                        for (map in songMaps) {
+                            // **CORRECCIÓN CRÍTICA**: Solo insertar si la canción existe
+                            if (map.songId !in existingSongIds) {
+                                continue
+                            }
+
+                            try {
+                                mapStmt.clearBindings()
+                                mapStmt.bindString(1, playlist.id)
+                                mapStmt.bindString(2, map.songId)
+
+                                val position =
+                                    if (map.position >= 0) map.position else positionCounter
+                                mapStmt.bindLong(3, position.toLong())
+
+                                val rowId = mapStmt.executeInsert()
+                                if (rowId > 0) {
+                                    insertedCount++
+                                    positionCounter++
+                                } else {
+                                    Log.w(
+                                        TAG,
+                                        "     ⚠️ No se insertó relación para songId=${map.songId}"
+                                    )
+                                }
+                            } catch (e: Exception) {
+                                Log.e(
+                                    TAG,
+                                    "     ❌ Error insertando relación songId=${map.songId}: ${e.message}"
+                                )
+                            }
+                        }
+
+                        mapStmt.close()
+                        totalSongsInserted += insertedCount
+
+                        Log.i(
+                            TAG,
+                            "  ✅ Insertadas $insertedCount relaciones de ${existingSongIds.size} válidas"
+                        )
+
+                        // 5. Verificar inserción
+                        val verifyCursor = writable.query(
+                            "SELECT COUNT(*) FROM playlist_song_map WHERE playlistId = ?",
+                            arrayOf(playlist.id)
+                        )
+                        val verifyCount = try {
+                            if (verifyCursor.moveToFirst()) verifyCursor.getInt(0) else 0
+                        } finally {
+                            verifyCursor.close()
+                        }
+
+                        Log.i(TAG, "  🔍 Verificación: $verifyCount relaciones en BD")
+
+                        if (verifyCount != insertedCount) {
+                            Log.e(
+                                TAG,
+                                "  ⚠️ DISCREPANCIA: Se insertaron $insertedCount pero BD muestra $verifyCount"
+                            )
+                        }
+
+                        writable.setTransactionSuccessful()
                     }
-                    mapStmt.close()
+
+                    successfulPlaylists++
                 }
 
-                writable.setTransactionSuccessful()
-                Log.d(TAG, "Playlist '${playlist.name}' insertada con ${songMaps.size} canciones")
             } catch (e: Exception) {
-                Log.e(TAG, "Error insertando playlist '${playlist.name}'", e)
-                // Continuar con la siguiente playlist en lugar de fallar todo
+                Log.e(TAG, "  ❌ Error procesando playlist '${playlist.name}'", e)
+                Log.e(TAG, "     Tipo: ${e.javaClass.simpleName}")
+                Log.e(TAG, "     Mensaje: ${e.message}")
+                // La transacción se revertirá automáticamente al no estar marcada como successful
             } finally {
-                writable.endTransaction()
+                // ✅ CORRECCIÓN: Siempre cerrar la transacción aquí, una sola vez
+                try {
+                    writable.endTransaction()
+                } catch (e: Exception) {
+                    Log.e(TAG, "  ⚠️ Error cerrando transacción: ${e.message}")
+                }
             }
         }
+
+        Log.i(TAG, "")
+        Log.i(TAG, "=== RESUMEN INSERCIÓN PLAYLISTS ===")
+        Log.i(TAG, "Playlists procesadas exitosamente: $successfulPlaylists/${playlists.size}")
+        Log.i(TAG, "Total relaciones insertadas: $totalSongsInserted")
+        Log.i(TAG, "Total canciones omitidas (no existen): $totalSongsSkipped")
+        Log.i(TAG, "")
     }
+
 
     // ---------- Detect fork ----------
     private fun detectForkType(db: SQLiteDatabase): ForkType {
@@ -261,18 +582,22 @@ private fun insertSongsSync(songs: List<SongEntity>, overwriteExisting: Boolean 
                     Log.d(TAG, "Detectado como InnerTune")
                     ForkType.INNERTUNE
                 }
+
                 tables.contains("songs") && tables.contains("playlists") -> {
                     Log.d(TAG, "Detectado como ViMusic")
                     ForkType.VIMUSIC
                 }
+
                 tables.contains("Song") && !tables.contains("Album") -> {
                     Log.d(TAG, "Detectado como RiMusic")
                     ForkType.RIMUSIC
                 }
+
                 tables.contains("queue") && hasColumn(db, "queue", "lastSongPos") -> {
                     Log.d(TAG, "Detectado como Harmony")
                     ForkType.HARMONY
                 }
+
                 else -> {
                     Log.d(TAG, "Tipo de fork desconocido")
                     ForkType.UNKNOWN
@@ -298,7 +623,10 @@ private fun insertSongsSync(songs: List<SongEntity>, overwriteExisting: Boolean 
                         break
                     }
                 }
-                Log.d(TAG, "Columna '$column' ${if(found) "encontrada" else "no encontrada"} en tabla '$table'")
+                Log.d(
+                    TAG,
+                    "Columna '$column' ${if (found) "encontrada" else "no encontrada"} en tabla '$table'"
+                )
                 found
             }
         } catch (e: Exception) {
@@ -307,7 +635,10 @@ private fun insertSongsSync(songs: List<SongEntity>, overwriteExisting: Boolean 
         }
     }
 
-    private suspend fun migrateFromInnerTune(sourceDb: SQLiteDatabase, options: ImportOptions): ImportResult {
+    private suspend fun migrateFromInnerTune(
+        sourceDb: SQLiteDatabase,
+        options: ImportOptions
+    ): ImportResult {
         Log.d(TAG, "Iniciando migración desde InnerTune con opciones: $options")
 
         // Loguear estructura inicial para diagnóstico
@@ -321,16 +652,27 @@ private fun insertSongsSync(songs: List<SongEntity>, overwriteExisting: Boolean 
             Log.d(TAG, "Opción de importar canciones deshabilitada o tabla 'Song' no encontrada")
             emptyList()
         }
+        val sourceSongArtists = if (options.importSongs) {
+            extractSongArtistsFromTable(sourceDb, "Song")
+        } else {
+            emptyMap()
+        }
 
         val playlistsToImport = if (options.importPlaylists && hasTable(sourceDb, "Playlist")) {
             Log.d(TAG, "Extrayendo playlists desde InnerTune...")
             extractPlaylistsFromInnerTune(sourceDb, options.generateNewIds)
         } else {
-            Log.d(TAG, "Opción de importar playlists deshabilitada o tabla 'Playlist' no encontrada")
+            Log.d(
+                TAG,
+                "Opción de importar playlists deshabilitada o tabla 'Playlist' no encontrada"
+            )
             emptyList()
         }
 
-        Log.d(TAG, "Preparando inserción de ${songsToImport.size} canciones en chunks de $CHUNK_SIZE y ${playlistsToImport.size} playlists")
+        Log.d(
+            TAG,
+            "Preparando inserción de ${songsToImport.size} canciones en chunks de $CHUNK_SIZE y ${playlistsToImport.size} playlists"
+        )
 
         var songsImported = 0
         var playlistsImported = 0
@@ -346,38 +688,35 @@ private fun insertSongsSync(songs: List<SongEntity>, overwriteExisting: Boolean 
             Log.i(TAG, "Procesando chunk ${idx + 1}/${chunks.size} (${chunk.size} canciones)")
 
             // Aplicar generateNewIds si es necesario y registrar el mapeo oldId -> newId
-           val songsToInsert = chunk.map { song ->
-    val originalId = song.id
-    val shouldGenerate = options.generateNewIds && songExists(originalId)
-    if (shouldGenerate) {
-        val newId = UUID.randomUUID().toString()
-        idMap[originalId] = newId
-        song.copy(id = newId)
-    } else {
-        // Preserve original id (and don't create idMap entry)
-        song
-    }
-}
+            val songsToInsert = chunk.map { song ->
+                val originalId = song.id
+                val shouldGenerate = options.generateNewIds && songExists(originalId)
+                if (shouldGenerate) {
+                    val newId = UUID.randomUUID().toString()
+                    idMap[originalId] = newId
+                    song.copy(id = newId)
+                } else {
+                    song
+                }
+            }
 
-
-            // Contar favoritos
             favoritesImported += songsToInsert.count { it.liked }
 
-            // Insertar sincrónicamente
             insertSongsSync(songsToInsert)
             songsImported += songsToInsert.size
 
             Log.i(TAG, "Chunk ${idx + 1} completado. Total insertadas: $songsImported")
         }
 
-        // Log ID mappings (old -> new) to inspect original YouTube IDs
+        val artistsImported = importSongArtistsFromSource(sourceSongArtists, idMap)
+        Log.i(TAG, "Mapeos song-artist importados (InnerTune): $artistsImported")
+
         try {
             logIdMappings(idMap)
         } catch (e: Exception) {
             Log.w(TAG, "Error logging id mappings", e)
         }
 
-        // Procesar playlists sincrónicamente
         if (playlistsToImport.isNotEmpty()) {
             Log.d(TAG, "Insertando ${playlistsToImport.size} playlists...")
             // Si generamos nuevos IDs para canciones, remappear songId en los mapas de playlist
@@ -385,7 +724,11 @@ private fun insertSongsSync(songs: List<SongEntity>, overwriteExisting: Boolean 
                 playlistsToImport.map { (pl, maps) ->
                     val remappedMaps = maps.map { m ->
                         val newSongId = idMap[m.songId] ?: m.songId
-                        PlaylistSongMap(playlistId = pl.id, songId = newSongId, position = m.position)
+                        PlaylistSongMap(
+                            playlistId = pl.id,
+                            songId = newSongId,
+                            position = m.position
+                        )
                     }
                     Pair(pl, remappedMaps)
                 }
@@ -395,14 +738,16 @@ private fun insertSongsSync(songs: List<SongEntity>, overwriteExisting: Boolean 
             playlistsImported = playlistsToImport.size
         }
 
-        // Remap favorites stored en tablas separadas (si existen en la fuente)
         try {
             remapFavoritesInTarget(sourceDb, idMap)
         } catch (e: Exception) {
             Log.w(TAG, "No se pudieron remapear favoritos", e)
         }
 
-        Log.d(TAG, "Transacción completada: $songsImported canciones, $playlistsImported playlists, $favoritesImported favoritos")
+        Log.d(
+            TAG,
+            "Transacción completada: $songsImported canciones, $playlistsImported playlists, $favoritesImported favoritos"
+        )
 
         val result = ImportResult(
             songsImported = songsImported,
@@ -439,7 +784,6 @@ private fun insertSongsSync(songs: List<SongEntity>, overwriteExisting: Boolean 
             columnMap["likedDate"] = columns.contains("likedDate")
             columnMap["localPath"] = columns.contains("localPath")
 
-            // Agregar columnas disponibles
             columnMap.forEach { (col, available) ->
                 if (available) selectColumns.add(col)
             }
@@ -475,9 +819,10 @@ private fun insertSongsSync(songs: List<SongEntity>, overwriteExisting: Boolean 
                         else "Unknown"
 
                         val duration = if (columnIndices["duration"] != -1) {
-                            val dur = c.getIntOrNull("duration")
-                            if (dur != null && dur >= 0) dur.toLong() else -1L
-                        } else -1L
+                            parseDurationAny(c.getStringOrNull("duration"))?.toLong() ?: -1L
+                        } else {
+                            -1L
+                        }
 
                         val thumbnailUrl = if (columnIndices["thumbnailUrl"] != -1)
                             c.getStringOrNull("thumbnailUrl")?.takeIf { it.isNotBlank() }
@@ -525,7 +870,6 @@ private fun insertSongsSync(songs: List<SongEntity>, overwriteExisting: Boolean 
                         }
                     } catch (e: Exception) {
                         Log.w(TAG, "Error extrayendo canción en fila $count", e)
-                        // Continuar con la siguiente fila
                     }
                 }
                 Log.d(TAG, "Total canciones extraídas: $count")
@@ -537,7 +881,10 @@ private fun insertSongsSync(songs: List<SongEntity>, overwriteExisting: Boolean 
         return songs
     }
 
-    private fun extractPlaylistsFromInnerTune(sourceDb: SQLiteDatabase, generateNewIds: Boolean): List<Pair<PlaylistEntity, List<PlaylistSongMap>>> {
+    private fun extractPlaylistsFromInnerTune(
+        sourceDb: SQLiteDatabase,
+        generateNewIds: Boolean
+    ): List<Pair<PlaylistEntity, List<PlaylistSongMap>>> {
         Log.d(TAG, "Extrayendo playlists desde InnerTune (generar nuevos IDs: $generateNewIds)...")
         val playlists = mutableListOf<Pair<PlaylistEntity, List<PlaylistSongMap>>>()
         try {
@@ -569,7 +916,13 @@ private fun insertSongsSync(songs: List<SongEntity>, overwriteExisting: Boolean 
                                 while (sc.moveToNext()) {
                                     val songId = sc.getStringOrNull("songId") ?: continue
                                     val pos = sc.getIntOrNull("position") ?: 0
-                                    songMaps.add(PlaylistSongMap(playlistId = newId, songId = songId, position = pos))
+                                    songMaps.add(
+                                        PlaylistSongMap(
+                                            playlistId = newId,
+                                            songId = songId,
+                                            position = pos
+                                        )
+                                    )
                                 }
                             }
                         } catch (e: Exception) {
@@ -595,10 +948,12 @@ private fun insertSongsSync(songs: List<SongEntity>, overwriteExisting: Boolean 
         return playlists
     }
 
-    private suspend fun migrateFromViMusic(sourceDb: SQLiteDatabase, options: ImportOptions): ImportResult {
+    private suspend fun migrateFromViMusic(
+        sourceDb: SQLiteDatabase,
+        options: ImportOptions
+    ): ImportResult {
         Log.d(TAG, "Iniciando migración desde ViMusic con opciones: $options")
 
-        // Loguear estructura inicial para diagnóstico
         logTablePreview(sourceDb, "songs", 5)
         logTablePreview(sourceDb, "playlists", 5)
 
@@ -609,30 +964,38 @@ private fun insertSongsSync(songs: List<SongEntity>, overwriteExisting: Boolean 
             Log.d(TAG, "Opción de importar canciones deshabilitada o tabla 'songs' no encontrada")
             emptyList()
         }
+        val sourceSongArtists = if (options.importSongs) {
+            extractSongArtistsFromTable(sourceDb, "songs")
+        } else {
+            emptyMap()
+        }
 
         val playlistsToImport = if (options.importPlaylists && hasTable(sourceDb, "playlists")) {
             Log.d(TAG, "Extrayendo playlists desde ViMusic...")
             extractPlaylistsFromViMusic(sourceDb, options.generateNewIds)
         } else {
-            Log.d(TAG, "Opción de importar playlists deshabilitada o tabla 'playlists' no encontrada")
+            Log.d(
+                TAG,
+                "Opción de importar playlists deshabilitada o tabla 'playlists' no encontrada"
+            )
             emptyList()
         }
 
-        Log.d(TAG, "Preparando inserción de ${songsToImport.size} canciones en chunks de $CHUNK_SIZE y ${playlistsToImport.size} playlists")
+        Log.d(
+            TAG,
+            "Preparando inserción de ${songsToImport.size} canciones en chunks de $CHUNK_SIZE y ${playlistsToImport.size} playlists"
+        )
 
         var songsImported = 0
         var playlistsImported = 0
-        // Mapa para conservar correspondencia entre IDs originales y nuevos (si generateNewIds)
         val idMap = mutableMapOf<String, String>()
 
-        // Procesar canciones en chunks
         val chunks = songsToImport.chunked(CHUNK_SIZE)
         var totalChunks = if (songsToImport.isEmpty()) 0 else (songsToImport.size / CHUNK_SIZE) + 1
 
         chunks.forEachIndexed { idx, chunk ->
             Log.i(TAG, "Procesando chunk ${idx + 1}/${chunks.size} (${chunk.size} canciones)")
 
-            // Aplicar generateNewIds si es necesario y registrar el mapeo oldId -> newId
             val songsToInsert = if (options.generateNewIds) {
                 chunk.map { song ->
                     val newId = UUID.randomUUID().toString()
@@ -643,19 +1006,20 @@ private fun insertSongsSync(songs: List<SongEntity>, overwriteExisting: Boolean 
                 chunk
             }
 
-            // Insertar sincrónicamente
             insertSongsSync(songsToInsert)
             songsImported += songsToInsert.size
 
             Log.i(TAG, "Chunk ${idx + 1} completado. Total insertadas: $songsImported")
         }
 
-            // Log ID mappings (old -> new) to inspect original YouTube IDs
-            try {
-                logIdMappings(idMap)
-            } catch (e: Exception) {
-                Log.w(TAG, "Error logging id mappings ViMusic", e)
-            }
+        val artistsImported = importSongArtistsFromSource(sourceSongArtists, idMap)
+        Log.i(TAG, "Mapeos song-artist importados (ViMusic): $artistsImported")
+
+        try {
+            logIdMappings(idMap)
+        } catch (e: Exception) {
+            Log.w(TAG, "Error logging id mappings ViMusic", e)
+        }
 
         // Procesar playlists sincrónicamente
         if (playlistsToImport.isNotEmpty()) {
@@ -664,7 +1028,11 @@ private fun insertSongsSync(songs: List<SongEntity>, overwriteExisting: Boolean 
                 playlistsToImport.map { (pl, maps) ->
                     val remappedMaps = maps.map { m ->
                         val newSongId = idMap[m.songId] ?: m.songId
-                        PlaylistSongMap(playlistId = pl.id, songId = newSongId, position = m.position)
+                        PlaylistSongMap(
+                            playlistId = pl.id,
+                            songId = newSongId,
+                            position = m.position
+                        )
                     }
                     Pair(pl, remappedMaps)
                 }
@@ -681,11 +1049,14 @@ private fun insertSongsSync(songs: List<SongEntity>, overwriteExisting: Boolean 
             Log.w(TAG, "No se pudieron remapear favoritos ViMusic", e)
         }
 
-        Log.d(TAG, "Transacción ViMusic completada: $songsImported canciones, $playlistsImported playlists")
+        Log.d(
+            TAG,
+            "Transacción ViMusic completada: $songsImported canciones, $playlistsImported playlists"
+        )
 
         val result = ImportResult(
             songsImported = songsImported,
-            playlistsImported = playlistsImported,
+            playlistsImported = playlistsToImport.size,
             favoritesImported = 0,
             historyImported = 0,
             queueImported = false
@@ -699,8 +1070,23 @@ private fun insertSongsSync(songs: List<SongEntity>, overwriteExisting: Boolean 
         Log.d(TAG, "Extrayendo canciones desde tabla songs de ViMusic...")
         val songs = mutableListOf<SongEntity>()
         try {
+            val columns = getTableColumns(sourceDb, "songs")
+            val hasArtistsText = columns.any { it.equals("artistsText", ignoreCase = true) }
+            val hasAlbumTitle = columns.any { it.equals("albumTitle", ignoreCase = true) }
+            val hasDurationText = columns.any { it.equals("durationText", ignoreCase = true) }
+            val hasDuration = columns.any { it.equals("duration", ignoreCase = true) }
+            val hasThumbnail = columns.any { it.equals("thumbnailUrl", ignoreCase = true) }
+
+            val selectCols = mutableListOf("id", "title").apply {
+                if (hasArtistsText) add("artistsText")
+                if (hasAlbumTitle) add("albumTitle")
+                if (hasDurationText) add("durationText")
+                if (hasDuration) add("duration")
+                if (hasThumbnail) add("thumbnailUrl")
+            }
+
             sourceDb.rawQuery(
-                "SELECT id, title, artistsText, albumTitle, durationText, thumbnailUrl FROM songs",
+                "SELECT ${selectCols.joinToString(", ")} FROM songs",
                 null
             ).use { c ->
                 Log.d(TAG, "Consulta ViMusic ejecutada, procesando resultados...")
@@ -708,20 +1094,21 @@ private fun insertSongsSync(songs: List<SongEntity>, overwriteExisting: Boolean 
                 while (c.moveToNext()) {
                     try {
                         // Saneamiento de ID
-                        val id = c.getStringOrNull("id")?.takeIf { it.isNotBlank() } ?: UUID.randomUUID().toString()
+                        val id =
+                            c.getStringOrNull("id")?.takeIf { it.isNotBlank() } ?: UUID.randomUUID()
+                                .toString()
 
                         // Saneamiento de título
-                        val title = c.getStringOrNull("title")?.takeIf { it.isNotBlank() } ?: "Unknown"
-
-                        // Saneamiento de artista (opcional)
-                        val artist = c.getStringOrNull("artistsText")?.takeIf { it.isNotBlank() }
+                        val title =
+                            c.getStringOrNull("title")?.takeIf { it.isNotBlank() } ?: "Unknown"
 
                         // Saneamiento de álbum (opcional)
                         val album = c.getStringOrNull("albumTitle")?.takeIf { it.isNotBlank() }
 
-                        // Saneamiento de duración (texto -> segundos)
-                        val durationText = c.getStringOrNull("durationText")
-                        val durationSeconds = parseDuration(durationText)
+                        // Saneamiento de duración (texto o numérico -> segundos)
+                        val durationSeconds = parseDurationAny(
+                            c.getStringOrNull("durationText") ?: c.getStringOrNull("duration")
+                        )
 
                         // Saneamiento de miniatura (opcional)
                         val thumb = c.getStringOrNull("thumbnailUrl")?.takeIf { it.isNotBlank() }
@@ -757,7 +1144,10 @@ private fun insertSongsSync(songs: List<SongEntity>, overwriteExisting: Boolean 
         return songs
     }
 
-    private fun extractPlaylistsFromViMusic(sourceDb: SQLiteDatabase, generateNewIds: Boolean): List<Pair<PlaylistEntity, List<PlaylistSongMap>>> {
+    private fun extractPlaylistsFromViMusic(
+        sourceDb: SQLiteDatabase,
+        generateNewIds: Boolean
+    ): List<Pair<PlaylistEntity, List<PlaylistSongMap>>> {
         Log.d(TAG, "Extrayendo playlists desde ViMusic (generar nuevos IDs: $generateNewIds)...")
         val playlists = mutableListOf<Pair<PlaylistEntity, List<PlaylistSongMap>>>()
         try {
@@ -786,7 +1176,13 @@ private fun insertSongsSync(songs: List<SongEntity>, overwriteExisting: Boolean 
                                 while (sc.moveToNext()) {
                                     val songId = sc.getStringOrNull("songId") ?: continue
                                     val pos = sc.getIntOrNull("position") ?: 0
-                                    songMaps.add(PlaylistSongMap(playlistId = newId, songId = songId, position = pos))
+                                    songMaps.add(
+                                        PlaylistSongMap(
+                                            playlistId = newId,
+                                            songId = songId,
+                                            position = pos
+                                        )
+                                    )
                                 }
                             }
                         } catch (e: Exception) {
@@ -812,62 +1208,175 @@ private fun insertSongsSync(songs: List<SongEntity>, overwriteExisting: Boolean 
         return playlists
     }
 
-    private suspend fun migrateFromRiMusic(sourceDb: SQLiteDatabase, options: ImportOptions): ImportResult {
+    private suspend fun migrateFromRiMusic(
+        sourceDb: SQLiteDatabase,
+        options: ImportOptions
+    ): ImportResult {
         Log.d(TAG, "Migrando desde RiMusic (usando lógica de ViMusic)...")
         return migrateFromViMusic(sourceDb, options)
     }
 
-    private suspend fun migrateFromHarmony(sourceDb: SQLiteDatabase, options: ImportOptions): ImportResult {
+    private suspend fun migrateFromHarmony(
+        sourceDb: SQLiteDatabase,
+        options: ImportOptions
+    ): ImportResult {
         Log.d(TAG, "Migrando desde Harmony (usando lógica de InnerTune)...")
         return migrateFromInnerTune(sourceDb, options)
     }
 
-    private suspend fun migrateFromUnknownFork(sourceDb: SQLiteDatabase, options: ImportOptions): ImportResult {
+    private suspend fun migrateFromUnknownFork(
+        sourceDb: SQLiteDatabase,
+        options: ImportOptions
+    ): ImportResult {
         Log.i(TAG, "Intentando migración genérica para fork desconocido con opciones: $options")
 
-        val allTables = mutableListOf<String>()
-        sourceDb.rawQuery("SELECT name FROM sqlite_master WHERE type='table'", null).use { c ->
-            Log.d(TAG, "Obteniendo todas las tablas disponibles...")
-            while (c.moveToNext()) allTables.add(c.getString(0))
+        val allTables = extractAvailableTables(sourceDb)
+        logKeyTablesPreview(sourceDb, allTables)
+
+        val (songsToImport, playlistsToImport) = extractDataFromSource(
+            sourceDb,
+            allTables,
+            options
+        )
+        val sourceSongArtists = if (options.importSongs) {
+            extractSongArtistsFromUnknownSource(sourceDb, allTables)
+        } else {
+            emptyMap()
         }
-        Log.i(TAG, "Tablas disponibles: $allTables")
 
-        // Logear preview de tablas clave
-        logTablePreview(sourceDb, allTables.firstOrNull { it.lowercase() == "song" || it.lowercase() == "songs" } ?: "song", 5)
-        logTablePreview(sourceDb, allTables.firstOrNull { it.lowercase() == "playlist" || it.lowercase() == "playlists" } ?: "playlist", 5)
+        return performImport(
+            songsToImport = songsToImport,
+            playlistsToImport = playlistsToImport,
+            options = options,
+            sourceSongArtists = sourceSongArtists
+        )
+    }
 
-        val songsToImport = if (options.importSongs) {
+    /**
+     * Extrae todas las tablas disponibles de la base de datos origen
+     */
+    private fun extractAvailableTables(sourceDb: SQLiteDatabase): List<String> {
+        Log.d(TAG, "Obteniendo todas las tablas disponibles...")
+
+        return sourceDb.rawQuery(
+            "SELECT name FROM sqlite_master WHERE type='table'",
+            null
+        ).use { cursor ->
+            buildList {
+                while (cursor.moveToNext()) {
+                    add(cursor.getString(0))
+                }
+            }
+        }.also { tables ->
+            Log.i(TAG, "Tablas disponibles: $tables")
+        }
+    }
+
+    /**
+     * Registra un preview de las tablas clave (song y playlist)
+     */
+    private fun logKeyTablesPreview(sourceDb: SQLiteDatabase, allTables: List<String>) {
+        val songTable = allTables.firstOrNull {
+            it.equals("song", ignoreCase = true) || it.equals("songs", ignoreCase = true)
+        } ?: "song"
+
+        val playlistTable = allTables.firstOrNull {
+            it.equals("playlist", ignoreCase = true) || it.equals("playlists", ignoreCase = true)
+        } ?: "playlist"
+
+        logTablePreview(sourceDb, songTable, PREVIEW_ROWS_COUNT)
+        logTablePreview(sourceDb, playlistTable, PREVIEW_ROWS_COUNT)
+    }
+
+    /**
+     * Extrae canciones y playlists de la base de datos origen según las opciones
+     */
+    private fun extractDataFromSource(
+        sourceDb: SQLiteDatabase,
+        allTables: List<String>,
+        options: ImportOptions
+    ): Pair<List<SongEntity>, List<Pair<PlaylistEntity, List<PlaylistSongMap>>>> {
+        val songs = if (options.importSongs) {
             Log.d(TAG, "Extrayendo canciones genéricas...")
             extractGenericSongs(sourceDb, allTables)
         } else {
-            Log.d(TAG, "Opción de importar canciones deshabilitada para migración genérica")
+            Log.d(TAG, "Opción de importar canciones deshabilitada")
             emptyList()
         }
 
-        val playlistsToImport = if (options.importPlaylists) {
+        val playlists = if (options.importPlaylists) {
             Log.d(TAG, "Extrayendo playlists genéricas...")
             extractGenericPlaylists(sourceDb, allTables, options.generateNewIds)
         } else {
-            Log.d(TAG, "Opción de importar playlists deshabilitada para migración genérica")
+            Log.d(TAG, "Opción de importar playlists deshabilitada")
             emptyList()
         }
 
-        Log.d(TAG, "Preparando inserción genérica de ${songsToImport.size} canciones en chunks de $CHUNK_SIZE y ${playlistsToImport.size} playlists")
+        return Pair(songs, playlists)
+    }
 
-        var songsImported = 0
-        var playlistsImported = 0
-        var favoritesImported = 0
+    /**
+     * Realiza la importación de los datos extraídos
+     */
+    private suspend fun performImport(
+        songsToImport: List<SongEntity>,
+        playlistsToImport: List<Pair<PlaylistEntity, List<PlaylistSongMap>>>,
+        options: ImportOptions,
+        sourceSongArtists: Map<String, String> = emptyMap()
+    ): ImportResult {
+        Log.d(
+            TAG,
+            "Preparando inserción de ${songsToImport.size} canciones en chunks de $CHUNK_SIZE " +
+                    "y ${playlistsToImport.size} playlists"
+        )
+
         val idMap = mutableMapOf<String, String>()
+        val songsImported = importSongsInChunks(songsToImport, options.generateNewIds, idMap)
+        val favoritesImported = songsToImport.count { it.liked }
+        val artistsImported = importSongArtistsFromSource(sourceSongArtists, idMap)
 
-        // Procesar canciones en chunks
-        val chunks = songsToImport.chunked(CHUNK_SIZE)
-        var totalChunks = if (songsToImport.isEmpty()) 0 else (songsToImport.size / CHUNK_SIZE) + 1
+        if (songsToImport.isNotEmpty()) {
+            verifyImportedSongs(songsImported)
+        } else {
+            Log.i(TAG, "No hay canciones para verificar en esta importación")
+        }
 
-        chunks.forEachIndexed { idx, chunk ->
+        val playlistsImported = importPlaylists(playlistsToImport, idMap)
+
+        Log.d(
+            TAG,
+            "Transacción genérica completada: $songsImported canciones, " +
+                    "$playlistsImported playlists, $favoritesImported favoritos, $artistsImported artistas"
+        )
+
+        return ImportResult(
+            songsImported = songsImported,
+            playlistsImported = playlistsImported,
+            favoritesImported = favoritesImported,
+            historyImported = 0,
+            queueImported = false
+        ).also { result ->
+            Log.i(TAG, "Migración genérica completada: $result")
+        }
+    }
+
+    /**
+     * Importa canciones en chunks para mejor rendimiento
+     */
+    private suspend fun importSongsInChunks(
+        songs: List<SongEntity>,
+        generateNewIds: Boolean,
+        idMap: MutableMap<String, String>
+    ): Int {
+        if (songs.isEmpty()) return 0
+
+        var imported = 0
+        val chunks = songs.chunked(CHUNK_SIZE)
+
+        chunks.forEachIndexed { idx: Int, chunk: List<SongEntity> ->
             Log.i(TAG, "Procesando chunk ${idx + 1}/${chunks.size} (${chunk.size} canciones)")
 
-            // Aplicar generateNewIds si es necesario y registrar el mapeo oldId -> newId
-            val songsToInsert = if (options.generateNewIds) {
+            val songsToInsert = if (generateNewIds) {
                 chunk.map { song ->
                     val newId = UUID.randomUUID().toString()
                     idMap[song.id] = newId
@@ -877,58 +1386,108 @@ private fun insertSongsSync(songs: List<SongEntity>, overwriteExisting: Boolean 
                 chunk
             }
 
-            // Contar favoritos
-            favoritesImported += songsToInsert.count { it.liked }
+            val insertedInChunk = insertSongsSync(songsToInsert)
+            imported += insertedInChunk
 
-            // Insertar sincrónicamente
-            insertSongsSync(songsToInsert)
-            songsImported += songsToInsert.size
-
-            Log.i(TAG, "Chunk ${idx + 1} completado. Total insertadas: $songsImported")
+            Log.i(
+                TAG,
+                "Chunk ${idx + 1} completado. Insertadas en chunk: $insertedInChunk. Total insertadas: $imported"
+            )
         }
 
-            // Log ID mappings (old -> new) to inspect original YouTube IDs
-            try {
-                logIdMappings(idMap)
-            } catch (e: Exception) {
-                Log.w(TAG, "Error logging id mappings (generic)", e)
-            }
-        // Procesar playlists sincrónicamente
-        if (playlistsToImport.isNotEmpty()) {
-            Log.d(TAG, "Insertando ${playlistsToImport.size} playlists...")
-            val remappedPlaylists = if (idMap.isNotEmpty()) {
-                playlistsToImport.map { (pl, maps) ->
-                    val remappedMaps = maps.map { m ->
-                        val newSongId = idMap[m.songId] ?: m.songId
-                        PlaylistSongMap(playlistId = pl.id, songId = newSongId, position = m.position)
-                    }
-                    Pair(pl, remappedMaps)
-                }
-            } else playlistsToImport
-
-            insertPlaylistsSync(remappedPlaylists)
-            playlistsImported = playlistsToImport.size
-        }
-
-        Log.d(TAG, "Transacción genérica completada: $songsImported canciones, $playlistsImported playlists, $favoritesImported favoritos")
-
-        val result = ImportResult(
-            songsImported = songsImported,
-            playlistsImported = playlistsImported,
-            favoritesImported = favoritesImported,
-            historyImported = 0,
-            queueImported = false
-        )
-
-        Log.i(TAG, "Migración genérica completada: $result")
-        return result
+        return imported
     }
 
-    private fun extractGenericSongs(sourceDb: SQLiteDatabase, allTables: List<String>): List<SongEntity> {
-        Log.d(TAG, "Extrayendo canciones genéricas desde tablas: $allTables")
+    /**
+     * Verifica que las canciones fueron insertadas correctamente
+     */
+    private fun verifyImportedSongs(expectedCount: Int) {
+        try {
+            Log.d(TAG, "🔄 Forzando flush de transacciones pendientes...")
+
+            // Obtener la base de datos SQLite subyacente
+            val db = database.openHelper.writableDatabase
+
+            // PRAGMA wal_checkpoint devuelve filas, por lo que debe ejecutarse como query.
+            db.query("PRAGMA wal_checkpoint(FULL)", emptyArray()).use { cursor ->
+                if (cursor.moveToFirst()) {
+                    val busy = cursor.getInt(0)
+                    val log = cursor.getInt(1)
+                    val checkpointed = cursor.getInt(2)
+                    Log.d(TAG, "WAL checkpoint: busy=$busy, log=$log, checkpointed=$checkpointed")
+                }
+            }
+
+            // Verificar inserción
+            val actualCount = db.query("SELECT COUNT(*) FROM song", emptyArray()).use { cursor ->
+                if (cursor.moveToFirst()) cursor.getInt(0) else 0
+            }
+
+            Log.i(TAG, "✅ Verificación post-inserción: $actualCount canciones en BD")
+            if (expectedCount > 0 && actualCount < expectedCount) {
+                Log.w(
+                    TAG,
+                    "Inserción parcial detectada. Esperadas: $expectedCount, encontradas: $actualCount"
+                )
+            }
+
+            if (actualCount == 0) {
+                throw IllegalStateException(
+                    "Failed to insert songs - database is empty after import"
+                )
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "❌ Error verificando inserción de canciones", e)
+            throw e
+        }
+    }
+    /**
+     * Importa playlists y sus mapeos de canciones
+     */
+    private suspend fun importPlaylists(
+        playlists: List<Pair<PlaylistEntity, List<PlaylistSongMap>>>,
+        idMap: Map<String, String>
+    ): Int {
+        if (playlists.isEmpty()) return 0
+
+        Log.d(TAG, "Insertando ${playlists.size} playlists...")
+
+        val remappedPlaylists = if (idMap.isNotEmpty()) {
+            playlists.map { (playlist, maps) ->
+                val remappedMaps = maps.map { map ->
+                    PlaylistSongMap(
+                        playlistId = playlist.id,
+                        songId = idMap[map.songId] ?: map.songId,
+                        position = map.position
+                    )
+                }
+                playlist to remappedMaps
+            }
+        } else {
+            playlists
+        }
+
+        insertPlaylistsSync(remappedPlaylists)
+        return playlists.size
+    }
+
+
+
+    /**
+     * Excepción personalizada para errores de importación
+     */
+    class ImportException(message: String, cause: Throwable? = null) :
+        Exception(message, cause)
+
+    private fun extractGenericSongs(
+        sourceDb: SQLiteDatabase,
+        allTables: List<String>
+    ): List<SongEntity> {
+        Log.d(TAG, "Extrayendo canciones genericas desde tablas: $allTables")
         val songs = mutableListOf<SongEntity>()
 
-        val songTable = allTables.firstOrNull { it.lowercase() == "song" || it.lowercase() == "songs" }
+        val songTable =
+            allTables.firstOrNull { it.lowercase() == "song" || it.lowercase() == "songs" }
         if (songTable != null) {
             Log.d(TAG, "Tabla de canciones encontrada: $songTable")
             try {
@@ -937,18 +1496,72 @@ private fun insertSongsSync(songs: List<SongEntity>, overwriteExisting: Boolean 
 
                 val idCol = columns.firstOrNull { it.lowercase() == "id" }
                 val titleCol = columns.firstOrNull { it.lowercase() in listOf("title", "name") }
-                val durationCol = columns.firstOrNull { it.lowercase() in listOf("duration", "durationtext") }
-                val thumbCol = columns.firstOrNull { it.lowercase() in listOf("thumbnailurl", "thumbnail", "image") }
-                val likedCol = columns.firstOrNull { it.lowercase() in listOf("liked", "isfavorite", "favorite") }
-                val albumCol = columns.firstOrNull { it.lowercase() in listOf("albumname", "album") }
+                val durationCol = columns.firstOrNull {
+                    it.lowercase() in listOf(
+                        "duration",
+                        "durationsec",
+                        "durationsecs",
+                        "durationseconds",
+                        "duration_ms",
+                        "durationms",
+                        "durationmillis",
+                        "durationtext",
+                        "length",
+                        "lengthsec",
+                        "lengthsecs",
+                        "lengthtext"
+                    )
+                }
+                val artistCol = columns.firstOrNull {
+                    it.lowercase() in listOf(
+                        "artiststext",
+                        "artists",
+                        "artist",
+                        "artistname",
+                        "artist_name",
+                        "author",
+                        "uploader",
+                        "channel"
+                    )
+                }
+                val likedCol = columns.firstOrNull {
+                    it.lowercase() in listOf(
+                        "liked",
+                        "isliked",
+                        "is_liked",
+                        "isfavorite",
+                        "is_favorite",
+                        "favorite"
+                    )
+                }
+                val thumbnailCol = columns.firstOrNull {
+                    it.lowercase() in listOf(
+                        "thumbnailurl",
+                        "thumbnail",
+                        "image",
+                        "imageurl",
+                        "coverurl",
+                        "artworkurl",
+                        "albumart"
+                    )
+                }
 
-                Log.d(TAG, "Columnas identificadas - id: $idCol, title: $titleCol, duration: $durationCol, thumb: $thumbCol, liked: $likedCol, album: $albumCol")
+                Log.d(
+                    TAG,
+                    "Columnas identificadas (modo minimo) - id: $idCol, title: $titleCol, duration: $durationCol, artist: $artistCol, liked: $likedCol, thumbnail: $thumbnailCol"
+                )
 
                 if (idCol != null && titleCol != null) {
-                    // Build SELECT with exact order
-                    val selectCols = listOfNotNull(idCol, titleCol, durationCol, thumbCol, albumCol, likedCol).joinToString(", ")
+                    val selectCols = listOfNotNull(
+                        idCol,
+                        titleCol,
+                        durationCol,
+                        artistCol,
+                        likedCol,
+                        thumbnailCol
+                    ).joinToString(", ")
                     val query = "SELECT $selectCols FROM $songTable"
-                    Log.d(TAG, "Ejecutando consulta genérica: $query")
+                    Log.d(TAG, "Ejecutando consulta generica: $query")
 
                     sourceDb.rawQuery(query, null).use { c ->
                         Log.d(TAG, "Encontradas ${c.count} filas en $songTable")
@@ -956,53 +1569,58 @@ private fun insertSongsSync(songs: List<SongEntity>, overwriteExisting: Boolean 
 
                         while (c.moveToNext()) {
                             try {
-                                // Use sequential indices based on SELECT order
-                                var colIdx = 0
+                                val id = c.getStringOrNull(idCol)?.takeIf { it.isNotBlank() }
+                                    ?: UUID.randomUUID().toString()
+                                val title = c.getStringOrNull(titleCol)?.takeIf { it.isNotBlank() }
+                                    ?: "Unknown"
 
-                                val id = c.getStringSafe(colIdx++) ?: UUID.randomUUID().toString()
-                                val title = c.getStringSafe(colIdx++) ?: "Unknown"
+                                val liked = if (likedCol != null) {
+                                    when (c.getStringOrNull(likedCol)?.trim()?.lowercase()) {
+                                        "1", "true", "yes" -> true
+                                        else -> false
+                                    }
+                                } else {
+                                    false
+                                }
+
+                                val thumbnail = if (thumbnailCol != null) {
+                                    c.getStringOrNull(thumbnailCol)
+                                } else {
+                                    null
+                                }
 
                                 val duration = if (durationCol != null) {
-                                    val value = c.getStringSafe(colIdx++)
-                                    when {
-                                        value == null -> {
-                                            -1
-                                        }
-                                        value.contains(":") -> {
-                                            parseDuration(value) ?: -1
-                                        }
-                                        else -> {
-                                            value.toIntOrNull() ?: -1
-                                        }
-                                    }
-                                } else -1
+                                    parseDurationAny(c.getStringOrNull(durationCol)) ?: -1
+                                } else {
+                                    -1
+                                }
 
-                                val thumbnail = if (thumbCol != null) c.getStringSafe(colIdx++) else null
-                                val album = if (albumCol != null) c.getStringSafe(colIdx++) else null
-                                val liked = if (likedCol != null) c.getIntSafe(colIdx++) == 1 else false
-
-                                val song = SongEntity(
-                                    id = id,
-                                    title = title,
-                                    duration = duration,
-                                    thumbnailUrl = thumbnail,
-                                    albumName = album,
-                                    liked = liked,
-                                    likedDate = if (liked) LocalDateTime.now() else null,
-                                    localPath = null
+                                songs.add(
+                                    SongEntity(
+                                        id = id,
+                                        title = title,
+                                        duration = duration,
+                                        thumbnailUrl = thumbnail?.takeIf { it.isNotBlank() },
+                                        albumName = null,
+                                        liked = liked,
+                                        likedDate = if (liked) LocalDateTime.now() else null,
+                                        localPath = null
+                                    )
                                 )
-
-                                songs.add(song)
                                 extractedCount++
 
                                 if (extractedCount % 500 == 0) {
-                                    Log.d(TAG, "Canciones genéricas extraídas: $extractedCount")
+                                    Log.d(TAG, "Canciones genericas extraidas: $extractedCount")
                                 }
                             } catch (e: Exception) {
-                                Log.w(TAG, "Fallo al extraer canción genérica en fila $extractedCount", e)
+                                Log.w(
+                                    TAG,
+                                    "Fallo al extraer cancion generica en fila $extractedCount",
+                                    e
+                                )
                             }
                         }
-                        Log.d(TAG, "Extracción genérica completada: $extractedCount canciones")
+                        Log.d(TAG, "Extraccion generica completada: $extractedCount canciones")
                     }
                 } else {
                     Log.w(TAG, "No se encontraron columnas ID o Title en la tabla de canciones")
@@ -1011,18 +1629,26 @@ private fun insertSongsSync(songs: List<SongEntity>, overwriteExisting: Boolean 
                 Log.e(TAG, "Error extrayendo desde tabla de canciones", e)
             }
         } else {
-            Log.w(TAG, "No se encontró tabla de canciones para migración genérica")
+            Log.w(TAG, "No se encontro tabla de canciones para migracion generica")
         }
 
-        Log.d(TAG, "Finalizada extracción de canciones genéricas: ${songs.size} canciones")
+        Log.d(TAG, "Finalizada extraccion de canciones genericas: ${songs.size} canciones")
         return songs
     }
 
-    private fun extractGenericPlaylists(sourceDb: SQLiteDatabase, allTables: List<String>, generateNewIds: Boolean): List<Pair<PlaylistEntity, List<PlaylistSongMap>>> {
-        Log.d(TAG, "Extrayendo playlists genéricas (generar nuevos IDs: $generateNewIds), tablas disponibles: $allTables")
+    private fun extractGenericPlaylists(
+        sourceDb: SQLiteDatabase,
+        allTables: List<String>,
+        generateNewIds: Boolean
+    ): List<Pair<PlaylistEntity, List<PlaylistSongMap>>> {
+        Log.d(
+            TAG,
+            "Extrayendo playlists genéricas (generar nuevos IDs: $generateNewIds), tablas disponibles: $allTables"
+        )
         val playlists = mutableListOf<Pair<PlaylistEntity, List<PlaylistSongMap>>>()
 
-        val playlistTable = allTables.firstOrNull { it.lowercase() == "playlist" || it.lowercase() == "playlists" }
+        val playlistTable =
+            allTables.firstOrNull { it.lowercase() == "playlist" || it.lowercase() == "playlists" }
         if (playlistTable != null) {
             Log.d(TAG, "Tabla de playlists encontrada: $playlistTable")
             try {
@@ -1033,10 +1659,12 @@ private fun insertSongsSync(songs: List<SongEntity>, overwriteExisting: Boolean 
                 val nameCol = columns.firstOrNull { it.lowercase() in listOf("name", "title") }
                 val browseIdCol = columns.firstOrNull { it.lowercase() == "browseid" }
 
-                Log.d(TAG, "Columnas identificadas - id: $idCol, name: $nameCol, browseId: $browseIdCol")
+                Log.d(
+                    TAG,
+                    "Columnas identificadas - id: $idCol, name: $nameCol, browseId: $browseIdCol"
+                )
 
                 if (idCol != null && nameCol != null) {
-                    // Only import local playlists (those without browseId or with empty browseId)
                     val whereClause = if (browseIdCol != null) {
                         " WHERE $browseIdCol IS NULL OR $browseIdCol = ''"
                     } else {
@@ -1052,7 +1680,8 @@ private fun insertSongsSync(songs: List<SongEntity>, overwriteExisting: Boolean 
 
                         while (c.moveToNext()) {
                             try {
-                                val playlistId = c.getStringOrNull(idCol) ?: UUID.randomUUID().toString()
+                                val playlistId =
+                                    c.getStringOrNull(idCol) ?: UUID.randomUUID().toString()
                                 val playlistName = c.getStringOrNull(nameCol) ?: "Playlist"
                                 val newId = if (generateNewIds) {
                                     val generatedId = PlaylistEntity.generatePlaylistId()
@@ -1066,7 +1695,12 @@ private fun insertSongsSync(songs: List<SongEntity>, overwriteExisting: Boolean 
                                 // Extract playlist songs
                                 val songMaps = mutableListOf<PlaylistSongMap>()
                                 val mapTable = allTables.firstOrNull {
-                                    it.lowercase() in listOf("playlistsongmap", "playlist_song_map", "songplaylistmap", "song_playlist_map")
+                                    it.lowercase() in listOf(
+                                        "playlistsongmap",
+                                        "playlist_song_map",
+                                        "songplaylistmap",
+                                        "song_playlist_map"
+                                    )
                                 }
 
                                 if (mapTable != null) {
@@ -1076,13 +1710,24 @@ private fun insertSongsSync(songs: List<SongEntity>, overwriteExisting: Boolean 
                                             arrayOf(playlistId)
                                         ).use { sc ->
                                             while (sc.moveToNext()) {
-                                                val songId = sc.getStringOrNull("songId") ?: continue
+                                                val songId =
+                                                    sc.getStringOrNull("songId") ?: continue
                                                 val pos = sc.getIntOrNull("position") ?: 0
-                                                songMaps.add(PlaylistSongMap(playlistId = newId, songId = songId, position = pos))
+                                                songMaps.add(
+                                                    PlaylistSongMap(
+                                                        playlistId = newId,
+                                                        songId = songId,
+                                                        position = pos
+                                                    )
+                                                )
                                             }
                                         }
                                     } catch (e: Exception) {
-                                        Log.w(TAG, "Error extrayendo canciones para playlist genérica '$playlistName'", e)
+                                        Log.w(
+                                            TAG,
+                                            "Error extrayendo canciones para playlist genérica '$playlistName'",
+                                            e
+                                        )
                                     }
                                 }
 
@@ -1093,10 +1738,17 @@ private fun insertSongsSync(songs: List<SongEntity>, overwriteExisting: Boolean 
                                     Log.d(TAG, "Playlists genéricas extraídas: $extractedCount")
                                 }
                             } catch (e: Exception) {
-                                Log.w(TAG, "Fallo al extraer playlist genérica en fila $extractedCount", e)
+                                Log.w(
+                                    TAG,
+                                    "Fallo al extraer playlist genérica en fila $extractedCount",
+                                    e
+                                )
                             }
                         }
-                        Log.d(TAG, "Extracción genérica de playlists completada: $extractedCount playlists")
+                        Log.d(
+                            TAG,
+                            "Extracción genérica de playlists completada: $extractedCount playlists"
+                        )
                     }
                 } else {
                     Log.w(TAG, "No se encontraron columnas ID o Name en la tabla de playlists")
@@ -1164,7 +1816,11 @@ private fun insertSongsSync(songs: List<SongEntity>, overwriteExisting: Boolean 
                 var logged = 0
                 while (c.moveToNext()) {
                     val row = cols.mapIndexed { idx, col ->
-                        val value = try { c.getString(c.getColumnIndexOrThrow(col)) } catch (e: Exception) { null }
+                        val value = try {
+                            c.getString(c.getColumnIndexOrThrow(col))
+                        } catch (e: Exception) {
+                            null
+                        }
                         "$col=$value"
                     }.joinToString(", ")
                     Log.i(TAG, "$tableName row ${logged + 1}: $row")
@@ -1183,14 +1839,31 @@ private fun insertSongsSync(songs: List<SongEntity>, overwriteExisting: Boolean 
             return
         }
 
-        val candidates = listOf("favorites", "favourites", "liked_songs", "liked", "favorite_songs", "favorite", "bookmarks", "bookmark")
+        val candidates = listOf(
+            "favorites",
+            "favourites",
+            "liked_songs",
+            "liked",
+            "favorite_songs",
+            "favorite",
+            "bookmarks",
+            "bookmark"
+        )
         val writable = database.openHelper.writableDatabase
 
         for (table in candidates) {
             if (!hasTable(sourceDb, table)) continue
 
             val cols = getTableColumns(sourceDb, table)
-            val idCol = cols.firstOrNull { it.equals("songId", true) || it.equals("song_id", true) || it.equals("id", true) || it.equals("trackId", true) || it.equals("track_id", true) }
+            val idCol = cols.firstOrNull {
+                it.equals("songId", true) || it.equals(
+                    "song_id",
+                    true
+                ) || it.equals("id", true) || it.equals("trackId", true) || it.equals(
+                    "track_id",
+                    true
+                )
+            }
             if (idCol == null) {
                 Log.d(TAG, "Tabla $table encontrada pero no se identificó columna de songId: $cols")
                 continue
@@ -1201,13 +1874,18 @@ private fun insertSongsSync(songs: List<SongEntity>, overwriteExisting: Boolean 
             var updated = 0
             sourceDb.rawQuery("SELECT $idCol FROM $table", null).use { c ->
                 while (c.moveToNext()) {
-                    val oldId = try { c.getString(c.getColumnIndexOrThrow(idCol)) } catch (e: Exception) { null }
+                    val oldId = try {
+                        c.getString(c.getColumnIndexOrThrow(idCol))
+                    } catch (e: Exception) {
+                        null
+                    }
                     if (oldId.isNullOrBlank()) continue
                     total++
                     val newId = idMap[oldId]
                     if (newId != null) {
                         try {
-                            val stmt = writable.compileStatement("UPDATE song SET liked = 1, likedDate = ? WHERE id = ?")
+                            val stmt =
+                                writable.compileStatement("UPDATE song SET liked = 1, likedDate = ? WHERE id = ?")
                             stmt.bindString(1, LocalDateTime.now().toString())
                             stmt.bindString(2, newId)
                             val rows = stmt.executeUpdateDelete()
@@ -1250,13 +1928,206 @@ private fun insertSongsSync(songs: List<SongEntity>, overwriteExisting: Boolean 
 
     private fun hasTable(db: SQLiteDatabase, tableName: String): Boolean {
         return try {
-            db.rawQuery("SELECT name FROM sqlite_master WHERE type='table' AND name=?", arrayOf(tableName)).use { c ->
+            db.rawQuery(
+                "SELECT name FROM sqlite_master WHERE type='table' AND name=?",
+                arrayOf(tableName)
+            ).use { c ->
                 c.count > 0
             }
         } catch (e: Exception) {
             Log.w(TAG, "Error verificando tabla $tableName", e)
             false
         }
+    }
+
+    private fun extractSongArtistsFromUnknownSource(
+        sourceDb: SQLiteDatabase,
+        allTables: List<String>
+    ): Map<String, String> {
+        val songTable = allTables.firstOrNull {
+            it.equals("song", ignoreCase = true) || it.equals("songs", ignoreCase = true)
+        } ?: return emptyMap()
+
+        return extractSongArtistsFromTable(sourceDb, songTable)
+    }
+
+    private fun extractSongArtistsFromTable(
+        sourceDb: SQLiteDatabase,
+        tableName: String
+    ): Map<String, String> {
+        return try {
+            if (!hasTable(sourceDb, tableName)) return emptyMap()
+
+            val columns = getTableColumns(sourceDb, tableName)
+            val idCol = columns.firstOrNull { it.equals("id", ignoreCase = true) } ?: return emptyMap()
+            val artistCol = findPreferredColumn(
+                columns = columns,
+                preferredNames = listOf(
+                    "artiststext",
+                    "artists_text",
+                    "artist_text",
+                    "artistnames",
+                    "artist_names",
+                    "artists",
+                    "artist",
+                    "artistname",
+                    "artist_name",
+                    "author",
+                    "uploader",
+                    "channel"
+                )
+            ) ?: return emptyMap()
+
+            val songArtists = linkedMapOf<String, String>()
+            sourceDb.rawQuery("SELECT $idCol, $artistCol FROM $tableName", null).use { cursor ->
+                while (cursor.moveToNext()) {
+                    val sourceSongId = cursor.getStringOrNull(idCol)?.takeIf { it.isNotBlank() } ?: continue
+                    val artistText = cursor.getStringOrNull(artistCol)?.takeIf { it.isNotBlank() } ?: continue
+                    songArtists[sourceSongId] = artistText
+                }
+            }
+
+            Log.d(TAG, "Extracción de artistas desde '$tableName': ${songArtists.size} canciones con artista")
+            songArtists
+        } catch (e: Exception) {
+            Log.w(TAG, "No se pudieron extraer artistas desde '$tableName'", e)
+            emptyMap()
+        }
+    }
+
+    private fun importSongArtistsFromSource(
+        sourceSongArtists: Map<String, String>,
+        idMap: Map<String, String>
+    ): Int {
+        if (sourceSongArtists.isEmpty()) {
+            return 0
+        }
+
+        val songExistsCache = mutableMapOf<String, Boolean>()
+        val artistIdByName = mutableMapOf<String, String>()
+        var insertedMappings = 0
+
+        try {
+            // Precargar artistas existentes para no duplicar nombres.
+            database.openHelper.readableDatabase
+                .query("SELECT id, name FROM artist", emptyArray())
+                .use { cursor ->
+                    while (cursor.moveToNext()) {
+                        val id = cursor.getStringOrNull("id") ?: continue
+                        val name = cursor.getStringOrNull("name")?.trim()?.lowercase() ?: continue
+                        if (name.isNotBlank()) {
+                            artistIdByName.putIfAbsent(name, id)
+                        }
+                    }
+                }
+        } catch (e: Exception) {
+            Log.w(TAG, "No se pudo precargar tabla artist", e)
+        }
+
+        sourceSongArtists.forEach { (sourceSongId, artistsText) ->
+            val targetSongId = idMap[sourceSongId] ?: sourceSongId
+            val exists = songExistsCache.getOrPut(targetSongId) { songExists(targetSongId) }
+            if (!exists) return@forEach
+
+            parseArtistsText(artistsText).forEachIndexed { index, artistName ->
+                val key = artistName.lowercase()
+                val artistId = artistIdByName[key] ?: run {
+                    val newId = ArtistEntity.generateArtistId()
+                    database.insert(
+                        ArtistEntity(
+                            id = newId,
+                            name = artistName,
+                            isLocal = false
+                        )
+                    )
+                    artistIdByName[key] = newId
+                    newId
+                }
+
+                database.insert(
+                    SongArtistMap(
+                        songId = targetSongId,
+                        artistId = artistId,
+                        position = index
+                    )
+                )
+                insertedMappings++
+            }
+        }
+
+        return insertedMappings
+    }
+
+    private fun parseArtistsText(artistsText: String): List<String> {
+        if (artistsText.isBlank()) return emptyList()
+
+        val compact = artistsText.trim()
+
+        val jsonNameMatches = Regex("\"name\"\\s*:\\s*\"([^\"]+)\"")
+            .findAll(compact)
+            .map { it.groupValues[1].trim() }
+            .filter { it.isNotBlank() }
+            .toList()
+        if (jsonNameMatches.isNotEmpty()) {
+            return jsonNameMatches.distinctBy { it.lowercase() }
+        }
+
+        val jsonStringArrayMatches = if (compact.startsWith("[") && compact.contains("\"")) {
+            Regex("\"([^\"]+)\"")
+                .findAll(compact)
+                .map { it.groupValues[1].trim() }
+                .filter { it.isNotBlank() && !it.equals("id", ignoreCase = true) && !it.equals("name", ignoreCase = true) }
+                .toList()
+        } else {
+            emptyList()
+        }
+        if (jsonStringArrayMatches.isNotEmpty()) {
+            return jsonStringArrayMatches.distinctBy { it.lowercase() }
+        }
+
+        var normalized = compact
+        normalized = normalized.replace(Regex("(?i)\\s+(feat\\.?|ft\\.?)\\s+"), ",")
+        normalized = normalized.replace(";", ",")
+        normalized = normalized.replace(" & ", ",")
+        normalized = normalized.replace(" • ", ",")
+        normalized = normalized.replace(" / ", ",")
+        normalized = normalized.replace(" x ", ",")
+        normalized = normalized.removePrefix("[").removeSuffix("]").replace("\"", "")
+
+        return normalized
+            .split(",")
+            .map { it.trim() }
+            .filter { it.isNotBlank() }
+            .distinctBy { it.lowercase() }
+    }
+
+    private fun findPreferredColumn(
+        columns: List<String>,
+        preferredNames: List<String>
+    ): String? {
+        if (columns.isEmpty()) return null
+        val byLower = columns.associateBy { it.lowercase() }
+        for (preferred in preferredNames) {
+            val match = byLower[preferred.lowercase()]
+            if (match != null) return match
+        }
+        return null
+    }
+
+    private fun parseDurationAny(rawDuration: String?): Int? {
+        if (rawDuration.isNullOrBlank()) return null
+
+        val normalized = rawDuration.trim()
+        if (normalized.contains(":")) {
+            return parseDuration(normalized)
+        }
+
+        val numeric = normalized.toDoubleOrNull() ?: return null
+        if (numeric <= 0) return null
+
+        // En varias bases externas la duración viene en milisegundos.
+        val seconds = if (numeric > 60_000) (numeric / 1000.0) else numeric
+        return seconds.toInt()
     }
 
     private fun parseDuration(durationText: String?): Int? {
@@ -1271,12 +2142,14 @@ private fun insertSongsSync(songs: List<SongEntity>, overwriteExisting: Boolean 
                     val seconds = parts[1].toLong()
                     ((minutes * 60 + seconds)).toInt()
                 }
+
                 3 -> {
                     val hours = parts[0].toLong()
                     val minutes = parts[1].toLong()
                     val seconds = parts[2].toLong()
                     ((hours * 3600 + minutes * 60 + seconds)).toInt()
                 }
+
                 else -> null
             }
         } catch (e: Exception) {
@@ -1323,6 +2196,7 @@ private fun insertSongsSync(songs: List<SongEntity>, overwriteExisting: Boolean 
         object CopyingFile : MigrateProgress()
         object OpeningDatabase : MigrateProgress()
         data class DetectingFork(val fork: ForkType) : MigrateProgress()
+        object CleaningSessionData : MigrateProgress()
         object Done : MigrateProgress()
         data class Error(val exception: Throwable) : MigrateProgress()
     }
@@ -1331,7 +2205,6 @@ private fun insertSongsSync(songs: List<SongEntity>, overwriteExisting: Boolean 
 // ---------- Utilities ----------
 enum class ForkType { INNERTUNE, VIMUSIC, RIMUSIC, HARMONY, UNKNOWN }
 
-// Cursor helpers
 fun Cursor.getStringSafe(index: Int): String? = try {
     if (isNull(index)) {
         null
@@ -1362,7 +2235,6 @@ fun Cursor.getIntSafe(index: Int): Int? = try {
     null
 }
 
-// Nuevas extensiones para manejo seguro de columnas por nombre
 fun Cursor.getStringOrNull(columnName: String): String? {
     return try {
         val index = getColumnIndex(columnName)
