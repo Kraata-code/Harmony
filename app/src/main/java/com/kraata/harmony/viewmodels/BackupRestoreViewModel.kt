@@ -6,19 +6,30 @@ import android.database.sqlite.SQLiteDatabase
 import android.net.Uri
 import android.util.Log
 import android.widget.Toast
+import androidx.datastore.preferences.core.edit
 import androidx.lifecycle.ViewModel
 import com.kraata.harmony.MainActivity
 import com.kraata.harmony.R
+import com.kraata.harmony.constants.AccountChannelHandleKey
+import com.kraata.harmony.constants.AccountEmailKey
+import com.kraata.harmony.constants.AccountNameKey
+import com.kraata.harmony.constants.DataSyncIdKey
+import com.kraata.harmony.constants.InnerTubeCookieKey
+import com.kraata.harmony.constants.UseLoginForBrowse
+import com.kraata.harmony.constants.VisitorDataKey
 import com.kraata.harmony.db.InternalDatabase
 import com.kraata.harmony.db.MusicDatabase
 import com.kraata.harmony.extensions.div
 import com.kraata.harmony.extensions.zipInputStream
 import com.kraata.harmony.extensions.zipOutputStream
 import com.kraata.harmony.playback.MusicService
+import com.kraata.harmony.utils.dataStore
 import com.kraata.harmony.utils.reportException
+import com.zionhuang.innertube.utils.parseCookieString
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import java.io.File
 import java.io.FileInputStream
@@ -63,6 +74,10 @@ class BackupRestoreViewModel @Inject constructor(
 
     fun restore(uri: Uri) {
         runCatching {
+            logAuthSettingsSnapshot("before_restore")
+            var restoreSuccessful = false
+            var settingsRestored = false
+
             context.applicationContext.contentResolver.openInputStream(uri)?.use {
                 it.zipInputStream().use { inputStream ->
                     var entry = inputStream.nextEntry
@@ -73,6 +88,7 @@ class BackupRestoreViewModel @Inject constructor(
                                     .use { outputStream ->
                                         inputStream.copyTo(outputStream)
                                     }
+                                settingsRestored = true
                             }
 
                             InternalDatabase.DB_NAME -> {
@@ -108,6 +124,8 @@ class BackupRestoreViewModel @Inject constructor(
                                             inputStream.copyTo(outputStream)
                                         }
                                     }
+                                    restoreSuccessful = true
+                                    createImportCacheMarker("restore")
                                 } else {
                                     Log.e(TAG, "Incompatible database, aborting restore")
                                     Toast.makeText(
@@ -123,13 +141,21 @@ class BackupRestoreViewModel @Inject constructor(
                 }
             }
 
+            if (settingsRestored) {
+                clearImportedSessionCredentials("restore")
+            }
 
-            val stopIntent = Intent(context, MusicService::class.java)
-            context.stopService(stopIntent)
-            val startIntent = Intent(context, MainActivity::class.java)
-            startIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            context.startActivity(startIntent)
-            exitProcess(0)
+            if (restoreSuccessful) {
+                logAuthSettingsSnapshot("after_restore_before_restart")
+                val stopIntent = Intent(context, MusicService::class.java)
+                context.stopService(stopIntent)
+                val startIntent = Intent(context, MainActivity::class.java)
+                startIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                context.startActivity(startIntent)
+                exitProcess(0)
+            } else {
+                Log.w(TAG, "Restore finished without replacing database. Restart skipped.")
+            }
         }.onFailure {
             reportException(it)
             Toast.makeText(context, it.message, Toast.LENGTH_SHORT).show()
@@ -141,8 +167,10 @@ class BackupRestoreViewModel @Inject constructor(
         Log.d(TAG, "Import URI: $uri")
 
         runCatching {
+            logAuthSettingsSnapshot("before_import")
             var importSuccessful = false
             var importResult: CrossForkMigrationViewModel.ImportResult? = null
+            var settingsRestored = false
 
             context.applicationContext.contentResolver.openInputStream(uri)?.use { input ->
                 Log.d(TAG, "Successfully opened input stream from URI")
@@ -166,6 +194,7 @@ class BackupRestoreViewModel @Inject constructor(
                                             zipInputStream.copyTo(outputStream)
                                         }
                                     Log.d(TAG, "Settings file extracted successfully")
+                                    settingsRestored = true
                                 } catch (e: Exception) {
                                     Log.e(TAG, "Failed to extract settings file", e)
                                 }
@@ -368,6 +397,10 @@ class BackupRestoreViewModel @Inject constructor(
                 throw Exception("Cannot open backup file")
             }
 
+            if (settingsRestored) {
+                clearImportedSessionCredentials("import")
+            }
+
             // Only restart if import was successful
             if (importSuccessful) {
                 val message = if (importResult != null) {
@@ -378,6 +411,8 @@ class BackupRestoreViewModel @Inject constructor(
 
                 Log.i(TAG, "Import successful: $message")
                 Toast.makeText(context, message, Toast.LENGTH_LONG).show()
+                createImportCacheMarker("import")
+                logAuthSettingsSnapshot("after_import_before_restart")
 
                 // Give time for toast to show and transactions to complete
                 Log.d(TAG, "Waiting before restart...")
@@ -422,6 +457,59 @@ class BackupRestoreViewModel @Inject constructor(
         }
 
         Log.d(TAG, "=== IMPORT PROCESS COMPLETED ===")
+    }
+
+    private fun clearImportedSessionCredentials(source: String) {
+        runCatching {
+            runBlocking {
+                context.dataStore.edit { settings ->
+                    settings.remove(InnerTubeCookieKey)
+                    settings.remove(VisitorDataKey)
+                    settings.remove(DataSyncIdKey)
+                    settings.remove(AccountNameKey)
+                    settings.remove(AccountEmailKey)
+                    settings.remove(AccountChannelHandleKey)
+                }
+            }
+            Log.i(TAG, "Cleared imported session credentials after $source")
+        }.onFailure { e ->
+            Log.e(TAG, "Failed to clear imported session credentials after $source", e)
+        }
+    }
+
+    private fun createImportCacheMarker(source: String) {
+        runCatching {
+            val timestamp = System.currentTimeMillis()
+            val markerFile = File(context.cacheDir, ".import_completed_clear_cache")
+            markerFile.writeText(timestamp.toString())
+            Log.i(
+                TAG,
+                "Created import marker for MusicService cache cleanup. source=$source, timestamp=$timestamp"
+            )
+        }.onFailure { e ->
+            Log.w(TAG, "Failed to create import cache marker ($source): ${e.message}", e)
+        }
+    }
+
+    private fun logAuthSettingsSnapshot(stage: String) {
+        runCatching {
+            val settings = runBlocking { context.dataStore.data.first() }
+            val cookie = settings[InnerTubeCookieKey].orEmpty()
+            val visitorData = settings[VisitorDataKey].orEmpty()
+            val dataSyncId = settings[DataSyncIdKey].orEmpty()
+            val useLoginForBrowse = settings[UseLoginForBrowse] != false
+            val hasSapisid = runCatching { "SAPISID" in parseCookieString(cookie) }
+                .getOrDefault(false)
+
+            Log.i(
+                TAG,
+                "AUTH SNAPSHOT [$stage] useLoginForBrowse=$useLoginForBrowse, " +
+                        "cookieChars=${cookie.length}, hasSapisid=$hasSapisid, " +
+                        "visitorDataChars=${visitorData.length}, dataSyncIdChars=${dataSyncId.length}"
+            )
+        }.onFailure { e ->
+            Log.w(TAG, "Failed to capture auth snapshot ($stage): ${e.message}", e)
+        }
     }
 
     companion object {
