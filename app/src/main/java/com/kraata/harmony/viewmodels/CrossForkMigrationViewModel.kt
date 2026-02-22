@@ -6,6 +6,7 @@ import android.database.sqlite.SQLiteDatabase
 import android.net.Uri
 import android.util.Log
 import androidx.lifecycle.ViewModel
+import androidx.sqlite.db.SupportSQLiteDatabase
 import com.kraata.harmony.db.MusicDatabase
 import com.kraata.harmony.db.entities.ArtistEntity
 import com.kraata.harmony.db.entities.PlaylistEntity
@@ -34,6 +35,7 @@ class CrossForkMigrationViewModel @Inject constructor(
         const val TAG = "Migration"
         private const val CHUNK_SIZE = 300
         private const val PREVIEW_ROWS_COUNT = 5
+        private const val SQLITE_MAX_BIND_ARGS = 900
     }
 
     private val _progress = MutableStateFlow<MigrateProgress>(MigrateProgress.Idle)
@@ -155,6 +157,7 @@ class CrossForkMigrationViewModel @Inject constructor(
         uri: Uri,
         options: ImportOptions = ImportOptions()
     ): Result<ImportResult> {
+        // Toda la migración (I/O + parsing + SQLite) se ejecuta fuera de Main.
         return withContext(Dispatchers.IO) {
             Log.i(TAG, "Iniciando proceso de migración con URI: $uri y opciones: $options")
             var tempDb: SQLiteDatabase? = null
@@ -334,7 +337,10 @@ class CrossForkMigrationViewModel @Inject constructor(
         return inserted
     }
 
-    private fun insertPlaylistsSync(playlists: List<Pair<PlaylistEntity, List<PlaylistSongMap>>>) {
+    private fun insertPlaylistsSync(
+        playlists: List<Pair<PlaylistEntity, List<PlaylistSongMap>>>,
+        songIdMap: Map<String, String> = emptyMap()
+    ) {
         val writable = database.openHelper.writableDatabase
 
         Log.i(TAG, "=== INSERTANDO ${playlists.size} PLAYLISTS ===")
@@ -357,185 +363,182 @@ class CrossForkMigrationViewModel @Inject constructor(
             Log.w(TAG, "No se pudo verificar estado de foreign keys", e)
         }
 
+        val playlistSql = """
+            INSERT OR IGNORE INTO playlist
+            (id, name, isLocal, bookmarkedAt)
+            VALUES (?, ?, 1, strftime('%s','now'))
+        """.trimIndent()
+        val deleteSql = "DELETE FROM playlist_song_map WHERE playlistId = ?"
+        val mapSql = """
+            INSERT OR REPLACE INTO playlist_song_map
+            (playlistId, songId, position)
+            VALUES (?, ?, ?)
+        """.trimIndent()
+
+        val playlistStmt = writable.compileStatement(playlistSql)
+        val deleteStmt = writable.compileStatement(deleteSql)
+        val mapStmt = writable.compileStatement(mapSql)
+
         var successfulPlaylists = 0
         var totalSongsInserted = 0
         var totalSongsSkipped = 0
 
-        for ((index, playlistPair) in playlists.withIndex()) {
-            val (playlist, songMaps) = playlistPair
-            val playlistNumber = index + 1
+        try {
+            for ((index, playlistPair) in playlists.withIndex()) {
+                val (playlist, songMaps) = playlistPair
+                val playlistNumber = index + 1
 
-            Log.i(TAG, "")
-            Log.i(TAG, "[$playlistNumber/${playlists.size}] Procesando: '${playlist.name}'")
-            Log.i(TAG, "  ID: ${playlist.id}")
-            Log.i(TAG, "  Canciones a insertar: ${songMaps.size}")
+                Log.i(TAG, "")
+                Log.i(TAG, "[$playlistNumber/${playlists.size}] Procesando: '${playlist.name}'")
+                Log.i(TAG, "  ID: ${playlist.id}")
+                Log.i(TAG, "  Canciones a insertar: ${songMaps.size}")
 
-            writable.beginTransaction()
-            try {
-                // 1. Insertar playlist
-                val playlistSql = """
-                INSERT OR IGNORE INTO playlist
-                (id, name, isLocal, bookmarkedAt)
-                VALUES (?, ?, 1, strftime('%s','now'))
-            """.trimIndent()
+                writable.beginTransaction()
+                try {
+                    // 1. Insertar playlist
+                    playlistStmt.clearBindings()
+                    playlistStmt.bindString(1, playlist.id)
+                    playlistStmt.bindString(2, playlist.name)
+                    val playlistRowId = playlistStmt.executeInsert()
 
-                val playlistStmt = writable.compileStatement(playlistSql)
-                playlistStmt.bindString(1, playlist.id)
-                playlistStmt.bindString(2, playlist.name)
-                val playlistRowId = playlistStmt.executeInsert()
-                playlistStmt.close()
+                    if (playlistRowId == -1L) {
+                        Log.w(TAG, "  ⚠️ Playlist ya existe, actualizando relaciones...")
+                    } else {
+                        Log.d(TAG, "  ✅ Playlist insertada (rowId: $playlistRowId)")
+                    }
 
-                if (playlistRowId == -1L) {
-                    Log.w(TAG, "  ⚠️ Playlist ya existe, actualizando relaciones...")
-                } else {
-                    Log.d(TAG, "  ✅ Playlist insertada (rowId: $playlistRowId)")
-                }
+                    // 2. Limpiar relaciones anteriores
+                    deleteStmt.clearBindings()
+                    deleteStmt.bindString(1, playlist.id)
+                    val deleted = deleteStmt.executeUpdateDelete()
+                    if (deleted > 0) {
+                        Log.d(TAG, "  🗑️ Eliminadas $deleted relaciones anteriores")
+                    }
 
-                // 2. Limpiar relaciones anteriores
-                val deleteSql = "DELETE FROM playlist_song_map WHERE playlistId = ?"
-                val deleteStmt = writable.compileStatement(deleteSql)
-                deleteStmt.bindString(1, playlist.id)
-                val deleted = deleteStmt.executeUpdateDelete()
-                if (deleted > 0) {
-                    Log.d(TAG, "  🗑️ Eliminadas $deleted relaciones anteriores")
-                }
-                deleteStmt.close()
+                    // 3. Validar y preparar canciones para insertar
+                    if (songMaps.isEmpty()) {
+                        Log.w(TAG, "  ⚠️ Playlist sin canciones")
+                        writable.setTransactionSuccessful()
+                        successfulPlaylists++
+                        continue
+                    }
 
-                // 3. Validar y preparar canciones para insertar
-                if (songMaps.isEmpty()) {
-                    Log.w(TAG, "  ⚠️ Playlist sin canciones")
-                    // ✅ CORRECCIÓN: Marcar transacción como exitosa antes de salir
-                    writable.setTransactionSuccessful()
-                    // ✅ NO cerrar manualmente aquí, dejar que el finally lo haga
-                    successfulPlaylists++
-                    // El finally cerrará la transacción correctamente
-                } else {
                     Log.d(TAG, "  📝 Validando existencia de canciones...")
 
-                    // **CORRECCIÓN CRÍTICA**: Verificar qué canciones existen realmente en la BD
-                    val existingSongIds = mutableSetOf<String>()
-                    val missingSongIds = mutableListOf<String>()
+                    val candidateSongIds = LinkedHashSet<String>(songMaps.size)
+                    songMaps.forEach { map ->
+                        candidateSongIds.add(songIdMap[map.songId] ?: map.songId)
+                    }
+
+                    val existingSongIds = queryExistingSongIds(writable, candidateSongIds)
+                    Log.d(TAG, "  ✅ Canciones existentes: ${existingSongIds.size}")
+
+                    var missingCount = 0
+                    val missingSample = ArrayList<String>(5)
+                    var insertedCount = 0
+                    var positionCounter = 0
 
                     for (map in songMaps) {
-                        val checkCursor = writable.query(
-                            "SELECT 1 FROM song WHERE id = ? LIMIT 1",
-                            arrayOf(map.songId)
-                        )
-                        try {
-                            val exists = checkCursor.count > 0
-                            if (exists) {
-                                existingSongIds.add(map.songId)
-                            } else {
-                                missingSongIds.add(map.songId)
+                        val mappedSongId = songIdMap[map.songId] ?: map.songId
+                        if (!existingSongIds.contains(mappedSongId)) {
+                            missingCount++
+                            if (missingSample.size < 5) {
+                                missingSample.add(mappedSongId)
                             }
-                        } finally {
-                            checkCursor.close()
+                            continue
                         }
-                    }
 
-                    Log.d(TAG, "  ✅ Canciones existentes: ${existingSongIds.size}")
-                    if (missingSongIds.isNotEmpty()) {
-                        Log.w(TAG, "  ❌ Canciones NO encontradas: ${missingSongIds.size}")
-                        Log.w(TAG, "     Primeras 5: ${missingSongIds.take(5)}")
-                        totalSongsSkipped += missingSongIds.size
-                    }
+                        try {
+                            mapStmt.clearBindings()
+                            mapStmt.bindString(1, playlist.id)
+                            mapStmt.bindString(2, mappedSongId)
 
-                    // 4. Insertar solo las relaciones válidas
-                    if (existingSongIds.isEmpty()) {
-                        Log.w(TAG, "  ⚠️ NINGUNA canción existe en la BD - playlist quedará vacía")
-                        // ✅ CORRECCIÓN: Marcar como exitosa y dejar que finally cierre
-                        writable.setTransactionSuccessful()
-                        // ✅ NO hacer endTransaction aquí
-                    } else {
-                        val mapSql = """
-                        INSERT OR REPLACE INTO playlist_song_map
-                        (playlistId, songId, position)
-                        VALUES (?, ?, ?)
-                    """.trimIndent()
+                            val position = if (map.position >= 0) map.position else positionCounter
+                            mapStmt.bindLong(3, position.toLong())
 
-                        val mapStmt = writable.compileStatement(mapSql)
-                        var insertedCount = 0
-                        var positionCounter = 0
-
-                        for (map in songMaps) {
-                            // **CORRECCIÓN CRÍTICA**: Solo insertar si la canción existe
-                            if (map.songId !in existingSongIds) {
-                                continue
-                            }
-
-                            try {
-                                mapStmt.clearBindings()
-                                mapStmt.bindString(1, playlist.id)
-                                mapStmt.bindString(2, map.songId)
-
-                                val position =
-                                    if (map.position >= 0) map.position else positionCounter
-                                mapStmt.bindLong(3, position.toLong())
-
-                                val rowId = mapStmt.executeInsert()
-                                if (rowId > 0) {
-                                    insertedCount++
-                                    positionCounter++
-                                } else {
-                                    Log.w(
-                                        TAG,
-                                        "     ⚠️ No se insertó relación para songId=${map.songId}"
-                                    )
-                                }
-                            } catch (e: Exception) {
-                                Log.e(
+                            val rowId = mapStmt.executeInsert()
+                            if (rowId > 0) {
+                                insertedCount++
+                                positionCounter++
+                            } else {
+                                Log.w(
                                     TAG,
-                                    "     ❌ Error insertando relación songId=${map.songId}: ${e.message}"
+                                    "     ⚠️ No se insertó relación para songId=$mappedSongId"
                                 )
                             }
-                        }
-
-                        mapStmt.close()
-                        totalSongsInserted += insertedCount
-
-                        Log.i(
-                            TAG,
-                            "  ✅ Insertadas $insertedCount relaciones de ${existingSongIds.size} válidas"
-                        )
-
-                        // 5. Verificar inserción
-                        val verifyCursor = writable.query(
-                            "SELECT COUNT(*) FROM playlist_song_map WHERE playlistId = ?",
-                            arrayOf(playlist.id)
-                        )
-                        val verifyCount = try {
-                            if (verifyCursor.moveToFirst()) verifyCursor.getInt(0) else 0
-                        } finally {
-                            verifyCursor.close()
-                        }
-
-                        Log.i(TAG, "  🔍 Verificación: $verifyCount relaciones en BD")
-
-                        if (verifyCount != insertedCount) {
+                        } catch (e: Exception) {
                             Log.e(
                                 TAG,
-                                "  ⚠️ DISCREPANCIA: Se insertaron $insertedCount pero BD muestra $verifyCount"
+                                "     ❌ Error insertando relación songId=$mappedSongId: ${e.message}"
                             )
                         }
-
-                        writable.setTransactionSuccessful()
                     }
 
-                    successfulPlaylists++
-                }
+                    totalSongsInserted += insertedCount
+                    totalSongsSkipped += missingCount
 
-            } catch (e: Exception) {
-                Log.e(TAG, "  ❌ Error procesando playlist '${playlist.name}'", e)
-                Log.e(TAG, "     Tipo: ${e.javaClass.simpleName}")
-                Log.e(TAG, "     Mensaje: ${e.message}")
-                // La transacción se revertirá automáticamente al no estar marcada como successful
-            } finally {
-                // ✅ CORRECCIÓN: Siempre cerrar la transacción aquí, una sola vez
-                try {
-                    writable.endTransaction()
+                    if (missingCount > 0) {
+                        Log.w(TAG, "  ❌ Canciones NO encontradas: $missingCount")
+                        if (missingSample.isNotEmpty()) {
+                            Log.w(TAG, "     Primeras 5: $missingSample")
+                        }
+                    }
+
+                    if (existingSongIds.isEmpty()) {
+                        Log.w(TAG, "  ⚠️ NINGUNA canción existe en la BD - playlist quedará vacía")
+                    }
+
+                    Log.i(
+                        TAG,
+                        "  ✅ Insertadas $insertedCount relaciones de ${songMaps.size - missingCount} válidas"
+                    )
+
+                    // 4. Verificar inserción
+                    val verifyCount = writable.query(
+                        "SELECT COUNT(*) FROM playlist_song_map WHERE playlistId = ?",
+                        arrayOf(playlist.id)
+                    ).use { cursor ->
+                        if (cursor.moveToFirst()) cursor.getInt(0) else 0
+                    }
+
+                    Log.i(TAG, "  🔍 Verificación: $verifyCount relaciones en BD")
+
+                    if (verifyCount != insertedCount) {
+                        Log.e(
+                            TAG,
+                            "  ⚠️ DISCREPANCIA: Se insertaron $insertedCount pero BD muestra $verifyCount"
+                        )
+                    }
+
+                    writable.setTransactionSuccessful()
+                    successfulPlaylists++
                 } catch (e: Exception) {
-                    Log.e(TAG, "  ⚠️ Error cerrando transacción: ${e.message}")
+                    Log.e(TAG, "  ❌ Error procesando playlist '${playlist.name}'", e)
+                    Log.e(TAG, "     Tipo: ${e.javaClass.simpleName}")
+                    Log.e(TAG, "     Mensaje: ${e.message}")
+                } finally {
+                    try {
+                        writable.endTransaction()
+                    } catch (e: Exception) {
+                        Log.e(TAG, "  ⚠️ Error cerrando transacción: ${e.message}")
+                    }
                 }
+            }
+        } finally {
+            try {
+                mapStmt.close()
+            } catch (e: Exception) {
+                Log.w(TAG, "Error cerrando mapStmt", e)
+            }
+            try {
+                deleteStmt.close()
+            } catch (e: Exception) {
+                Log.w(TAG, "Error cerrando deleteStmt", e)
+            }
+            try {
+                playlistStmt.close()
+            } catch (e: Exception) {
+                Log.w(TAG, "Error cerrando playlistStmt", e)
             }
         }
 
@@ -667,32 +670,60 @@ class CrossForkMigrationViewModel @Inject constructor(
         val idMap = mutableMapOf<String, String>()
         var favoritesImported = 0
 
-        // Procesar canciones en chunks
-        val chunks = songsToImport.chunked(CHUNK_SIZE)
-        var totalChunks = if (songsToImport.isEmpty()) 0 else (songsToImport.size / CHUNK_SIZE) + 1
+        val preExistingSongIds = if (options.generateNewIds && songsToImport.isNotEmpty()) {
+            val sourceSongIds = LinkedHashSet<String>(songsToImport.size)
+            songsToImport.forEach { song -> sourceSongIds.add(song.id) }
+            queryExistingSongIds(database.openHelper.readableDatabase, sourceSongIds)
+        } else {
+            emptySet()
+        }
+        val usedSongIds = HashSet<String>(preExistingSongIds.size + CHUNK_SIZE).apply {
+            addAll(preExistingSongIds)
+        }
 
-        chunks.forEachIndexed { idx, chunk ->
-            Log.i(TAG, "Procesando chunk ${idx + 1}/${chunks.size} (${chunk.size} canciones)")
+        forEachChunk(songsToImport) { chunkIndex, totalChunks, chunk ->
+            Log.i(TAG, "Procesando chunk $chunkIndex/$totalChunks (${chunk.size} canciones)")
 
-            // Aplicar generateNewIds si es necesario y registrar el mapeo oldId -> newId
-            val songsToInsert = chunk.map { song ->
-                val originalId = song.id
-                val shouldGenerate = options.generateNewIds && songExists(originalId)
-                if (shouldGenerate) {
-                    val newId = UUID.randomUUID().toString()
-                    idMap[originalId] = newId
-                    song.copy(id = newId)
-                } else {
-                    song
+            val songsToInsert: List<SongEntity> = if (options.generateNewIds) {
+                val transformedChunk = ArrayList<SongEntity>(chunk.size)
+                chunk.forEach { song ->
+                    val originalId = song.id
+                    val collidesWithTarget = preExistingSongIds.contains(originalId)
+                    val collidesWithinImport = usedSongIds.contains(originalId)
+                    if (collidesWithTarget || collidesWithinImport) {
+                        var newId: String
+                        do {
+                            newId = UUID.randomUUID().toString()
+                        } while (usedSongIds.contains(newId))
+
+                        // El mapeo para playlists/favoritos solo aplica cuando el conflicto es con datos ya existentes.
+                        if (collidesWithTarget) {
+                            idMap[originalId] = newId
+                        }
+
+                        transformedChunk.add(song.copy(id = newId))
+                        usedSongIds.add(newId)
+                    } else {
+                        transformedChunk.add(song)
+                        usedSongIds.add(originalId)
+                    }
                 }
+                transformedChunk
+            } else {
+                chunk
             }
 
-            favoritesImported += songsToInsert.count { it.liked }
+            songsToInsert.forEach { song ->
+                if (song.liked) favoritesImported++
+            }
 
-            insertSongsSync(songsToInsert)
-            songsImported += songsToInsert.size
+            val insertedInChunk = insertSongsSync(songsToInsert)
+            songsImported += insertedInChunk
 
-            Log.i(TAG, "Chunk ${idx + 1} completado. Total insertadas: $songsImported")
+            Log.i(
+                TAG,
+                "Chunk $chunkIndex completado. Insertadas en chunk: $insertedInChunk. Total insertadas: $songsImported"
+            )
         }
 
         val artistsImported = importSongArtistsFromSource(sourceSongArtists, idMap)
@@ -706,22 +737,7 @@ class CrossForkMigrationViewModel @Inject constructor(
 
         if (playlistsToImport.isNotEmpty()) {
             Log.d(TAG, "Insertando ${playlistsToImport.size} playlists...")
-            // Si generamos nuevos IDs para canciones, remappear songId en los mapas de playlist
-            val remappedPlaylists = if (idMap.isNotEmpty()) {
-                playlistsToImport.map { (pl, maps) ->
-                    val remappedMaps = maps.map { m ->
-                        val newSongId = idMap[m.songId] ?: m.songId
-                        PlaylistSongMap(
-                            playlistId = pl.id,
-                            songId = newSongId,
-                            position = m.position
-                        )
-                    }
-                    Pair(pl, remappedMaps)
-                }
-            } else playlistsToImport
-
-            insertPlaylistsSync(remappedPlaylists)
+            insertPlaylistsSync(playlistsToImport, idMap)
             playlistsImported = playlistsToImport.size
         }
 
@@ -981,26 +997,28 @@ class CrossForkMigrationViewModel @Inject constructor(
         var playlistsImported = 0
         val idMap = mutableMapOf<String, String>()
 
-        val chunks = songsToImport.chunked(CHUNK_SIZE)
-        var totalChunks = if (songsToImport.isEmpty()) 0 else (songsToImport.size / CHUNK_SIZE) + 1
-
-        chunks.forEachIndexed { idx, chunk ->
-            Log.i(TAG, "Procesando chunk ${idx + 1}/${chunks.size} (${chunk.size} canciones)")
+        forEachChunk(songsToImport) { chunkIndex, totalChunks, chunk ->
+            Log.i(TAG, "Procesando chunk $chunkIndex/$totalChunks (${chunk.size} canciones)")
 
             val songsToInsert = if (options.generateNewIds) {
-                chunk.map { song ->
+                val transformedChunk = ArrayList<SongEntity>(chunk.size)
+                chunk.forEach { song ->
                     val newId = UUID.randomUUID().toString()
                     idMap[song.id] = newId
-                    song.copy(id = newId)
+                    transformedChunk.add(song.copy(id = newId))
                 }
+                transformedChunk
             } else {
                 chunk
             }
 
-            insertSongsSync(songsToInsert)
-            songsImported += songsToInsert.size
+            val insertedInChunk = insertSongsSync(songsToInsert)
+            songsImported += insertedInChunk
 
-            Log.i(TAG, "Chunk ${idx + 1} completado. Total insertadas: $songsImported")
+            Log.i(
+                TAG,
+                "Chunk $chunkIndex completado. Insertadas en chunk: $insertedInChunk. Total insertadas: $songsImported"
+            )
         }
 
         val artistsImported = importSongArtistsFromSource(sourceSongArtists, idMap)
@@ -1015,21 +1033,7 @@ class CrossForkMigrationViewModel @Inject constructor(
         // Procesar playlists sincrónicamente
         if (playlistsToImport.isNotEmpty()) {
             Log.d(TAG, "Insertando ${playlistsToImport.size} playlists...")
-            val remappedPlaylists = if (idMap.isNotEmpty()) {
-                playlistsToImport.map { (pl, maps) ->
-                    val remappedMaps = maps.map { m ->
-                        val newSongId = idMap[m.songId] ?: m.songId
-                        PlaylistSongMap(
-                            playlistId = pl.id,
-                            songId = newSongId,
-                            position = m.position
-                        )
-                    }
-                    Pair(pl, remappedMaps)
-                }
-            } else playlistsToImport
-
-            insertPlaylistsSync(remappedPlaylists)
+            insertPlaylistsSync(playlistsToImport, idMap)
             playlistsImported = playlistsToImport.size
         }
 
@@ -1366,17 +1370,17 @@ class CrossForkMigrationViewModel @Inject constructor(
         if (songs.isEmpty()) return 0
 
         var imported = 0
-        val chunks = songs.chunked(CHUNK_SIZE)
-
-        chunks.forEachIndexed { idx: Int, chunk: List<SongEntity> ->
-            Log.i(TAG, "Procesando chunk ${idx + 1}/${chunks.size} (${chunk.size} canciones)")
+        forEachChunk(songs) { chunkIndex, totalChunks, chunk ->
+            Log.i(TAG, "Procesando chunk $chunkIndex/$totalChunks (${chunk.size} canciones)")
 
             val songsToInsert = if (generateNewIds) {
-                chunk.map { song ->
+                val transformedChunk = ArrayList<SongEntity>(chunk.size)
+                chunk.forEach { song ->
                     val newId = UUID.randomUUID().toString()
                     idMap[song.id] = newId
-                    song.copy(id = newId)
+                    transformedChunk.add(song.copy(id = newId))
                 }
+                transformedChunk
             } else {
                 chunk
             }
@@ -1386,7 +1390,7 @@ class CrossForkMigrationViewModel @Inject constructor(
 
             Log.i(
                 TAG,
-                "Chunk ${idx + 1} completado. Insertadas en chunk: $insertedInChunk. Total insertadas: $imported"
+                "Chunk $chunkIndex completado. Insertadas en chunk: $insertedInChunk. Total insertadas: $imported"
             )
         }
 
@@ -1448,22 +1452,7 @@ class CrossForkMigrationViewModel @Inject constructor(
 
         Log.d(TAG, "Insertando ${playlists.size} playlists...")
 
-        val remappedPlaylists = if (idMap.isNotEmpty()) {
-            playlists.map { (playlist, maps) ->
-                val remappedMaps = maps.map { map ->
-                    PlaylistSongMap(
-                        playlistId = playlist.id,
-                        songId = idMap[map.songId] ?: map.songId,
-                        position = map.position
-                    )
-                }
-                playlist to remappedMaps
-            }
-        } else {
-            playlists
-        }
-
-        insertPlaylistsSync(remappedPlaylists)
+        insertPlaylistsSync(playlists, idMap)
         return playlists.size
     }
 
@@ -1845,24 +1834,61 @@ class CrossForkMigrationViewModel @Inject constructor(
         }
     }
 
-    private fun songExists(id: String): Boolean {
-        return try {
-            val db = database.openHelper.readableDatabase
+    private inline fun <T> forEachChunk(
+        items: List<T>,
+        chunkSize: Int = CHUNK_SIZE,
+        block: (chunkIndex: Int, totalChunks: Int, chunk: List<T>) -> Unit
+    ) {
+        if (items.isEmpty()) return
 
-            val cursor = db.query(
-                "SELECT 1 FROM song WHERE id = ? LIMIT 1",
-                arrayOf(id)
-            )
+        val totalChunks = ((items.size - 1) / chunkSize) + 1
+        var startIndex = 0
+        var chunkIndex = 0
 
-            cursor.use {
-                it.moveToFirst()
-            }
-        } catch (e: Exception) {
-            Log.w(TAG, "Error checking songExists($id)", e)
-            false
+        while (startIndex < items.size) {
+            val endIndex = minOf(startIndex + chunkSize, items.size)
+            chunkIndex++
+            block(chunkIndex, totalChunks, items.subList(startIndex, endIndex))
+            startIndex = endIndex
         }
     }
 
+    private fun queryExistingSongIds(
+        db: SupportSQLiteDatabase,
+        songIds: Collection<String>
+    ): Set<String> {
+        if (songIds.isEmpty()) return emptySet()
+
+        val inputIds = if (songIds is List<String>) songIds else songIds.toList()
+        val existingSongIds = HashSet<String>(inputIds.size)
+        var startIndex = 0
+
+        while (startIndex < inputIds.size) {
+            val endIndex = minOf(startIndex + SQLITE_MAX_BIND_ARGS, inputIds.size)
+            val batchSize = endIndex - startIndex
+
+            val placeholders = buildString(batchSize * 2) {
+                repeat(batchSize) { idx ->
+                    if (idx > 0) append(',')
+                    append('?')
+                }
+            }
+            val args = Array<Any>(batchSize) { idx -> inputIds[startIndex + idx] }
+
+            db.query("SELECT id FROM song WHERE id IN ($placeholders)", args).use { cursor ->
+                while (cursor.moveToNext()) {
+                    val songId = cursor.getString(0)
+                    if (!songId.isNullOrBlank()) {
+                        existingSongIds.add(songId)
+                    }
+                }
+            }
+
+            startIndex = endIndex
+        }
+
+        return existingSongIds
+    }
 
     private fun logTablePreview(db: SQLiteDatabase, tableName: String, limit: Int = 5) {
         try {
@@ -2173,10 +2199,16 @@ class CrossForkMigrationViewModel @Inject constructor(
             return 0
         }
 
-        val songExistsCache = mutableMapOf<String, Boolean>()
         val artistIdByName = mutableMapOf<String, String>()
         val existingArtistIds = mutableSetOf<String>()
         var insertedMappings = 0
+        val targetSongIds = LinkedHashSet<String>(sourceSongArtists.size).apply {
+            sourceSongArtists.keys.forEach { sourceSongId ->
+                add(idMap[sourceSongId] ?: sourceSongId)
+            }
+        }
+        val existingTargetSongIds =
+            queryExistingSongIds(database.openHelper.readableDatabase, targetSongIds)
 
         try {
             // Precargar artistas existentes para no duplicar nombres.
@@ -2198,8 +2230,7 @@ class CrossForkMigrationViewModel @Inject constructor(
 
         sourceSongArtists.forEach { (sourceSongId, artists) ->
             val targetSongId = idMap[sourceSongId] ?: sourceSongId
-            val exists = songExistsCache.getOrPut(targetSongId) { songExists(targetSongId) }
-            if (!exists) return@forEach
+            if (!existingTargetSongIds.contains(targetSongId)) return@forEach
 
             dedupeArtistInfos(artists).forEachIndexed { index, artistInfo ->
                 val normalizedName = artistInfo.name.trim()
