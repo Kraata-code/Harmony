@@ -40,21 +40,14 @@ class CrossForkMigrationViewModel @Inject constructor(
     val progress: StateFlow<MigrateProgress> = _progress
 
     private suspend fun cleanSessionDependentData() {
-        Log.i(TAG, "=== LIMPIANDO DATOS DE SESIÓN POST-IMPORTACIÓN ===")
-
         try {
             val writable = database.openHelper.writableDatabase
-            Log.i(TAG, "🗑️ Eliminando URLs de streaming caducadas...")
-
             val formatCountBefore = writable.query(
                 "SELECT COUNT(*) FROM format",
                 emptyArray()
             ).use { cursor ->
                 if (cursor.moveToFirst()) cursor.getInt(0) else 0
             }
-
-            Log.d(TAG, "📊 Registros en format antes: $formatCountBefore")
-
             writable.execSQL("DELETE FROM format")
 
             val formatCountAfter = writable.query(
@@ -63,16 +56,6 @@ class CrossForkMigrationViewModel @Inject constructor(
             ).use { cursor ->
                 if (cursor.moveToFirst()) cursor.getInt(0) else 0
             }
-
-            Log.i(TAG, "✅ Format limpiado: $formatCountBefore → $formatCountAfter registros")
-
-            try {
-                Log.d(TAG, "ℹ️ Invalidación de cache de metadatos no necesaria")
-            } catch (e: Exception) {
-                Log.d(TAG, "⚠️ No hay campos de cache para invalidar: ${e.message}")
-            }
-            Log.i(TAG, "🗑️ Limpiando cache de reproducción...")
-
             val cacheDir = context.cacheDir
             val criticalCacheDirs = listOf(
                 "exoplayer",           // Cache principal de ExoPlayer
@@ -652,8 +635,11 @@ class CrossForkMigrationViewModel @Inject constructor(
             Log.d(TAG, "Opción de importar canciones deshabilitada o tabla 'Song' no encontrada")
             emptyList()
         }
+        val allTables = extractAvailableTables(sourceDb)
         val sourceSongArtists = if (options.importSongs) {
-            extractSongArtistsFromTable(sourceDb, "Song")
+            val artistsFromRelationTables = extractSongArtistsFromRelationTables(sourceDb, allTables)
+            val artistsFromSongTable = extractSongArtistsFromTable(sourceDb, "Song")
+            mergeSongArtists(artistsFromSongTable, artistsFromRelationTables)
         } else {
             emptyMap()
         }
@@ -964,8 +950,11 @@ class CrossForkMigrationViewModel @Inject constructor(
             Log.d(TAG, "Opción de importar canciones deshabilitada o tabla 'songs' no encontrada")
             emptyList()
         }
+        val allTables = extractAvailableTables(sourceDb)
         val sourceSongArtists = if (options.importSongs) {
-            extractSongArtistsFromTable(sourceDb, "songs")
+            val artistsFromRelationTables = extractSongArtistsFromRelationTables(sourceDb, allTables)
+            val artistsFromSongTable = extractSongArtistsFromTable(sourceDb, "songs")
+            mergeSongArtists(artistsFromSongTable, artistsFromRelationTables)
         } else {
             emptyMap()
         }
@@ -1233,16 +1222,11 @@ class CrossForkMigrationViewModel @Inject constructor(
         val allTables = extractAvailableTables(sourceDb)
         logKeyTablesPreview(sourceDb, allTables)
 
-        val (songsToImport, playlistsToImport) = extractDataFromSource(
+        val (songsToImport, playlistsToImport, sourceSongArtists) = extractDataFromSource(
             sourceDb,
             allTables,
             options
         )
-        val sourceSongArtists = if (options.importSongs) {
-            extractSongArtistsFromUnknownSource(sourceDb, allTables)
-        } else {
-            emptyMap()
-        }
 
         return performImport(
             songsToImport = songsToImport,
@@ -1295,13 +1279,21 @@ class CrossForkMigrationViewModel @Inject constructor(
         sourceDb: SQLiteDatabase,
         allTables: List<String>,
         options: ImportOptions
-    ): Pair<List<SongEntity>, List<Pair<PlaylistEntity, List<PlaylistSongMap>>>> {
-        val songs = if (options.importSongs) {
+    ): Triple<List<SongEntity>, List<Pair<PlaylistEntity, List<PlaylistSongMap>>>, Map<String, List<ArtistInfo>>> {
+        val (songs, sourceSongArtists) = if (options.importSongs) {
             Log.d(TAG, "Extrayendo canciones genéricas...")
-            extractGenericSongs(sourceDb, allTables)
+            val (genericSongs, artistsFromSongTable) = extractGenericSongs(sourceDb, allTables)
+            val artistsFromRelationTables = extractSongArtistsFromRelationTables(sourceDb, allTables)
+            val mergedArtists = mergeSongArtists(artistsFromSongTable, artistsFromRelationTables)
+            Log.i(
+                TAG,
+                "Artistas detectados para UNKNOWN: song_table=${artistsFromSongTable.size}, " +
+                        "relation_tables=${artistsFromRelationTables.size}, merged=${mergedArtists.size}"
+            )
+            Pair(genericSongs, mergedArtists)
         } else {
             Log.d(TAG, "Opción de importar canciones deshabilitada")
-            emptyList()
+            Pair(emptyList(), emptyMap())
         }
 
         val playlists = if (options.importPlaylists) {
@@ -1312,7 +1304,7 @@ class CrossForkMigrationViewModel @Inject constructor(
             emptyList()
         }
 
-        return Pair(songs, playlists)
+        return Triple(songs, playlists, sourceSongArtists)
     }
 
     /**
@@ -1322,7 +1314,7 @@ class CrossForkMigrationViewModel @Inject constructor(
         songsToImport: List<SongEntity>,
         playlistsToImport: List<Pair<PlaylistEntity, List<PlaylistSongMap>>>,
         options: ImportOptions,
-        sourceSongArtists: Map<String, String> = emptyMap()
+        sourceSongArtists: Map<String, List<ArtistInfo>> = emptyMap()
     ): ImportResult {
         Log.d(
             TAG,
@@ -1482,9 +1474,10 @@ class CrossForkMigrationViewModel @Inject constructor(
     private fun extractGenericSongs(
         sourceDb: SQLiteDatabase,
         allTables: List<String>
-    ): List<SongEntity> {
+    ): Pair<List<SongEntity>, Map<String, List<ArtistInfo>>> {
         Log.d(TAG, "Extrayendo canciones genericas desde tablas: $allTables")
         val songs = mutableListOf<SongEntity>()
+        val songArtists = mutableMapOf<String, List<ArtistInfo>>()
 
         val songTable =
             allTables.firstOrNull { it.lowercase() == "song" || it.lowercase() == "songs" }
@@ -1512,9 +1505,14 @@ class CrossForkMigrationViewModel @Inject constructor(
                         "lengthtext"
                     )
                 }
-                val artistCol = columns.firstOrNull {
-                    it.lowercase() in listOf(
+                val artistCol = findPreferredColumn(
+                    columns = columns,
+                    preferredNames = listOf(
                         "artiststext",
+                        "artists_text",
+                        "artist_text",
+                        "artistnames",
+                        "artist_names",
                         "artists",
                         "artist",
                         "artistname",
@@ -1523,7 +1521,23 @@ class CrossForkMigrationViewModel @Inject constructor(
                         "uploader",
                         "channel"
                     )
-                }
+                )
+                val artistIdCol = findPreferredColumn(
+                    columns = columns,
+                    preferredNames = listOf(
+                        "artistid",
+                        "artist_id",
+                        "artistId",
+                        "artistsid",
+                        "artists_id",
+                        "authorid",
+                        "author_id",
+                        "channelid",
+                        "channel_id",
+                        "uploaderid",
+                        "uploader_id"
+                    )
+                )?.takeIf { !it.equals(artistCol, ignoreCase = true) }
                 val likedCol = columns.firstOrNull {
                     it.lowercase() in listOf(
                         "liked",
@@ -1548,7 +1562,7 @@ class CrossForkMigrationViewModel @Inject constructor(
 
                 Log.d(
                     TAG,
-                    "Columnas identificadas (modo minimo) - id: $idCol, title: $titleCol, duration: $durationCol, artist: $artistCol, liked: $likedCol, thumbnail: $thumbnailCol"
+                    "Columnas identificadas (modo minimo) - id: $idCol, title: $titleCol, duration: $durationCol, artist: $artistCol, artistId: $artistIdCol, liked: $likedCol, thumbnail: $thumbnailCol"
                 )
 
                 if (idCol != null && titleCol != null) {
@@ -1557,6 +1571,7 @@ class CrossForkMigrationViewModel @Inject constructor(
                         titleCol,
                         durationCol,
                         artistCol,
+                        artistIdCol,
                         likedCol,
                         thumbnailCol
                     ).joinToString(", ")
@@ -1594,6 +1609,16 @@ class CrossForkMigrationViewModel @Inject constructor(
                                 } else {
                                     -1
                                 }
+                                val artistText = if (artistCol != null) {
+                                    c.getStringOrNull(artistCol)?.trim()?.takeIf { it.isNotBlank() }
+                                } else {
+                                    null
+                                }
+                                val artistIdText = if (artistIdCol != null) {
+                                    c.getStringOrNull(artistIdCol)?.trim()?.takeIf { it.isNotBlank() }
+                                } else {
+                                    null
+                                }
 
                                 songs.add(
                                     SongEntity(
@@ -1607,6 +1632,12 @@ class CrossForkMigrationViewModel @Inject constructor(
                                         localPath = null
                                     )
                                 )
+                                if (!artistText.isNullOrBlank()) {
+                                    val artists = parseArtistInfos(artistText, artistIdText)
+                                    if (artists.isNotEmpty()) {
+                                        songArtists[id] = artists
+                                    }
+                                }
                                 extractedCount++
 
                                 if (extractedCount % 500 == 0) {
@@ -1633,7 +1664,35 @@ class CrossForkMigrationViewModel @Inject constructor(
         }
 
         Log.d(TAG, "Finalizada extraccion de canciones genericas: ${songs.size} canciones")
-        return songs
+        return Pair(songs, songArtists)
+    }
+
+    private fun mergeSongArtists(
+        artistsFromSongTable: Map<String, List<ArtistInfo>>,
+        artistsFromRelationTables: Map<String, List<ArtistInfo>>
+    ): Map<String, List<ArtistInfo>> {
+        if (artistsFromSongTable.isEmpty() && artistsFromRelationTables.isEmpty()) {
+            return emptyMap()
+        }
+
+        val merged = linkedMapOf<String, List<ArtistInfo>>()
+        val allSongIds = linkedSetOf<String>().apply {
+            addAll(artistsFromSongTable.keys)
+            addAll(artistsFromRelationTables.keys)
+        }
+
+        allSongIds.forEach { sourceSongId ->
+            val artists = mutableListOf<ArtistInfo>()
+            artistsFromRelationTables[sourceSongId]?.let { artists.addAll(it) }
+            artistsFromSongTable[sourceSongId]?.let { artists.addAll(it) }
+
+            val normalized = dedupeArtistInfos(artists)
+            if (normalized.isNotEmpty()) {
+                merged[sourceSongId] = normalized
+            }
+        }
+
+        return merged
     }
 
     private fun extractGenericPlaylists(
@@ -1940,21 +1999,100 @@ class CrossForkMigrationViewModel @Inject constructor(
         }
     }
 
-    private fun extractSongArtistsFromUnknownSource(
+    private fun extractSongArtistsFromRelationTables(
         sourceDb: SQLiteDatabase,
         allTables: List<String>
-    ): Map<String, String> {
-        val songTable = allTables.firstOrNull {
-            it.equals("song", ignoreCase = true) || it.equals("songs", ignoreCase = true)
+    ): Map<String, List<ArtistInfo>> {
+        val mapTable = allTables.firstOrNull {
+            it.equals("song_artist_map", ignoreCase = true) ||
+                    it.equals("sorted_song_artist_map", ignoreCase = true) ||
+                    it.equals("songartistmap", ignoreCase = true) ||
+                    it.equals("song_artist", ignoreCase = true)
         } ?: return emptyMap()
 
-        return extractSongArtistsFromTable(sourceDb, songTable)
+        val artistTable = allTables.firstOrNull {
+            it.equals("artist", ignoreCase = true) || it.equals("artists", ignoreCase = true)
+        } ?: return emptyMap()
+
+        return try {
+            val mapCols = getTableColumns(sourceDb, mapTable)
+            val artistCols = getTableColumns(sourceDb, artistTable)
+
+            val songIdCol = findPreferredColumn(
+                columns = mapCols,
+                preferredNames = listOf(
+                    "songId",
+                    "song_id",
+                    "songid",
+                    "song",
+                    "trackId",
+                    "track_id"
+                )
+            ) ?: return emptyMap()
+            val artistIdCol = findPreferredColumn(
+                columns = mapCols,
+                preferredNames = listOf("artistId", "artist_id", "artistid", "artist")
+            ) ?: return emptyMap()
+            val positionCol = findPreferredColumn(
+                columns = mapCols,
+                preferredNames = listOf("position", "order", "idx", "index")
+            )
+
+            val artistPkCol = findPreferredColumn(
+                columns = artistCols,
+                preferredNames = listOf("id", "artistId", "artist_id")
+            ) ?: return emptyMap()
+            val artistNameCol = findPreferredColumn(
+                columns = artistCols,
+                preferredNames = listOf("name", "artist", "artistName", "artist_name", "title")
+            ) ?: return emptyMap()
+
+            val orderBy = if (positionCol != null) {
+                "ORDER BY m.$songIdCol, m.$positionCol"
+            } else {
+                "ORDER BY m.$songIdCol"
+            }
+
+            val query = """
+                SELECT m.$songIdCol AS sourceSongId, m.$artistIdCol AS sourceArtistId, a.$artistNameCol AS artistName
+                FROM $mapTable m
+                JOIN $artistTable a ON m.$artistIdCol = a.$artistPkCol
+                $orderBy
+            """.trimIndent()
+
+            val songArtists = linkedMapOf<String, MutableList<ArtistInfo>>()
+            sourceDb.rawQuery(query, null).use { cursor ->
+                while (cursor.moveToNext()) {
+                    val sourceSongId =
+                        cursor.getStringOrNull("sourceSongId")?.takeIf { it.isNotBlank() } ?: continue
+                    val artistId =
+                        cursor.getStringOrNull("sourceArtistId")?.trim()?.takeIf { it.isNotBlank() }
+                            ?: continue
+                    val artistName =
+                        cursor.getStringOrNull("artistName")?.trim()?.takeIf { it.isNotBlank() }
+                            ?: continue
+                    val bucket = songArtists.getOrPut(sourceSongId) { mutableListOf() }
+                    bucket.add(
+                        ArtistInfo(
+                            id = artistId,
+                            name = artistName,
+                            isYouTubeId = isLikelyYouTubeArtistId(artistId)
+                        )
+                    )
+                }
+            }
+
+            songArtists.mapValues { (_, artists) -> dedupeArtistInfos(artists) }
+        } catch (e: Exception) {
+            Log.w(TAG, "No se pudieron extraer artistas desde tablas relacionales", e)
+            emptyMap()
+        }
     }
 
     private fun extractSongArtistsFromTable(
         sourceDb: SQLiteDatabase,
         tableName: String
-    ): Map<String, String> {
+    ): Map<String, List<ArtistInfo>> {
         return try {
             if (!hasTable(sourceDb, tableName)) return emptyMap()
 
@@ -1977,13 +2115,34 @@ class CrossForkMigrationViewModel @Inject constructor(
                     "channel"
                 )
             ) ?: return emptyMap()
+            val artistIdCol = findPreferredColumn(
+                columns = columns,
+                preferredNames = listOf(
+                    "artistid",
+                    "artist_id",
+                    "artistId",
+                    "artistsid",
+                    "artists_id",
+                    "authorid",
+                    "author_id",
+                    "channelid",
+                    "channel_id",
+                    "uploaderid",
+                    "uploader_id"
+                )
+            )?.takeIf { !it.equals(artistCol, ignoreCase = true) }
 
-            val songArtists = linkedMapOf<String, String>()
-            sourceDb.rawQuery("SELECT $idCol, $artistCol FROM $tableName", null).use { cursor ->
+            val selectCols = listOfNotNull(idCol, artistCol, artistIdCol).joinToString(", ")
+            val songArtists = linkedMapOf<String, List<ArtistInfo>>()
+            sourceDb.rawQuery("SELECT $selectCols FROM $tableName", null).use { cursor ->
                 while (cursor.moveToNext()) {
                     val sourceSongId = cursor.getStringOrNull(idCol)?.takeIf { it.isNotBlank() } ?: continue
                     val artistText = cursor.getStringOrNull(artistCol)?.takeIf { it.isNotBlank() } ?: continue
-                    songArtists[sourceSongId] = artistText
+                    val artistIdsText = artistIdCol?.let { cursor.getStringOrNull(it) }
+                    val artists = parseArtistInfos(artistText, artistIdsText)
+                    if (artists.isNotEmpty()) {
+                        songArtists[sourceSongId] = artists
+                    }
                 }
             }
 
@@ -1996,7 +2155,7 @@ class CrossForkMigrationViewModel @Inject constructor(
     }
 
     private fun importSongArtistsFromSource(
-        sourceSongArtists: Map<String, String>,
+        sourceSongArtists: Map<String, List<ArtistInfo>>,
         idMap: Map<String, String>
     ): Int {
         if (sourceSongArtists.isEmpty()) {
@@ -2005,6 +2164,7 @@ class CrossForkMigrationViewModel @Inject constructor(
 
         val songExistsCache = mutableMapOf<String, Boolean>()
         val artistIdByName = mutableMapOf<String, String>()
+        val existingArtistIds = mutableSetOf<String>()
         var insertedMappings = 0
 
         try {
@@ -2014,6 +2174,7 @@ class CrossForkMigrationViewModel @Inject constructor(
                 .use { cursor ->
                     while (cursor.moveToNext()) {
                         val id = cursor.getStringOrNull("id") ?: continue
+                        existingArtistIds.add(id)
                         val name = cursor.getStringOrNull("name")?.trim()?.lowercase() ?: continue
                         if (name.isNotBlank()) {
                             artistIdByName.putIfAbsent(name, id)
@@ -2024,24 +2185,50 @@ class CrossForkMigrationViewModel @Inject constructor(
             Log.w(TAG, "No se pudo precargar tabla artist", e)
         }
 
-        sourceSongArtists.forEach { (sourceSongId, artistsText) ->
+        sourceSongArtists.forEach { (sourceSongId, artists) ->
             val targetSongId = idMap[sourceSongId] ?: sourceSongId
             val exists = songExistsCache.getOrPut(targetSongId) { songExists(targetSongId) }
             if (!exists) return@forEach
 
-            parseArtistsText(artistsText).forEachIndexed { index, artistName ->
-                val key = artistName.lowercase()
-                val artistId = artistIdByName[key] ?: run {
-                    val newId = ArtistEntity.generateArtistId()
-                    database.insert(
-                        ArtistEntity(
-                            id = newId,
-                            name = artistName,
-                            isLocal = false
+            dedupeArtistInfos(artists).forEachIndexed { index, artistInfo ->
+                val normalizedName = artistInfo.name.trim()
+                if (normalizedName.isBlank()) return@forEachIndexed
+
+                val nameKey = normalizedName.lowercase()
+                val sourceArtistId = artistInfo.id.trim()
+
+                val artistId = if (sourceArtistId.isNotBlank()) {
+                    if (!existingArtistIds.contains(sourceArtistId)) {
+                        database.insert(
+                            ArtistEntity(
+                                id = sourceArtistId,
+                                name = normalizedName,
+                                isLocal = !artistInfo.isYouTubeId
+                            )
                         )
-                    )
-                    artistIdByName[key] = newId
-                    newId
+                        existingArtistIds.add(sourceArtistId)
+                    }
+                    artistIdByName.putIfAbsent(nameKey, sourceArtistId)
+                    sourceArtistId
+                } else {
+                    artistIdByName[nameKey] ?: run {
+                        val newId = ArtistEntity.generateArtistId()
+                        database.insert(
+                            ArtistEntity(
+                                id = newId,
+                                name = normalizedName,
+                                isLocal = true
+                            )
+                        )
+                        existingArtistIds.add(newId)
+                        artistIdByName[nameKey] = newId
+                        newId
+                    }
+                }
+
+                if (!artistInfo.isYouTubeId) {
+                    // IDs locales (LA...) no deben tratarse como artistas remotos.
+                    enforceLocalFlagForImportedArtist(artistId)
                 }
 
                 database.insert(
@@ -2056,6 +2243,201 @@ class CrossForkMigrationViewModel @Inject constructor(
         }
 
         return insertedMappings
+    }
+
+    private fun dedupeArtistInfos(artists: List<ArtistInfo>): List<ArtistInfo> {
+        if (artists.isEmpty()) return emptyList()
+
+        val deduped = mutableListOf<ArtistInfo>()
+        val seen = mutableSetOf<String>()
+
+        artists.forEach { artist ->
+            val normalizedName = artist.name.trim()
+            if (normalizedName.isBlank()) return@forEach
+
+            val normalizedId = artist.id.trim()
+            val normalizedArtist = artist.copy(id = normalizedId, name = normalizedName)
+            val key = if (normalizedArtist.isYouTubeId && normalizedId.isNotBlank()) {
+                "yt:${normalizedId.lowercase()}"
+            } else {
+                "name:${normalizedName.lowercase()}"
+            }
+
+            if (seen.add(key)) {
+                deduped.add(normalizedArtist)
+            }
+        }
+
+        return deduped
+    }
+
+    private fun parseArtistInfos(
+        artistsText: String,
+        artistIdsText: String? = null
+    ): List<ArtistInfo> {
+        if (artistsText.isBlank()) return emptyList()
+
+        val artistsFromJson = parseArtistInfosFromJsonObjects(artistsText)
+        if (artistsFromJson.isNotEmpty()) {
+            return dedupeArtistInfos(artistsFromJson)
+        }
+
+        val names = parseArtistsText(artistsText)
+        if (names.isEmpty()) return emptyList()
+
+        val ids = parseArtistIdsText(artistIdsText)
+        val result = when {
+            ids.size == names.size -> names.mapIndexed { index, name ->
+                val artistId = ids[index]
+                ArtistInfo(
+                    id = artistId,
+                    name = name,
+                    isYouTubeId = isLikelyYouTubeArtistId(artistId)
+                )
+            }
+
+            ids.size == 1 -> {
+                val firstId = ids.first()
+                names.mapIndexed { index, name ->
+                    if (index == 0) {
+                        ArtistInfo(
+                            id = firstId,
+                            name = name,
+                            isYouTubeId = isLikelyYouTubeArtistId(firstId)
+                        )
+                    } else {
+                        ArtistInfo(
+                            id = "",
+                            name = name,
+                            isYouTubeId = false
+                        )
+                    }
+                }
+            }
+
+            else -> names.map { name ->
+                ArtistInfo(
+                    id = "",
+                    name = name,
+                    isYouTubeId = false
+                )
+            }
+        }
+
+        return dedupeArtistInfos(result)
+    }
+
+    private fun parseArtistInfosFromJsonObjects(rawArtistsText: String): List<ArtistInfo> {
+        val normalized = rawArtistsText.trim().replace("\\\"", "\"")
+        val objectRegex = Regex("\\{[^{}]+\\}")
+        val artists = mutableListOf<ArtistInfo>()
+
+        objectRegex.findAll(normalized).forEach { match ->
+            val block = match.value
+            val artistName = findJsonValue(
+                block,
+                listOf("name", "artist", "artistName", "artist_name", "author", "channel", "title")
+            )?.trim()?.takeIf { it.isNotBlank() } ?: return@forEach
+
+            val artistId = findJsonValue(
+                block,
+                listOf("id", "artistId", "artist_id", "channelId", "channel_id", "browseId", "browse_id")
+            )?.trim()?.takeIf { it.isNotBlank() }
+
+            artists.add(
+                if (artistId != null) {
+                    ArtistInfo(
+                        id = artistId,
+                        name = artistName,
+                        isYouTubeId = isLikelyYouTubeArtistId(artistId)
+                    )
+                } else {
+                    ArtistInfo(
+                        id = "",
+                        name = artistName,
+                        isYouTubeId = false
+                    )
+                }
+            )
+        }
+
+        return dedupeArtistInfos(artists)
+    }
+
+    private fun findJsonValue(jsonBlock: String, keys: List<String>): String? {
+        keys.forEach { key ->
+            val regex = Regex("\"$key\"\\s*:\\s*\"([^\"]+)\"")
+            val value = regex.find(jsonBlock)?.groupValues?.getOrNull(1)?.trim()
+            if (!value.isNullOrBlank()) {
+                return value
+            }
+        }
+        return null
+    }
+
+    private fun parseArtistIdsText(artistIdsText: String?): List<String> {
+        if (artistIdsText.isNullOrBlank()) return emptyList()
+
+        val compact = artistIdsText.trim()
+        val jsonIdMatches = Regex("\"(?:id|artistId|artist_id|channelId|channel_id|browseId|browse_id)\"\\s*:\\s*\"([^\"]+)\"")
+            .findAll(compact)
+            .map { it.groupValues[1].trim() }
+            .filter { it.isNotBlank() }
+            .toList()
+        if (jsonIdMatches.isNotEmpty()) {
+            return jsonIdMatches.distinctBy { it.lowercase() }
+        }
+
+        val quotedMatches = if (compact.startsWith("[") && compact.contains("\"")) {
+            Regex("\"([^\"]+)\"")
+                .findAll(compact)
+                .map { it.groupValues[1].trim() }
+                .filter { candidate ->
+                    candidate.isNotBlank() &&
+                            !candidate.equals("id", ignoreCase = true) &&
+                            !candidate.equals("artistId", ignoreCase = true) &&
+                            !candidate.equals("artist_id", ignoreCase = true)
+                }
+                .toList()
+        } else {
+            emptyList()
+        }
+        if (quotedMatches.isNotEmpty()) {
+            return quotedMatches.distinctBy { it.lowercase() }
+        }
+
+        var normalized = compact
+        normalized = normalized.replace(";", ",")
+        normalized = normalized.replace(" & ", ",")
+        normalized = normalized.replace(" / ", ",")
+        normalized = normalized.removePrefix("[").removeSuffix("]").replace("\"", "")
+
+        return normalized
+            .split(",")
+            .map { it.trim() }
+            .filter { it.isNotBlank() }
+            .distinctBy { it.lowercase() }
+    }
+
+    private fun isLikelyYouTubeArtistId(artistId: String): Boolean {
+        return artistId.startsWith("UC") ||
+                artistId.startsWith("FEmusic_library_privately_owned_artist")
+    }
+
+    private fun enforceLocalFlagForImportedArtist(artistId: String) {
+        if (isLikelyYouTubeArtistId(artistId)) return
+
+        try {
+            val writable = database.openHelper.writableDatabase
+            val stmt = writable.compileStatement(
+                "UPDATE artist SET isLocal = 1 WHERE id = ?"
+            )
+            stmt.bindString(1, artistId)
+            stmt.executeUpdateDelete()
+            stmt.close()
+        } catch (e: Exception) {
+            Log.w(TAG, "No se pudo forzar isLocal=1 para artistId=$artistId", e)
+        }
     }
 
     private fun parseArtistsText(artistsText: String): List<String> {
@@ -2175,6 +2557,22 @@ class CrossForkMigrationViewModel @Inject constructor(
     }
 
     // ---------- Data classes ----------
+    data class ArtistInfo(
+        val id: String,
+        val name: String,
+        val isYouTubeId: Boolean
+    ) {
+        companion object {
+            fun fromName(name: String): ArtistInfo {
+                return ArtistInfo(
+                    id = ArtistEntity.generateArtistId(),
+                    name = name,
+                    isYouTubeId = false
+                )
+            }
+        }
+    }
+
     data class ImportOptions(
         val importSongs: Boolean = true,
         val importPlaylists: Boolean = true,
