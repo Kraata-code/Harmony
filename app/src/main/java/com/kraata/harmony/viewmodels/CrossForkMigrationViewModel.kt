@@ -10,8 +10,8 @@ import com.kraata.harmony.db.MusicDatabase
 import com.kraata.harmony.db.entities.ArtistEntity
 import com.kraata.harmony.db.entities.PlaylistEntity
 import com.kraata.harmony.db.entities.PlaylistSongMap
-import com.kraata.harmony.db.entities.SongEntity
 import com.kraata.harmony.db.entities.SongArtistMap
+import com.kraata.harmony.db.entities.SongEntity
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
@@ -637,7 +637,8 @@ class CrossForkMigrationViewModel @Inject constructor(
         }
         val allTables = extractAvailableTables(sourceDb)
         val sourceSongArtists = if (options.importSongs) {
-            val artistsFromRelationTables = extractSongArtistsFromRelationTables(sourceDb, allTables)
+            val artistsFromRelationTables =
+                extractSongArtistsFromRelationTables(sourceDb, allTables)
             val artistsFromSongTable = extractSongArtistsFromTable(sourceDb, "Song")
             mergeSongArtists(artistsFromSongTable, artistsFromRelationTables)
         } else {
@@ -952,7 +953,8 @@ class CrossForkMigrationViewModel @Inject constructor(
         }
         val allTables = extractAvailableTables(sourceDb)
         val sourceSongArtists = if (options.importSongs) {
-            val artistsFromRelationTables = extractSongArtistsFromRelationTables(sourceDb, allTables)
+            val artistsFromRelationTables =
+                extractSongArtistsFromRelationTables(sourceDb, allTables)
             val artistsFromSongTable = extractSongArtistsFromTable(sourceDb, "songs")
             mergeSongArtists(artistsFromSongTable, artistsFromRelationTables)
         } else {
@@ -1283,7 +1285,8 @@ class CrossForkMigrationViewModel @Inject constructor(
         val (songs, sourceSongArtists) = if (options.importSongs) {
             Log.d(TAG, "Extrayendo canciones genéricas...")
             val (genericSongs, artistsFromSongTable) = extractGenericSongs(sourceDb, allTables)
-            val artistsFromRelationTables = extractSongArtistsFromRelationTables(sourceDb, allTables)
+            val artistsFromRelationTables =
+                extractSongArtistsFromRelationTables(sourceDb, allTables)
             val mergedArtists = mergeSongArtists(artistsFromSongTable, artistsFromRelationTables)
             Log.i(
                 TAG,
@@ -1433,6 +1436,7 @@ class CrossForkMigrationViewModel @Inject constructor(
             throw e
         }
     }
+
     /**
      * Importa playlists y sus mapeos de canciones
      */
@@ -1462,7 +1466,6 @@ class CrossForkMigrationViewModel @Inject constructor(
         insertPlaylistsSync(remappedPlaylists)
         return playlists.size
     }
-
 
 
     /**
@@ -1615,7 +1618,8 @@ class CrossForkMigrationViewModel @Inject constructor(
                                     null
                                 }
                                 val artistIdText = if (artistIdCol != null) {
-                                    c.getStringOrNull(artistIdCol)?.trim()?.takeIf { it.isNotBlank() }
+                                    c.getStringOrNull(artistIdCol)?.trim()
+                                        ?.takeIf { it.isNotBlank() }
                                 } else {
                                     null
                                 }
@@ -2064,7 +2068,8 @@ class CrossForkMigrationViewModel @Inject constructor(
             sourceDb.rawQuery(query, null).use { cursor ->
                 while (cursor.moveToNext()) {
                     val sourceSongId =
-                        cursor.getStringOrNull("sourceSongId")?.takeIf { it.isNotBlank() } ?: continue
+                        cursor.getStringOrNull("sourceSongId")?.takeIf { it.isNotBlank() }
+                            ?: continue
                     val artistId =
                         cursor.getStringOrNull("sourceArtistId")?.trim()?.takeIf { it.isNotBlank() }
                             ?: continue
@@ -2097,7 +2102,8 @@ class CrossForkMigrationViewModel @Inject constructor(
             if (!hasTable(sourceDb, tableName)) return emptyMap()
 
             val columns = getTableColumns(sourceDb, tableName)
-            val idCol = columns.firstOrNull { it.equals("id", ignoreCase = true) } ?: return emptyMap()
+            val idCol =
+                columns.firstOrNull { it.equals("id", ignoreCase = true) } ?: return emptyMap()
             val artistCol = findPreferredColumn(
                 columns = columns,
                 preferredNames = listOf(
@@ -2136,8 +2142,10 @@ class CrossForkMigrationViewModel @Inject constructor(
             val songArtists = linkedMapOf<String, List<ArtistInfo>>()
             sourceDb.rawQuery("SELECT $selectCols FROM $tableName", null).use { cursor ->
                 while (cursor.moveToNext()) {
-                    val sourceSongId = cursor.getStringOrNull(idCol)?.takeIf { it.isNotBlank() } ?: continue
-                    val artistText = cursor.getStringOrNull(artistCol)?.takeIf { it.isNotBlank() } ?: continue
+                    val sourceSongId =
+                        cursor.getStringOrNull(idCol)?.takeIf { it.isNotBlank() } ?: continue
+                    val artistText =
+                        cursor.getStringOrNull(artistCol)?.takeIf { it.isNotBlank() } ?: continue
                     val artistIdsText = artistIdCol?.let { cursor.getStringOrNull(it) }
                     val artists = parseArtistInfos(artistText, artistIdsText)
                     if (artists.isNotEmpty()) {
@@ -2146,7 +2154,10 @@ class CrossForkMigrationViewModel @Inject constructor(
                 }
             }
 
-            Log.d(TAG, "Extracción de artistas desde '$tableName': ${songArtists.size} canciones con artista")
+            Log.d(
+                TAG,
+                "Extracción de artistas desde '$tableName': ${songArtists.size} canciones con artista"
+            )
             songArtists
         } catch (e: Exception) {
             Log.w(TAG, "No se pudieron extraer artistas desde '$tableName'", e)
@@ -2341,7 +2352,15 @@ class CrossForkMigrationViewModel @Inject constructor(
 
             val artistId = findJsonValue(
                 block,
-                listOf("id", "artistId", "artist_id", "channelId", "channel_id", "browseId", "browse_id")
+                listOf(
+                    "id",
+                    "artistId",
+                    "artist_id",
+                    "channelId",
+                    "channel_id",
+                    "browseId",
+                    "browse_id"
+                )
             )?.trim()?.takeIf { it.isNotBlank() }
 
             artists.add(
@@ -2379,11 +2398,12 @@ class CrossForkMigrationViewModel @Inject constructor(
         if (artistIdsText.isNullOrBlank()) return emptyList()
 
         val compact = artistIdsText.trim()
-        val jsonIdMatches = Regex("\"(?:id|artistId|artist_id|channelId|channel_id|browseId|browse_id)\"\\s*:\\s*\"([^\"]+)\"")
-            .findAll(compact)
-            .map { it.groupValues[1].trim() }
-            .filter { it.isNotBlank() }
-            .toList()
+        val jsonIdMatches =
+            Regex("\"(?:id|artistId|artist_id|channelId|channel_id|browseId|browse_id)\"\\s*:\\s*\"([^\"]+)\"")
+                .findAll(compact)
+                .map { it.groupValues[1].trim() }
+                .filter { it.isNotBlank() }
+                .toList()
         if (jsonIdMatches.isNotEmpty()) {
             return jsonIdMatches.distinctBy { it.lowercase() }
         }
@@ -2458,7 +2478,12 @@ class CrossForkMigrationViewModel @Inject constructor(
             Regex("\"([^\"]+)\"")
                 .findAll(compact)
                 .map { it.groupValues[1].trim() }
-                .filter { it.isNotBlank() && !it.equals("id", ignoreCase = true) && !it.equals("name", ignoreCase = true) }
+                .filter {
+                    it.isNotBlank() && !it.equals(
+                        "id",
+                        ignoreCase = true
+                    ) && !it.equals("name", ignoreCase = true)
+                }
                 .toList()
         } else {
             emptyList()
@@ -2646,15 +2671,6 @@ fun Cursor.getIntOrNull(columnName: String): Int? {
     return try {
         val index = getColumnIndex(columnName)
         if (index != -1 && !isNull(index)) getInt(index) else null
-    } catch (e: Exception) {
-        null
-    }
-}
-
-fun Cursor.getLongOrNull(columnName: String): Long? {
-    return try {
-        val index = getColumnIndex(columnName)
-        if (index != -1 && !isNull(index)) getLong(index) else null
     } catch (e: Exception) {
         null
     }

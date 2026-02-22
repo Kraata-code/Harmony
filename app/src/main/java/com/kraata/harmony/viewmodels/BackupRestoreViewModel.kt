@@ -15,6 +15,8 @@ import com.kraata.harmony.constants.AccountEmailKey
 import com.kraata.harmony.constants.AccountNameKey
 import com.kraata.harmony.constants.DataSyncIdKey
 import com.kraata.harmony.constants.InnerTubeCookieKey
+import com.kraata.harmony.constants.OOBE_VERSION
+import com.kraata.harmony.constants.OobeStatusKey
 import com.kraata.harmony.constants.UseLoginForBrowse
 import com.kraata.harmony.constants.VisitorDataKey
 import com.kraata.harmony.db.InternalDatabase
@@ -170,7 +172,6 @@ class BackupRestoreViewModel @Inject constructor(
             logAuthSettingsSnapshot("before_import")
             var importSuccessful = false
             var importResult: CrossForkMigrationViewModel.ImportResult? = null
-            var settingsRestored = false
 
             context.applicationContext.contentResolver.openInputStream(uri)?.use { input ->
                 Log.d(TAG, "Successfully opened input stream from URI")
@@ -187,17 +188,7 @@ class BackupRestoreViewModel @Inject constructor(
 
                         when (entry.name) {
                             SETTINGS_FILENAME -> {
-                                Log.d(TAG, "Found settings file, extracting...")
-                                try {
-                                    (context.filesDir / "datastore" / SETTINGS_FILENAME).outputStream()
-                                        .use { outputStream ->
-                                            zipInputStream.copyTo(outputStream)
-                                        }
-                                    Log.d(TAG, "Settings file extracted successfully")
-                                    settingsRestored = true
-                                } catch (e: Exception) {
-                                    Log.e(TAG, "Failed to extract settings file", e)
-                                }
+                                Log.i(TAG, "Import mode: skipping settings file (${entry.name})")
                             }
 
                             InternalDatabase.DB_NAME -> {
@@ -397,10 +388,6 @@ class BackupRestoreViewModel @Inject constructor(
                 throw Exception("Cannot open backup file")
             }
 
-            if (settingsRestored) {
-                clearImportedSessionCredentials("import")
-            }
-
             // Only restart if import was successful
             if (importSuccessful) {
                 val message = if (importResult != null) {
@@ -411,6 +398,7 @@ class BackupRestoreViewModel @Inject constructor(
 
                 Log.i(TAG, "Import successful: $message")
                 Toast.makeText(context, message, Toast.LENGTH_LONG).show()
+                markWizardAsCompletedAfterImport()
                 createImportCacheMarker("import")
                 logAuthSettingsSnapshot("after_import_before_restart")
 
@@ -488,6 +476,19 @@ class BackupRestoreViewModel @Inject constructor(
             )
         }.onFailure { e ->
             Log.w(TAG, "Failed to create import cache marker ($source): ${e.message}", e)
+        }
+    }
+
+    private fun markWizardAsCompletedAfterImport() {
+        runCatching {
+            runBlocking {
+                context.dataStore.edit { settings ->
+                    settings[OobeStatusKey] = OOBE_VERSION
+                }
+            }
+            Log.i(TAG, "Marked setup wizard as completed after import (oobeStatus=$OOBE_VERSION)")
+        }.onFailure { e ->
+            Log.w(TAG, "Failed to mark setup wizard as completed after import: ${e.message}", e)
         }
     }
 
