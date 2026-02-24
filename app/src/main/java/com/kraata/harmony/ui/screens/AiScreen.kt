@@ -26,6 +26,9 @@ import com.kraata.harmony.MainActivity
 import com.kraata.harmony.models.ChatMessage
 import com.kraata.harmony.viewmodels.AiViewModel
 import kotlinx.coroutines.launch
+import androidx.compose.animation.core.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.draw.alpha
 
 @SuppressLint("ContextCastToActivity")
 @OptIn(ExperimentalMaterial3Api::class)
@@ -217,6 +220,32 @@ fun ErrorBanner(
 
 @Composable
 fun LoadingIndicator() {
+    val infiniteTransition = rememberInfiniteTransition(label = "loadingDots")
+    @Composable
+    fun dotAlpha(delayMillis: Int): Float {
+        val alpha by infiniteTransition.animateFloat(
+            initialValue = 0.2f,
+            targetValue = 1f,
+            animationSpec = infiniteRepeatable(
+                animation = keyframes {
+                    durationMillis = 1200
+                    0.2f at 0 using LinearEasing
+                    1f at 300 using LinearEasing
+                    0.2f at 600 using LinearEasing
+                    0.2f at 1200 using LinearEasing
+                },
+                repeatMode = RepeatMode.Restart,
+                initialStartOffset = StartOffset(delayMillis)
+            ),
+            label = "dot_alpha_$delayMillis"
+        )
+        return alpha
+    }
+
+    val alpha1 = dotAlpha(delayMillis = 0)
+    val alpha2 = dotAlpha(delayMillis = 200)
+    val alpha3 = dotAlpha(delayMillis = 400)
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -230,26 +259,19 @@ fun LoadingIndicator() {
                 topEnd = 16.dp,
                 bottomStart = 4.dp,
                 bottomEnd = 16.dp
-            ),
-            modifier = Modifier.padding(start = 0.dp)
+            )
         ) {
             Row(
-                modifier = Modifier.padding(
-                    horizontal = 16.dp,
-                    vertical = 10.dp
-                ),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                CircularProgressIndicator(
-                    modifier = Modifier.size(16.dp),
-                    strokeWidth = 2.dp
-                )
-                Text(
-                    text = "Generando respuesta...",
-                    color = MaterialTheme.colorScheme.onSecondaryContainer,
-                    style = MaterialTheme.typography.bodyMedium
-                )
+                val dotStyle = MaterialTheme.typography.titleLarge
+                val dotColor = MaterialTheme.colorScheme.onSecondaryContainer
+
+                Text("•", color = dotColor.copy(alpha = alpha1), style = dotStyle)
+                Text("•", color = dotColor.copy(alpha = alpha2), style = dotStyle)
+                Text("•", color = dotColor.copy(alpha = alpha3), style = dotStyle)
             }
         }
     }
