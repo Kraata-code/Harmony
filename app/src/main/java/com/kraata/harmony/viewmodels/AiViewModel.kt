@@ -20,6 +20,7 @@ class AiViewModel @Inject constructor(private val database: MusicDatabase) : Vie
 
     private companion object {
         const val TAG = "AiViewModel"
+
         // Límite de tokens optimizado para respuestas rápidas
         const val MAX_TOKENS_PER_RESPONSE = 80
     }
@@ -64,7 +65,18 @@ class AiViewModel @Inject constructor(private val database: MusicDatabase) : Vie
 
                         _messages.value = listOf(
                             ChatMessage(
-                                text = "¡Hola! Soy tu asistente. ¿En qué puedo ayudarte?",
+                                text = """¡Hola! Soy tu asistente musical 🎵
+
+Puedo ayudarte con preguntas generales y gestionar tu biblioteca musical.
+Los artistas y canciones que administro son de tu biblioteca local — si un artista no aparece, asegúrate de tenerlo descargado.""",
+                                isFromMe = false
+                            ),
+                            ChatMessage(
+                                text = """Ejemplos de lo que puedes pedirme:
+
+"¿Qué día es hoy?"
+"Crea una playlist llamada Favoritas"
+"Agrega canciones de Metallica a la playlist Rock"""",
                                 isFromMe = false
                             )
                         )
