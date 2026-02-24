@@ -144,7 +144,7 @@ fun ColumnScope.BackupAndRestoreFrag(viewModel: BackupRestoreViewModel) {
         modifier = Modifier.fillMaxWidth()
     ) {
         PreferenceEntry(
-            title = { Text("Import") },
+            title = { Text(stringResource(R.string.action_import)) },
             icon = { Icon(Icons.Rounded.FolderCopy, null) },
             onClick = {
                 importLauncher.launch(arrayOf("application/octet-stream"))

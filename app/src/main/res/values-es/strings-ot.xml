@@ -267,4 +267,9 @@
     <string name="scanner_strict_file_paths_title">Coincidir rutas de archivo en lugar de metadatos</string>
     <string name="scanner_strict_file_paths_description">Desactiva toda la coincidencia inteligente de metadatos. Esto puede causar problemas si se mueven archivos en tu almacenamiento local, pero permite que la misma canción se encuentre en diferentes carpetas</string>
     <string name="scanner_type_tooltip">El escáner del sistema es más rápido, pero puede extraer algunos metadatos de forma incorrecta en comparación con otros extractores. Ten en cuenta que al cambiar de escáner no se volverán a cargar automáticamente los metadatos de las canciones existentes.</string>
+    <string name="AI">IA</string>
+    <string name="restore_lm_tooltip">En instalaciones nuevas de la aplicación, las rutas personalizadas de descargas y escaneo de medios locales pueden no funcionar. Para resolverlo, elimínalas y agrégalas de nuevo.</string>
+    <string name="action_import">Importar</string>
+    <string name="oobe_layout_classic">Diseño clásico</string>
+    <string name="oobe_layout_floating">Flotante</string>
 </resources>

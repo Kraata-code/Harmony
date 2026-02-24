@@ -467,7 +467,7 @@ fun SetupWizard(
                         ) {
                             // Opción 1: Diseño por defecto
                             LayoutOptionCard(
-                                title = "Diseño Clásico",
+                                title = stringResource(R.string.oobe_layout_classic),
                                 isSelected = !isFloatingMiniplayer,
                                 onClick = { onFloatingMiniplayerChange(false) },
                                 preview = R.drawable.miniplayer_default // <-- Aquí usamos el drawable
@@ -475,7 +475,7 @@ fun SetupWizard(
                             Spacer(modifier = Modifier.width(12.dp))
                             // Opción 2: Diseño flotante
                             LayoutOptionCard(
-                                title = "Flotante",
+                                title = stringResource(R.string.oobe_layout_floating),
                                 isSelected = isFloatingMiniplayer,
                                 onClick = { onFloatingMiniplayerChange(true) },
                                 preview = R.drawable.miniplayer_floating
