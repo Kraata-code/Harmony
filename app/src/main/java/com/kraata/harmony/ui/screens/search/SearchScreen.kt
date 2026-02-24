@@ -1,6 +1,7 @@
 package com.kraata.harmony.ui.screens.search
 
 import android.util.Log
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.fadeIn
@@ -42,6 +43,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastAny
@@ -95,18 +97,45 @@ fun SearchBarContainer(
     }
 
     val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val isSearchRoute = navBackStackEntry?.destination?.route?.startsWith("search") == true
+    val isSearchResultRoute = navBackStackEntry?.destination?.route?.startsWith("search/") == true
 
     var searchActive by rememberSaveable {
         mutableStateOf(false)
     }
-    val onSearchActiveChange: (Boolean) -> Unit = { newActive ->
+    val setSearchActive: (Boolean, Boolean) -> Unit = { newActive, clearQuery ->
         searchActive = newActive
         if (!newActive) {
             focusManager.clearFocus()
-            if (navigationItems.fastAny { it.route == navBackStackEntry?.destination?.route }) {
+            if (clearQuery && navigationItems.fastAny { it.route == navBackStackEntry?.destination?.route }) {
                 onQueryChange(TextFieldValue())
             }
         }
+    }
+    val onSearchActiveChange: (Boolean) -> Unit = { newActive ->
+        setSearchActive(newActive, true)
+    }
+    val handleSearchBack: () -> Unit = {
+        val previousEntry = navController.previousBackStackEntry
+        val previousIsSearchResult =
+            previousEntry?.destination?.route?.startsWith("search/") == true
+        val previousQuery = if (previousIsSearchResult) {
+            previousEntry?.arguments?.getString("query").orEmpty()
+        } else {
+            ""
+        }
+
+        navController.navigateUp()
+        onQueryChange(
+            if (previousQuery.isNotEmpty()) {
+                TextFieldValue(
+                    text = previousQuery,
+                    selection = TextRange(previousQuery.length)
+                )
+            } else {
+                TextFieldValue()
+            }
+        )
     }
 
     val onSearch: (String) -> Unit = {
@@ -114,7 +143,13 @@ fun SearchBarContainer(
             if (searchSource == SearchSource.LOCAL) {
                 focusManager.clearFocus(true)
             } else {
-                onSearchActiveChange(false)
+                setSearchActive(false, false)
+                onQueryChange(
+                    TextFieldValue(
+                        text = it,
+                        selection = TextRange(it.length)
+                    )
+                )
                 if (youtubeNavigator(
                         context,
                         navController,
@@ -141,6 +176,10 @@ fun SearchBarContainer(
     val shouldShowSearchBar = remember(searchActive, navBackStackEntry) {
         (searchActive || navigationItems.fastAny { it.route == navBackStackEntry?.destination?.route } ||
                 navBackStackEntry?.destination?.route?.startsWith("search/") == true)
+    }
+
+    BackHandler(enabled = !searchActive && isSearchResultRoute) {
+        handleSearchBack()
     }
 
     LaunchedEffect(navBackStackEntry) {
@@ -178,9 +217,11 @@ fun SearchBarContainer(
                         when {
                             searchActive -> onSearchActiveChange(false)
 
-                            !searchActive && navBackStackEntry?.destination?.route?.startsWith(
-                                "search"
-                            ) == true -> {
+                            !searchActive && isSearchResultRoute -> {
+                                handleSearchBack()
+                            }
+
+                            !searchActive && isSearchRoute -> {
                                 navController.navigateUp()
                             }
 
@@ -252,7 +293,7 @@ fun SearchBarContainer(
                     SearchSource.LOCAL -> LocalSearchScreen(
                         query = query.text,
                         navController = navController,
-                        onDismiss = { onSearchActiveChange(false) },
+                        onDismiss = { setSearchActive(false, false) },
                     )
 
                     SearchSource.ONLINE -> OnlineSearchScreen(
@@ -279,7 +320,7 @@ fun SearchBarContainer(
                                 }
                             }
                         },
-                        onDismiss = { onSearchActiveChange(false) },
+                        onDismiss = { setSearchActive(false, false) },
                     )
                 }
             }

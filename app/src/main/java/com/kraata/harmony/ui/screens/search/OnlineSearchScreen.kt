@@ -99,6 +99,14 @@ fun OnlineSearchScreen(
 
     val lazyListState = rememberLazyListState()
     val snackbarHostState = LocalSnackbarHostState.current
+    val fillQuery: (String) -> Unit = { value ->
+        onQueryChange(
+            TextFieldValue(
+                text = value,
+                selection = TextRange(value.length)
+            )
+        )
+    }
 
     LaunchedEffect(Unit) {
         snapshotFlow { lazyListState.firstVisibleItemScrollOffset }
@@ -126,6 +134,7 @@ fun OnlineSearchScreen(
                 query = history.query,
                 online = false,
                 onClick = {
+                    fillQuery(history.query)
                     onSearch(history.query)
                     onDismiss()
                 },
@@ -135,12 +144,7 @@ fun OnlineSearchScreen(
                     }
                 },
                 onFillTextField = {
-                    onQueryChange(
-                        TextFieldValue(
-                            text = history.query,
-                            selection = TextRange(history.query.length)
-                        )
-                    )
+                    fillQuery(history.query)
                 },
                 modifier = Modifier.animateItem()
             )
@@ -154,16 +158,12 @@ fun OnlineSearchScreen(
                 query = query,
                 online = true,
                 onClick = {
+                    fillQuery(query)
                     onSearch(query)
                     onDismiss()
                 },
                 onFillTextField = {
-                    onQueryChange(
-                        TextFieldValue(
-                            text = query,
-                            selection = TextRange(query.length)
-                        )
-                    )
+                    fillQuery(query)
                 },
                 modifier = Modifier.animateItem()
             )
