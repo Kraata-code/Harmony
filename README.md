@@ -1,129 +1,164 @@
+<div align="center">
+
+<img src="assets/Harmony.webp" width="120" alt="Harmony logo"/>
+
 # Harmony
 
-Aplicación de música para Android basada en OuterTune/InnerTune: combina un reproductor local con cliente de YouTube Music en una sola app.
+**Reproductor de música local + cliente de YouTube Music en una sola app para Android.**  
+Basado en [InnerTune](https://github.com/z-huang/InnerTune) y el ecosistema de OuterTune.
 
-![Harmony screenshot](assets/main-interface.jpg)
+![Android](https://img.shields.io/badge/Android-8.0%2B-3DDC84?style=flat-square&logo=android&logoColor=white)
+![minSdk](https://img.shields.io/badge/minSdk-24-brightgreen?style=flat-square)
+![compileSdk](https://img.shields.io/badge/compileSdk-36-blue?style=flat-square)
+![Kotlin](https://img.shields.io/badge/Kotlin-purple?style=flat-square&logo=kotlin&logoColor=white)
+![License](https://img.shields.io/badge/License-GPL--3.0-red?style=flat-square)
+
+<img src="assets/main-interface.jpg" width="720" alt="Harmony main interface"/>
+
+</div>
+
+---
 
 ## Galería
 
-![Homepage](assets/gallery/homepage.png)
-![Player](assets/gallery/player.png)
-![Queue collapsed](assets/gallery/queue_collapsed.png)
-![Queue expanded](assets/gallery/queue_expanded.png)
-![Library](assets/gallery/library.png)
-![Library songs](assets/gallery/library_songs.png)
-![Folders](assets/gallery/folders.png)
-![Artist page](assets/gallery/artist_page.png)
-![Lyrics](assets/gallery/lyrics.png)
-![Chatbot](assets/gallery/chatbot.png)
-![Settings](assets/gallery/settings.png)
-![Tablet queue home light](assets/gallery/tablet_queue_home_light.png)
-![Tablet lyrics library](assets/gallery/tablet_lyrics_library.png)
-![Tablet lyrics library dark](assets/gallery/tablet_lyrics_library_dark.png)
+<div align="center">
 
-## Imágenes adicionales
+### Móvil
 
-![Harmony logo](assets/Harmony.webp)
-![GitHub badge](assets/badge_github.png)
-![Player image](assets/player.jpg)
-![YTM sync](assets/ytm-sync.jpg)
+| Player | Homepage | Library |
+|:---:|:---:|:---:|
+| <img src="assets/gallery/player.png" width="200" alt="Player"/> | <img src="assets/gallery/homepage.png" width="200" alt="Homepage"/> | <img src="assets/gallery/library.png" width="200" alt="Library"/> |
+
+| Queue (collapsed) | Queue (expanded) | Library songs |
+|:---:|:---:|:---:|
+| <img src="assets/gallery/queue_collapsed.png" width="200" alt="Queue collapsed"/> | <img src="assets/gallery/queue_expanded.png" width="200" alt="Queue expanded"/> | <img src="assets/gallery/library_songs.png" width="200" alt="Library songs"/> |
+
+| Folders | Artist | Lyrics |
+|:---:|:---:|:---:|
+| <img src="assets/gallery/folders.png" width="200" alt="Folders"/> | <img src="assets/gallery/artist_page.png" width="200" alt="Artist page"/> | <img src="assets/gallery/lyrics.png" width="200" alt="Lyrics"/> |
+
+| AI Chatbot | Settings |
+|:---:|:---:|
+| <img src="assets/gallery/chatbot.png" width="200" alt="Chatbot"/> | <img src="assets/gallery/settings.png" width="200" alt="Settings"/> |
+
+### Tablet
+
+| Light | Dark |
+|:---:|:---:|
+| <img src="assets/gallery/tablet_queue_home_light.png" width="380" alt="Tablet light"/> | <img src="assets/gallery/tablet_lyrics_library_dark.png" width="380" alt="Tablet dark"/> |
+
+</div>
+
+---
 
 ## Características
 
-- Reproducción de música local (MP3, FLAC, OGG, etc.)
-- Cliente de YouTube Music con reproducción en segundo plano y descargas
-- Biblioteca unificada (contenido local + online)
-- Sincronización con cuenta de YouTube Music
-- Letras sincronizadas (LRC/TTML/SRT), incluyendo modo karaoke palabra por palabra
-- Múltiples colas de reproducción
-- Integración con Android Auto
-- Extracción de metadatos mejorada (TagLib/FFmpeg/MediaStore según configuración)
-- Modo `AI` experimental en la app (LLM local vía `llama.cpp`modelo: Qwen2-500m)
+- 🎵 **Música local** — MP3, FLAC, OGG y más.
+- 📺 **YouTube Music** — reproducción en segundo plano y descargas.
+- 📚 **Biblioteca unificada** — contenido local y online en una sola vista.
+- 🔄 **Sincronización YTM** — vincula tu cuenta de YouTube Music.
+- 🎤 **Letras sincronizadas** — LRC / TTML / SRT con modo karaoke palabra por palabra.
+- 🎛️ **Múltiples colas de reproducción.**
+- 🚗 **Android Auto** — integración nativa.
+- 🏷️ **Metadatos mejorados** — TagLib / FFmpeg / MediaStore según configuración.
+- 🤖 **Modo AI experimental** — LLM local vía `llama.cpp` (modelo: Qwen2-500m).
+
+---
 
 ## Requisitos
 
-- Android `8.0+` (minSdk 24)
-- JDK `21`
-- Android SDK con `compileSdk 36`
-- NDK y CMake (el proyecto usa código nativo)
-- Git con submódulos
+| Componente | Versión |
+|---|---|
+| Android | 8.0+ (minSdk 24) |
+| JDK | 21 |
+| Android SDK | compileSdk 36 |
+| NDK + CMake | requerido (código nativo) |
+| Git | con soporte de submódulos |
 
-## Instalación (usuarios)
+---
 
-- Descarga un APK desde la sección **Releases** del repositorio.
-- Si usas la variante `full`, incluye componentes adicionales como extractor FFmpeg para metadatos.
+## Instalación
 
-## Compilación local (desarrolladores)
+Descarga el APK desde la sección **[Releases](../../releases)** del repositorio.
 
-1. Clonar el repo con submódulos:
+> La variante `full` incluye el extractor FFmpeg para metadatos avanzados.
+
+---
+
+## Compilación local
+
+### 1. Clonar el repositorio
 
 ```bash
 git clone --recurse-submodules <URL_DEL_REPOSITORIO>
-cd Hamony_OuterTune
+cd Harmony_OuterTune
 ```
 
-2. Compilar variante `core` debug:
+### 2. Variante `core`
 
 ```bash
+# Debug
 ./gradlew assembleCoreDebug
-```
 
-3. Ejecutar lint y tests de JVM (igual que CI):
-
-```bash
+# Lint + tests (igual que CI)
 ./gradlew lintCoreDebug testCoreDebugUnitTest
-```
 
-4. Compilar release `core`:
-
-```bash
+# Release
 ./gradlew assembleCoreRelease
 ```
 
-### Compilar variante `full`
-
-La variante `full` requiere librerías FFmpeg precompiladas dentro de `ffMetadataEx/ffmpeg-android-maker`.
+### 3. Variante `full` (requiere FFmpeg precompilado)
 
 ```bash
-git clone https://github.com/mikooomich/ffmpeg-android-maker-prebuilt/ -b audio ffMetadataEx/ffmpeg-android-maker
+git clone https://github.com/mikooomich/ffmpeg-android-maker-prebuilt/ \
+  -b audio ffMetadataEx/ffmpeg-android-maker
+
 ./gradlew assembleFullDebug
-# o release
 ./gradlew assembleFullRelease
 ```
 
-## Variantes del proyecto
+---
 
-- `core`: build por defecto, más ligera
-- `full`: añade componentes avanzados (por ejemplo, extractor FFmpeg)
+## Variantes
 
-También existen tipos de build:
+| Variante | Descripción |
+|---|---|
+| `core` | Build por defecto, más ligero. |
+| `full` | Añade extractor FFmpeg y componentes avanzados. |
 
-- `debug`
-- `userdebug` (similar a release, sin minificación)
-- `release`
+| Tipo de build | Descripción |
+|---|---|
+| `debug` | Sin optimizaciones, con logs. |
+| `userdebug` | Similar a release pero sin minificación. |
+| `release` | Optimizado y minificado. |
+
+---
 
 ## Estructura de módulos
 
-- `app`: aplicación principal Android (UI, reproducción, base de datos, configuración)
-- `innertube`: cliente/API para YouTube Music
-- `kugou`: integración de letras (KuGou)
-- `lrclib`: integración de letras (LrcLib)
-- `ffMetadataEx`: integración nativa con FFmpeg para metadatos
-- `taglib`: parsing/lectura de metadatos de audio
-- `material-color-utilities`: utilidades de color Material
+| Módulo | Descripción |
+|---|---|
+| `app` | Aplicación principal: UI (Compose), reproducción, Room, configuración. |
+| `innertube` | Cliente/API para YouTube Music. |
+| `kugou` | Integración de letras vía KuGou. |
+| `lrclib` | Integración de letras vía LrcLib. |
+| `ffMetadataEx` | Integración nativa NDK/CMake con FFmpeg para metadatos. |
+| `taglib` | Parsing de metadatos de audio (C++ / JNI). |
+| `material-color-utilities` | Utilidades de color Material You. |
+
+---
 
 ## Tecnologías
 
-- Kotlin + Jetpack Compose
-- Media3 (ExoPlayer, Session, Download)
-- Room
-- Hilt
-- Ktor
-- NDK/CMake (C++)
+`Kotlin` · `Jetpack Compose` · `Media3 / ExoPlayer` · `Room` · `Hilt` · `Ktor` · `NDK / CMake` · `llama.cpp` · `FFmpeg` · `TagLib`
+
+---
 
 ## Créditos
 
-- Basado en ideas y trabajo de **InnerTune** y el ecosistema de **OuterTune**.
+Basado en ideas y trabajo de **InnerTune** y el ecosistema de **OuterTune**.
+
+---
 
 ## Licencia
 
