@@ -5,7 +5,7 @@
 # Harmony
 
 **Reproductor de música local + cliente de YouTube Music en una sola app para Android.**  
-Basado en [InnerTune](https://github.com/z-huang/InnerTune) y el ecosistema de [OuterTune](https://github.com/OuterTune/OuterTune).
+Basado en [InnerTune](https://github.com/z-huang/InnerTune) y el ecosistema de OuterTune.
 
 ![Android](https://img.shields.io/badge/Android-8.0%2B-3DDC84?style=flat-square&logo=android&logoColor=white)
 ![minSdk](https://img.shields.io/badge/minSdk-24-brightgreen?style=flat-square)
@@ -13,7 +13,10 @@ Basado en [InnerTune](https://github.com/z-huang/InnerTune) y el ecosistema de [
 ![Kotlin](https://img.shields.io/badge/Kotlin-purple?style=flat-square&logo=kotlin&logoColor=white)
 ![License](https://img.shields.io/badge/License-GPL--3.0-red?style=flat-square)
 
-<img src="assets/main-interface.jpg" width="720" alt="Harmony main interface"/>
+| | | |
+|:---:|:---:|:---:|
+| <img src="assets/main-interface.jpg" width="230" alt="Main interface"/> | <img src="assets/player.jpg" width="230" alt="Player"/> | <img src="assets/ytm-sync.jpg" width="230" alt="YTM Sync"/> |
+| Main Interface | Player | YTM Sync |
 
 </div>
 
