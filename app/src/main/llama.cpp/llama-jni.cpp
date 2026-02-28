@@ -21,6 +21,10 @@ namespace Config {
     constexpr int MIN_GENERATION_TOKENS = 50;   // Mínimo tokens para generar
     constexpr int LOG_INTERVAL = 10;            // Intervalo de logging
     constexpr float TRUNCATE_THRESHOLD = 0.7f;  // Umbral para truncamiento inteligente
+    constexpr int DEFAULT_CONTEXT_TOKENS = 4096;
+    constexpr int MIN_CONTEXT_TOKENS = 1024;
+    constexpr int MAX_CONTEXT_TOKENS = 8192;
+    constexpr int DEFAULT_BATCH_TOKENS = 512;
 
 }
 
@@ -273,7 +277,8 @@ JNIEXPORT jboolean JNICALL
 Java_com_kraata_harmony_viewmodels_LlamaBridge_initModel(
         JNIEnv* env,
         jobject thiz,
-        jstring modelPath
+        jstring modelPath,
+        jint contextLength
 ) {
     try {
         const char* path = env->GetStringUTFChars(modelPath, nullptr);
@@ -303,11 +308,25 @@ Java_com_kraata_harmony_viewmodels_LlamaBridge_initModel(
         }
 
         // Parámetros del contexto optimizados para móvil
+        const int requested_ctx = contextLength > 0
+                                  ? static_cast<int>(contextLength)
+                                  : Config::DEFAULT_CONTEXT_TOKENS;
+        const int model_ctx_train = llama_model_n_ctx_train(model);
+        const int max_supported_ctx = model_ctx_train > 0 ? model_ctx_train : Config::MAX_CONTEXT_TOKENS;
+        const int clamped_ctx = std::max(
+                Config::MIN_CONTEXT_TOKENS,
+                std::min(requested_ctx, std::min(Config::MAX_CONTEXT_TOKENS, max_supported_ctx))
+        );
+
         llama_context_params cparams = llama_context_default_params();
-        cparams.n_ctx = 2048;           // Contexto de 2K tokens
-        cparams.n_batch = 512;          // Batch size
+        cparams.n_ctx = clamped_ctx;
+        cparams.n_batch = std::min(cparams.n_ctx, static_cast<uint32_t>(Config::DEFAULT_BATCH_TOKENS));
+        cparams.n_ubatch = cparams.n_batch;
         cparams.n_threads = 4;          // Threads para inferencia
         cparams.n_threads_batch = 4;    // Threads para batch
+
+        LOGI("Contexto solicitado=%d, contexto aplicado=%u, n_ctx_train=%d, n_batch=%u",
+             requested_ctx, cparams.n_ctx, model_ctx_train, cparams.n_batch);
 
         auto ctx = llama_new_context_with_model(model, cparams);
         if (!ctx) {
@@ -394,17 +413,32 @@ Java_com_kraata_harmony_viewmodels_LlamaBridge_generateText(
         auto ctx = g_llama_context->ctx;
         auto model = g_llama_context->model;
         auto sampler = g_llama_context->sampler;
-        auto conv_manager = g_llama_context->conversation_manager.get();
         const llama_vocab* vocab = llama_model_get_vocab(model);
 
         const int n_ctx = llama_n_ctx(ctx);
+        const int n_batch = llama_n_batch(ctx);
+        const int requested_max_tokens = std::max(1, static_cast<int>(maxTokens));
+
+        if (n_batch <= 0) {
+            LOGE("❌ n_batch inválido: %d", n_batch);
+            return env->NewStringUTF("Error: Configuración inválida del modelo.");
+        }
+
+        // Reiniciar memoria KV para cada inferencia completa.
+        llama_memory_clear(llama_get_memory(ctx), false);
 
         // ====================================================================
         // FASE 1: TOKENIZACIÓN Y VALIDACIÓN CON FRAGMENTACIÓN
         // ====================================================================
 
         // Calcular espacio máximo disponible para el prompt
-        int max_prompt_space = n_ctx - maxTokens - Config::SAFETY_MARGIN;
+        int max_prompt_space = n_ctx - requested_max_tokens - Config::SAFETY_MARGIN;
+        if (max_prompt_space < Config::MIN_GENERATION_TOKENS) {
+            LOGE("❌ Espacio insuficiente para prompt: max_prompt_space=%d", max_prompt_space);
+            return env->NewStringUTF(
+                    "Error: La configuración de generación excede el contexto disponible."
+            );
+        }
 
         // Crear fragmento seguro si es necesario
         auto fragment = PromptFragmenter::createSafeFragment(
@@ -449,7 +483,7 @@ Java_com_kraata_harmony_viewmodels_LlamaBridge_generateText(
         }
 
         // Ajustar maxTokens dinámicamente
-        const int adjusted_max_tokens = std::min((int)maxTokens, available_tokens);
+        const int adjusted_max_tokens = std::min(requested_max_tokens, available_tokens);
 
         LOGI("📊 Estadísticas de contexto:");
         LOGI("  - Contexto total: %d tokens", n_ctx);
@@ -462,11 +496,19 @@ Java_com_kraata_harmony_viewmodels_LlamaBridge_generateText(
         // FASE 3: DECODIFICACIÓN DEL PROMPT
         // ====================================================================
 
-        llama_batch batch = llama_batch_get_one(prompt_tokens.data(), n_prompt_tokens);
+        int prompt_offset = 0;
+        while (prompt_offset < n_prompt_tokens) {
+            const int chunk_size = std::min(n_batch, n_prompt_tokens - prompt_offset);
+            llama_batch batch = llama_batch_get_one(prompt_tokens.data() + prompt_offset, chunk_size);
 
-        if (llama_decode(ctx, batch) != 0) {
-            LOGE("❌ Error en llama_decode del prompt");
-            return env->NewStringUTF("Error: No se pudo procesar el prompt en el modelo.");
+            const int decode_status = llama_decode(ctx, batch);
+            if (decode_status != 0) {
+                LOGE("❌ Error en llama_decode del prompt (status=%d, chunk=%d, offset=%d)",
+                     decode_status, chunk_size, prompt_offset);
+                return env->NewStringUTF("Error: No se pudo procesar el prompt en el modelo.");
+            }
+
+            prompt_offset += chunk_size;
         }
 
         LOGI("✓ Prompt decodificado exitosamente");
@@ -541,7 +583,7 @@ Java_com_kraata_harmony_viewmodels_LlamaBridge_generateText(
             }
 
             // Preparar batch con el nuevo token
-            batch = llama_batch_get_one(&new_token, 1);
+            llama_batch batch = llama_batch_get_one(&new_token, 1);
 
             // Decodificar el nuevo token
             if (llama_decode(ctx, batch) != 0) {

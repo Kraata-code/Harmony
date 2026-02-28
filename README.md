@@ -1,113 +1,130 @@
-# OuterTune
+# Harmony
 
-<img src="./assets/outertune.webp" height="88" alt="OuterTune app icon">
+Aplicación de música para Android basada en OuterTune/InnerTune: combina un reproductor local con cliente de YouTube Music en una sola app.
 
-A Material 3 YouTube Music client & local music player for Android
+![Harmony screenshot](assets/main-interface.jpg)
 
-[![Latest release](https://img.shields.io/github/v/release/OuterTune/OuterTune?include_prereleases)](https://github.com/OuterTune/OuterTune/releases)
-[![License](https://img.shields.io/github/license/OuterTune/OuterTune)](https://www.gnu.org/licenses/gpl-3.0)
-[![Downloads](https://img.shields.io/github/downloads/OuterTune/OuterTune/total)](https://github.com/OuterTune/OuterTune/releases)
+## Galería
 
+![Homepage](assets/gallery/homepage.png)
+![Player](assets/gallery/player.png)
+![Queue collapsed](assets/gallery/queue_collapsed.png)
+![Queue expanded](assets/gallery/queue_expanded.png)
+![Library](assets/gallery/library.png)
+![Library songs](assets/gallery/library_songs.png)
+![Folders](assets/gallery/folders.png)
+![Artist page](assets/gallery/artist_page.png)
+![Lyrics](assets/gallery/lyrics.png)
+![Chatbot](assets/gallery/chatbot.png)
+![Settings](assets/gallery/settings.png)
+![Tablet queue home light](assets/gallery/tablet_queue_home_light.png)
+![Tablet lyrics library](assets/gallery/tablet_lyrics_library.png)
+![Tablet lyrics library dark](assets/gallery/tablet_lyrics_library_dark.png)
 
-<!-- use  "⠀⠀" for spacing -->
-[<img src="assets/badge_github.png" alt="Get it on GitHub" height="40">](https://github.com/OuterTune/OuterTune/releases/latest)⠀⠀
-[<img src="assets/IzzyOnDroidButtonGreyBorder.svg" alt="Get it on IzzyOnDroid" height="40">](https://apt.izzysoft.de/fdroid/index/apk/kraata.outertune)⠀⠀
-[<img src="assets/badge_fdroid.svg" alt="Get it on F-Droid" height="40">](https://f-droid.org/en/packages/kraata.outertune/)⠀⠀
-[<img src="assets/badge_obtainium.png" alt="Get it on Obtainium" height="40">](https://apps.obtainium.imranr.dev/redirect?r=obtainium://app/%7B%22id%22%3A%22com.kraata.harmony%22%2C%22url%22%3A%22https%3A%2F%2Fgithub.com%2FOuterTune%2FOuterTune%22%2C%22author%22%3A%22OuterTune%22%2C%22name%22%3A%22OuterTune%22%2C%22preferredApkIndex%22%3A0%2C%22additionalSettings%22%3A%22%7B%5C%22includePrereleases%5C%22%3Afalse%2C%5C%22fallbackToOlderReleases%5C%22%3Atrue%2C%5C%22filterReleaseTitlesByRegEx%5C%22%3A%5C%22%5C%22%2C%5C%22filterReleaseNotesByRegEx%5C%22%3A%5C%22%5C%22%2C%5C%22verifyLatestTag%5C%22%3Afalse%2C%5C%22dontSortReleasesList%5C%22%3Afalse%2C%5C%22useLatestAssetDateAsReleaseDate%5C%22%3Afalse%2C%5C%22trackOnly%5C%22%3Afalse%2C%5C%22versionExtractionRegEx%5C%22%3A%5C%22%5C%22%2C%5C%22matchGroupToUse%5C%22%3A%5C%22%5C%22%2C%5C%22versionDetection%5C%22%3Atrue%2C%5C%22releaseDateAsVersion%5C%22%3Afalse%2C%5C%22useVersionCodeAsOSVersion%5C%22%3Afalse%2C%5C%22apkFilterRegEx%5C%22%3A%5C%22%5C%22%2C%5C%22invertAPKFilter%5C%22%3Afalse%2C%5C%22autoApkFilterByArch%5C%22%3Atrue%2C%5C%22appName%5C%22%3A%5C%22%5C%22%2C%5C%22shizukuPretendToBeGooglePlay%5C%22%3Afalse%2C%5C%22allowInsecure%5C%22%3Afalse%2C%5C%22exemptFromBackgroundUpdates%5C%22%3Afalse%2C%5C%22skipUpdateNotifications%5C%22%3Afalse%2C%5C%22about%5C%22%3A%5C%22A%20Material%203%20YouTube%20Music%20client%20%26%20local%20music%20player%20for%20Android%5C%22%7D%22%2C%22overrideSource%22%3A%22GitHub%22%7D)
+## Imágenes adicionales
 
+![Harmony logo](assets/Harmony.webp)
+![GitHub badge](assets/badge_github.png)
+![Player image](assets/player.jpg)
+![YTM sync](assets/ytm-sync.jpg)
 
-> [!WARNING]
-> OuterTune is only available on the platforms listed here. This app is not listed on the Play Store or any other fake website that claim to be us. We recommend you to immediately delete any fake versions or clones for your safety.
+## Características
 
+- Reproducción de música local (MP3, FLAC, OGG, etc.)
+- Cliente de YouTube Music con reproducción en segundo plano y descargas
+- Biblioteca unificada (contenido local + online)
+- Sincronización con cuenta de YouTube Music
+- Letras sincronizadas (LRC/TTML/SRT), incluyendo modo karaoke palabra por palabra
+- Múltiples colas de reproducción
+- Integración con Android Auto
+- Extracción de metadatos mejorada (TagLib/FFmpeg/MediaStore según configuración)
+- Modo `AI` experimental en la app (LLM local vía `llama.cpp`modelo: Qwen2-500m)
 
-## Features
+## Requisitos
 
-OuterTune is a supercharged fork of [InnerTune](https://github.com/z-huang/InnerTune). This app is both a local media player, and a YouTube Music client.
+- Android `8.0+` (minSdk 24)
+- JDK `21`
+- Android SDK con `compileSdk 36`
+- NDK y CMake (el proyecto usa código nativo)
+- Git con submódulos
 
-- YouTube Music client features
-    - Song downloading (offline playback)
-    - Seamless playback: no ADs & background playback
-    - Account synchronization
-        - Full playlist sync from the app to the remote account is temporally unavailable 
-- Local audio file playback (ex. MP3, OGG, FLAC, etc.)
-    - Play local and Youtube Music songs at the same time
-    - Uses a custom tag extractor instead of MediaStore's broken metadata extractor! (e.g tags delimited with \\ now show up properly)
-- Sleek Material3 design
-- Multiple queues
-- Synchronized lyrics, and support for word by word/Karaoke lyrics formats (e.g LRC, TTML)
-- Audio normalization, tempo/pitch adjustment, and various other audio effects
-- Android Auto support
-- Support for Android 8 (Oreo) and higher
+## Instalación (usuarios)
 
-> [!NOTE]
-> Android 8 (Oreo) and higher is supported. While the app may work on Android 7.x (Nougat), we do not officially support this version
+- Descarga un APK desde la sección **Releases** del repositorio.
+- Si usas la variante `full`, incluye componentes adicionales como extractor FFmpeg para metadatos.
 
-> [!NOTE]
-> Read our FAQ and guides on our [wiki](https://github.com/OuterTune/OuterTune/wiki/Frequently-Asked-Questions-(FAQ))
+## Compilación local (desarrolladores)
 
+1. Clonar el repo con submódulos:
 
-## Screenshots
+```bash
+git clone --recurse-submodules <URL_DEL_REPOSITORIO>
+cd Hamony_OuterTune
+```
 
-<img src="./assets/main-interface.jpg" alt="Main player interface" />
-<br/><br/>
-<img src="./assets/player.jpg" alt="Player interface"/>
-<br/><br/>
-<img src="./assets/ytm-sync.jpg" alt="Sync with YouTube Music"/>
+2. Compilar variante `core` debug:
 
-[Full image gallery](./assets/gallery)
+```bash
+./gradlew assembleCoreDebug
+```
 
-> [!WARNING]
->
->If you're in a region where YouTube Music is not supported, you won't be able to use this app
-***unless*** you have a proxy or VPN to connect to a YTM supported region.
+3. Ejecutar lint y tests de JVM (igual que CI):
 
-## Building & Contributing
+```bash
+./gradlew lintCoreDebug testCoreDebugUnitTest
+```
 
-We are looking for contributors, translators, and maintainers! If you would like to help out, or just wish to build the
-app yourself, please see the [building and contribution notes](./CONTRIBUTING.md).
+4. Compilar release `core`:
 
-### Submitting Translations
+```bash
+./gradlew assembleCoreRelease
+```
 
-We use Weblate to translate OuterTune. For more details or to submit translations, visit our [Weblate page](https://hosted.weblate.org/projects/outertune/).
+### Compilar variante `full`
 
-<a href="https://hosted.weblate.org/projects/outertune/">
-<img src="https://hosted.weblate.org/widget/outertune/multi-auto.svg" alt="Translation status" />
-</a>
+La variante `full` requiere librerías FFmpeg precompiladas dentro de `ffMetadataEx/ffmpeg-android-maker`.
 
-Thank you very much for helping to make OuterTune accessible to many people worldwide.
+```bash
+git clone https://github.com/mikooomich/ffmpeg-android-maker-prebuilt/ -b audio ffMetadataEx/ffmpeg-android-maker
+./gradlew assembleFullDebug
+# o release
+./gradlew assembleFullRelease
+```
 
-## Support us
+## Variantes del proyecto
 
-If you like OuterTune, you're welcome to send a donation. Donations will support the development,
-including bug fixes and new features.
+- `core`: build por defecto, más ligera
+- `full`: añade componentes avanzados (por ejemplo, extractor FFmpeg)
 
-<a href="https://paypal.me/DD3Boh"><img src="./assets/paypal.png" alt="PayPal" height="60" ></a>
+También existen tipos de build:
 
-## Help & Support
-Contact us through GitHub
-- For bug reports and/or feature requests, please create a [GitHub issue](https://github.com/OuterTune/OuterTune/issues).
-- If you have want help with the app, check out the [Discussion Forum](https://github.com/OuterTune/OuterTune/discussions).
+- `debug`
+- `userdebug` (similar a release, sin minificación)
+- `release`
 
-For all other inquiries NOT related to the app, you can contact us at outertune@protonmail.com. **This is NOT a support email!**
+## Estructura de módulos
 
-## Attribution
+- `app`: aplicación principal Android (UI, reproducción, base de datos, configuración)
+- `innertube`: cliente/API para YouTube Music
+- `kugou`: integración de letras (KuGou)
+- `lrclib`: integración de letras (LrcLib)
+- `ffMetadataEx`: integración nativa con FFmpeg para metadatos
+- `taglib`: parsing/lectura de metadatos de audio
+- `material-color-utilities`: utilidades de color Material
 
-Thanks to all our contributors! Check them out [here](https://github.com/OuterTune/OuterTune/graphs/contributors)
+## Tecnologías
 
-[z-huang/InnerTune](https://github.com/z-huang/InnerTune) for providing an awesome base for this fork, none of this
-would have been possible without it.
+- Kotlin + Jetpack Compose
+- Media3 (ExoPlayer, Session, Download)
+- Room
+- Hilt
+- Ktor
+- NDK/CMake (C++)
 
-[Musicolet](https://play.google.com/store/apps/details?id=in.krosbits.musicolet) for inspiration of a local music player
-experience done right.
+## Créditos
 
-[Gramophone](https://github.com/FoedusProgramme/Gramophone) for emotional support, and a legendary lyrics parser
+- Basado en ideas y trabajo de **InnerTune** y el ecosistema de **OuterTune**.
 
-[![Star History Chart](https://api.star-history.com/svg?repos=outertune/outertune&type=Date)](https://www.star-history.com/#outertune/outertune&Date)
+## Licencia
 
-## Disclaimer
-
-This project and its contents are not affiliated with, funded, authorized, endorsed by, or in any
-way associated with YouTube, Google LLC or any of its affiliates and subsidiaries.
-
-Any trademark, service mark, trade name, or other intellectual property rights used in this project
-are owned by the respective owners.
+Este proyecto se distribuye bajo licencia **GPL-3.0**. Consulta [LICENSE](LICENSE).

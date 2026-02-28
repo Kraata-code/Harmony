@@ -198,7 +198,6 @@ import com.kraata.harmony.utils.coilCoroutine
 import com.kraata.harmony.utils.lmScannerCoroutine
 import com.kraata.harmony.utils.rememberEnumPreference
 import com.kraata.harmony.utils.rememberPreference
-import com.kraata.harmony.viewmodels.LlamaEngine
 import com.valentinilk.shimmer.LocalShimmerTheme
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
@@ -215,8 +214,6 @@ class MainActivity : ComponentActivity() {
 
     @Inject
     lateinit var database: MusicDatabase
-
-    private lateinit var llama: LlamaEngine
 
     @Inject
     lateinit var downloadUtil: DownloadUtil
@@ -286,13 +283,6 @@ class MainActivity : ComponentActivity() {
         WindowCompat.setDecorFitsSystemWindows(window, false)
 
         activityLauncher = ActivityLauncherHelper(this)
-
-        llama = LlamaEngine(this, database)
-
-        lifecycleScope.launch(Dispatchers.IO) {
-            val ok = llama.init()
-            Log.d("LLAMA", "Initialized = $ok")
-        }
 
         setContent {
             Log.v(MAIN_TAG, "RC-1")
