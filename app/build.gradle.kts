@@ -19,20 +19,20 @@ val keystorePropertiesFile = rootProject.file("keystore.properties")
 val keystoreProperties = Properties()
 
 android {
-    namespace = "com.dd3boh.outertune"
+    namespace = "com.kraata.harmony"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.dd3boh.harmony"
+        applicationId = "com.kraata.harmony"
         minSdk = 24
         targetSdk = 36
-        versionCode = 70
-        versionName = "0.10.0"
+        versionCode = 1
+        versionName = "1.0.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
         ndk {
             //noinspection ChromeOsAbiSupport
-            abiFilters.addAll(listOf("arm64-v8a"))
+            abiFilters.addAll(listOf("arm64-v8a", "x86_64"))
         }
         externalNativeBuild {
             cmake {
@@ -116,7 +116,7 @@ android {
         abi {
             isEnable = true
             reset()
-            include("x86_64", "x86", "armeabi-v7a", "arm64-v8a")
+            include("arm64-v8a", "x86_64")
             isUniversalApk = true
         }
     }
