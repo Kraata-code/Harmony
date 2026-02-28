@@ -5,7 +5,7 @@
 # Harmony
 
 **Reproductor de música local + cliente de YouTube Music en una sola app para Android.**  
-Basado en [InnerTune](https://github.com/z-huang/InnerTune) y el ecosistema de OuterTune.
+Basado en [InnerTune](https://github.com/z-huang/InnerTune) y el ecosistema de [OuterTune](https://github.com/OuterTune/OuterTune).
 
 ![Android](https://img.shields.io/badge/Android-8.0%2B-3DDC84?style=flat-square&logo=android&logoColor=white)
 ![minSdk](https://img.shields.io/badge/minSdk-24-brightgreen?style=flat-square)
