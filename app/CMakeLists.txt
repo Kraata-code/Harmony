@@ -65,6 +65,14 @@ if(NOT EXISTS "${LLAMA_CPP_DIR}/CMakeLists.txt")
     message(FATAL_ERROR "No se encuentra ${LLAMA_CPP_DIR}/CMakeLists.txt")
 endif()
 
+# Requerido por Play para dispositivos con page size de 16 KB.
+if(ANDROID_ABI STREQUAL "arm64-v8a")
+    add_link_options(
+        "-Wl,-z,max-page-size=16384"
+        "-Wl,-z,common-page-size=16384"
+    )
+endif()
+
 # CRÍTICO: Incluir con EXCLUDE_FROM_ALL para evitar que compile herramientas
 add_subdirectory(${LLAMA_CPP_DIR} EXCLUDE_FROM_ALL)
 
