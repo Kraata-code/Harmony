@@ -94,6 +94,22 @@ Los artistas y canciones que administro son de tu biblioteca local — si un art
                         llamaEngine = null
                     }
                 }
+            } catch (e: UnsatisfiedLinkError) {
+                Log.e(TAG, "Native library unavailable during engine initialization", e)
+
+                withContext(Dispatchers.Main) {
+                    _isInitialized.value = false
+                    _errorMessage.value = "Biblioteca nativa no disponible para este dispositivo"
+
+                    _messages.value = listOf(
+                        ChatMessage(
+                            text = "La función de IA no está disponible en esta arquitectura del dispositivo.",
+                            isFromMe = false
+                        )
+                    )
+
+                    llamaEngine = null
+                }
             } catch (e: Exception) {
                 Log.e(TAG, "Exception initializing engine", e)
 
@@ -169,6 +185,9 @@ Los artistas y canciones que administro son de tu biblioteca local — si un art
                             // Usar límite de tokens optimizado
                             engine.generateResponse(text, maxTokens = MAX_TOKENS_PER_RESPONSE)
                         }
+                    } catch (e: UnsatisfiedLinkError) {
+                        Log.e(TAG, "Native library unavailable in generation coroutine", e)
+                        "Error: Biblioteca nativa no disponible para este dispositivo"
                     } catch (e: Exception) {
                         Log.e(TAG, "Error in generation coroutine", e)
                         "Error: ${e.message}"
@@ -184,6 +203,15 @@ Los artistas y canciones que administro son de tu biblioteca local — si un art
 
                 Log.d(TAG, "Response added to messages")
 
+            } catch (e: UnsatisfiedLinkError) {
+                Log.e(TAG, "Native library unavailable while generating response", e)
+
+                val errorMessage = ChatMessage(
+                    text = "La función de IA no está disponible en esta arquitectura del dispositivo.",
+                    isFromMe = false
+                )
+                _messages.value = _messages.value + errorMessage
+                _errorMessage.value = "Biblioteca nativa no disponible para este dispositivo"
             } catch (e: Exception) {
                 Log.e(TAG, "Error generating response", e)
 
@@ -251,6 +279,8 @@ Los artistas y canciones que administro son de tu biblioteca local — si un art
         try {
             llamaEngine?.release()
             llamaEngine = null
+        } catch (e: UnsatisfiedLinkError) {
+            Log.e(TAG, "Native library unavailable during onCleared release", e)
         } catch (e: Exception) {
             Log.e(TAG, "Error releasing engine in onCleared", e)
         }

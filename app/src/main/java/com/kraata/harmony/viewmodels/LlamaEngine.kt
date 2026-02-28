@@ -22,6 +22,7 @@ class LlamaEngine(private val context: Context, private val database: MusicDatab
         // Parámetros optimizados para Qwen2
         const val MAX_TOKENS_DEFAULT = 128
         const val MAX_TOKENS_LIMIT = 256
+        const val CONTEXT_LENGTH_TOKENS = 4096
     }
 
     private val llamaBridge = LlamaBridge()
@@ -46,12 +47,18 @@ class LlamaEngine(private val context: Context, private val database: MusicDatab
             return@withContext true
         }
 
+        if (!LlamaBridge.isNativeLibraryLoaded()) {
+            Log.e(TAG, "llama-jni-lib is not available for this ABI/device")
+            isInitialized.set(false)
+            return@withContext false
+        }
+
         try {
             Log.i(TAG, "Preparing model from assets...")
             val modelPath = ModelManager.prepareModel(context)
             Log.i(TAG, "Initializing Qwen2 model from: $modelPath")
 
-            val success = llamaBridge.initModel(modelPath)
+            val success = llamaBridge.initModel(modelPath, CONTEXT_LENGTH_TOKENS)
 
             if (success) {
                 isInitialized.set(true)
@@ -62,6 +69,10 @@ class LlamaEngine(private val context: Context, private val database: MusicDatab
 
             success
 
+        } catch (e: UnsatisfiedLinkError) {
+            Log.e(TAG, "JNI library unavailable during initialization", e)
+            isInitialized.set(false)
+            false
         } catch (e: Exception) {
             Log.e(TAG, "Exception during initialization", e)
             isInitialized.set(false)
@@ -165,6 +176,8 @@ class LlamaEngine(private val context: Context, private val database: MusicDatab
             Log.d(TAG, "Response generated: ${cleanedResponse.take(50)}...")
             cleanedResponse
 
+        } catch (e: UnsatisfiedLinkError) {
+            "Error: Biblioteca nativa no disponible para este dispositivo"
         } catch (e: Exception) {
             "Error: ${e.message ?: "Error desconocido"}"
         }
@@ -355,6 +368,8 @@ class LlamaEngine(private val context: Context, private val database: MusicDatab
                 llamaBridge.releaseModel()
                 Log.i(TAG, "Model released successfully")
             }
+        } catch (e: UnsatisfiedLinkError) {
+            Log.e(TAG, "JNI library unavailable while releasing model", e)
         } catch (e: Exception) {
             Log.e(TAG, "Exception releasing model", e)
         }
