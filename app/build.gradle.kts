@@ -17,10 +17,12 @@ plugins {
 // Configuración de keystore con manejo seguro
 val keystorePropertiesFile = rootProject.file("keystore.properties")
 val keystoreProperties = Properties()
+val isBundleTask = gradle.startParameter.taskNames.any { it.contains("bundle", ignoreCase = true) }
 
 android {
     namespace = "com.kraata.harmony"
     compileSdk = 36
+    ndkVersion = "29.0.13113456"
 
     defaultConfig {
         applicationId = "com.kraata.harmony"
@@ -45,7 +47,8 @@ android {
             "-DLLAMA_CURL=OFF",            // Ya lo teníamos
             "-DLLAMA_BUILD_COMMON=ON",     // Solo lo necesario para la lib
             "-DLLAMA_BUILD_CLI=OFF",       // <--- ESTO ES CLAVE: Desactiva llama-cli
-            "-DLLAMA_BUILD_MTMD=OFF"       // <--- ESTO ELIMINA EL ERROR DE 'mtmd.h'
+            "-DLLAMA_BUILD_MTMD=OFF",      // <--- ESTO ELIMINA EL ERROR DE 'mtmd.h'
+            "-DANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES=ON"
         )
             }
         }
@@ -114,10 +117,10 @@ android {
     // Configuración de splits por ABI
     splits {
         abi {
-            isEnable = true
+            isEnable = !isBundleTask
             reset()
             include("arm64-v8a", "x86_64")
-            isUniversalApk = true
+            isUniversalApk = !isBundleTask
         }
     }
 

@@ -166,6 +166,20 @@ class LlamaEngine(private val context: Context, private val database: MusicDatab
                         return@withContext "$result ¿Deseas algo más?"
                     }
 
+                    "find_local_songs" -> {
+                        val query = toolCall.arguments["query"]?.trim().orEmpty()
+                        val limit = toolCall.arguments["limit"]?.toIntOrNull() ?: 5
+                        val safeLimit = limit.coerceIn(1, 20)
+
+                        val result = tools.findLocalSongs(query, safeLimit)
+                        val secondFormattedPrompt = formatFinalAnswerPrompt(prompt, result)
+                        val finalResponse = llamaBridge.generateText(
+                            secondFormattedPrompt,
+                            limitedMaxTokens
+                        )
+                        return@withContext cleanResponse(finalResponse)
+                    }
+
                     else -> {
                     }
                 }
@@ -230,6 +244,13 @@ class LlamaEngine(private val context: Context, private val database: MusicDatab
                         "     * playlistName: Exact playlist name as user states it\n" +
                         "   - Example: 'add The Doors to playlist Doors for ever' →\n" +
                         "     {\"tool\": \"insert_artis_playlist\", \"arguments\": {\"artist\": \"The Doors\", \"playlistName\": \"Doors for ever\"}}\n" +
+                        "\n" +
+                        "5. find_local_songs(query: string, limit: string?)\n" +
+                        "   - Use when user asks to find songs in their local library\n" +
+                        "   - Query should be plain text, no URLs\n" +
+                        "   - limit is optional and should be a number as string\n" +
+                        "   - Example:\n" +
+                        "     {\"tool\": \"find_local_songs\", \"arguments\": {\"query\": \"soda\", \"limit\": \"5\"}}\n" +
                         "\n" +
                         "RESPONSE FORMAT:\n" +
                         "For tool calls, respond ONLY with JSON (no extra text):\n" +
