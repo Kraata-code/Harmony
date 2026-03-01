@@ -12,6 +12,7 @@ import android.net.ConnectivityManager
 import android.util.Log
 import androidx.media3.common.PlaybackException
 import com.kraata.harmony.constants.AudioQuality
+import com.kraata.harmony.db.entities.FormatEntity
 import com.kraata.harmony.utils.YTPlayerUtils.MAIN_CLIENT
 import com.kraata.harmony.utils.YTPlayerUtils.STREAM_FALLBACK_CLIENTS
 import com.kraata.harmony.utils.YTPlayerUtils.validateStatus
@@ -75,9 +76,11 @@ object YTPlayerUtils {
      * Metadata like audioConfig and videoDetails are from [MAIN_CLIENT].
      * Format & stream can be from [MAIN_CLIENT] or [STREAM_FALLBACK_CLIENTS].
      */
+    @Suppress("UNUSED_PARAMETER")
     suspend fun playerResponseForPlayback(
         videoId: String,
         playlistId: String? = null,
+        playedFormat: FormatEntity? = null,
         audioQuality: AudioQuality,
         connectivityManager: ConnectivityManager,
     ): Result<PlaybackData> = runCatching {

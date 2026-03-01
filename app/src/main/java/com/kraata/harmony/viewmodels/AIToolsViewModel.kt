@@ -78,6 +78,35 @@ class AIToolsViewModel(private val database: MusicDatabase) {
         }
     }
 
+    suspend fun findLocalSongs(query: String, limit: Int = 5): String = withContext(Dispatchers.IO) {
+        try {
+            val normalizedQuery = query.trim()
+            if (normalizedQuery.isBlank()) {
+                return@withContext "La búsqueda está vacía. Indica un término para buscar canciones locales."
+            }
+
+            val safeLimit = limit.coerceIn(1, 20)
+            val songs = database.searchSongsAllLocal(normalizedQuery, safeLimit).firstOrNull().orEmpty()
+
+            if (songs.isEmpty()) {
+                return@withContext "No encontré canciones locales para \"$normalizedQuery\"."
+            }
+
+            return@withContext buildString {
+                append("Encontré ${songs.size} canción")
+                if (songs.size != 1) append("es")
+                append(" locales para \"$normalizedQuery\":\n")
+                songs.forEach { song ->
+                    val artistNames = song.artists.joinToString(", ") { it.name }
+                    append("• ${song.song.title} - $artistNames\n")
+                }
+            }.trim()
+        } catch (e: Exception) {
+            Log.e(TAG, "Error al buscar canciones locales para '$query'", e)
+            "Hubo un problema al buscar canciones locales. Intenta de nuevo."
+        }
+    }
+
     suspend fun createPlaylist(playlistName: String) = withContext(Dispatchers.IO) {
         try {
             Log.i(TAG, "Creando playlist: $playlistName")

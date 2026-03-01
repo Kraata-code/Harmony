@@ -64,21 +64,31 @@ class AiViewModel @Inject constructor(private val database: MusicDatabase) : Vie
                         _errorMessage.value = null
 
                         _messages.value = listOf(
-                            ChatMessage(
-                                text = """¡Hola! Soy tu asistente musical 🎵
+                           ChatMessage(
+    text = """¡Hola! Soy tu asistente musical 🎵
 
 Puedo ayudarte con preguntas generales y gestionar tu biblioteca musical.
 Los artistas y canciones que administro son de tu biblioteca local — si un artista no aparece, asegúrate de tenerlo descargado.""",
-                                isFromMe = false
-                            ),
-                            ChatMessage(
-                                text = """Ejemplos de lo que puedes pedirme:
+    isFromMe = false
+),
+ChatMessage(
+    text = """Estas son algunas cosas que puedo hacer por ti:
 
-"¿Qué día es hoy?"
-"Crea una playlist llamada Favoritas"
-"Agrega canciones de Metallica a la playlist Rock"""",
-                                isFromMe = false
-                            )
+📅 Información general
+   • "¿Qué día es hoy?" → fecha actual
+
+🎶 Buscar canciones locales
+   • "Busca canciones de Soda Stereo" → encuentra tracks en tu biblioteca
+
+📋 Crear playlists
+   • "Crea una playlist llamada Favoritas"
+
+➕ Agregar artistas a una playlist
+   • "Agrega canciones de Metallica a la playlist Rock"
+
+¡Prueba con cualquiera de estos ejemplos! 🚀""",
+    isFromMe = false
+),
                         )
                     } else {
                         Log.e(TAG, "Failed to initialize LLM Engine")

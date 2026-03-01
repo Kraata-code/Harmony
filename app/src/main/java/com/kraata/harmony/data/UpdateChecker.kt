@@ -3,8 +3,12 @@ package com.kraata.harmony.data
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.os.Build
+import android.provider.Settings
 import android.util.Log
 import androidx.core.content.FileProvider
+import com.kraata.harmony.BuildConfig
+import com.kraata.harmony.utils.compareVersion
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
@@ -12,25 +16,29 @@ import kotlinx.coroutines.flow.flowOn
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.json.JSONObject
-import com.kraata.harmony.utils.compareVersion
 import java.io.File
 import java.io.FileOutputStream
 import java.util.concurrent.TimeUnit
 
 private const val TAG = "UpdateChecker"
 private const val DEFAULT_UPDATE_URL = "https://github.com/Kraata-code/Harmony/releases/latest/download/app-release.apk"
+private const val DEFAULT_GITHUB_API_BASE_URL = "https://api.github.com"
 
 /**
  * Gestiona la verificación y descarga de actualizaciones de la aplicación.
- * 
+ *
  * Implementa el patrón Repository para separar la lógica de red del resto de la aplicación.
  */
 class UpdateChecker(
     private val apkUrl: String = DEFAULT_UPDATE_URL,
-    private val client: OkHttpClient = createDefaultClient()
+    private val client: OkHttpClient = createDefaultClient(),
+    private val githubApiBaseUrl: String = DEFAULT_GITHUB_API_BASE_URL
 ) {
-    
+
     companion object {
+        private val strictSemverRegex = Regex("""^v?(\d+\.\d+\.\d+(?:\.\d+)*)$""", RegexOption.IGNORE_CASE)
+        private val semverInAssetRegex = Regex("""(\d+\.\d+\.\d+(?:\.\d+)*)""")
+
         private fun createDefaultClient(): OkHttpClient = OkHttpClient.Builder()
             .callTimeout(0, TimeUnit.SECONDS)
             .connectTimeout(30, TimeUnit.SECONDS)
@@ -38,27 +46,75 @@ class UpdateChecker(
             .writeTimeout(60, TimeUnit.SECONDS)
             .retryOnConnectionFailure(true)
             .build()
+
+        internal fun extractSemverTag(tag: String?): String? {
+            if (tag.isNullOrBlank()) return null
+            return strictSemverRegex.matchEntire(tag.trim())?.groupValues?.get(1)
+        }
+
+        internal fun extractSemverFromAssetName(assetName: String): String? {
+            return semverInAssetRegex.find(assetName)?.groupValues?.get(1)
+        }
+
+        internal fun assetMatchesFlavor(assetName: String, flavor: String): Boolean {
+            if (flavor.isBlank()) return false
+            val matcher = Regex(
+                """(^|[-_.])${Regex.escape(flavor.lowercase())}($|[-_.])""",
+                RegexOption.IGNORE_CASE
+            )
+            return matcher.containsMatchIn(assetName)
+        }
+
+        internal fun selectAssetForFlavor(assets: List<ReleaseAsset>, flavor: String): ReleaseAsset? {
+            val flavorAssets = assets.filter { assetMatchesFlavor(it.name, flavor) }
+            if (flavorAssets.isEmpty()) return null
+            return flavorAssets.firstOrNull { it.name.contains("universal", ignoreCase = true) }
+                ?: flavorAssets.first()
+        }
+
+        internal fun extractApkAssets(releaseJson: JSONObject): List<ReleaseAsset> {
+            val assets = releaseJson.optJSONArray("assets") ?: return emptyList()
+            val apkAssets = mutableListOf<ReleaseAsset>()
+
+            for (i in 0 until assets.length()) {
+                val asset = assets.optJSONObject(i) ?: continue
+                val name = asset.optString("name")
+                val url = asset.optString("browser_download_url")
+                if (name.isBlank() || url.isBlank()) continue
+                if (name.endsWith(".apk", ignoreCase = true)) {
+                    apkAssets.add(ReleaseAsset(name = name, downloadUrl = url))
+                }
+            }
+
+            return apkAssets
+        }
     }
+
+    data class ReleaseAsset(
+        val name: String,
+        val downloadUrl: String
+    )
 
     /**
      * Descarga el APK desde la URL configurada.
-     * 
+     *
      * @param context Contexto de Android necesario para acceso al sistema de archivos
+     * @param downloadUrl URL del APK a descargar
      * @return Flow que emite el progreso de descarga y el estado final
      */
-    fun downloadUpdate(context: Context): Flow<DownloadState> = flow {
+    fun downloadUpdate(context: Context, downloadUrl: String = apkUrl): Flow<DownloadState> = flow {
         emit(DownloadState.Downloading(0))
-        
+
         try {
             val apkFile = File(context.cacheDir, "app-update.apk")
-            
+
             // Limpiar archivo anterior si existe
             if (apkFile.exists()) {
                 apkFile.delete()
             }
-            
+
             val request = Request.Builder()
-                .url(apkUrl)
+                .url(downloadUrl)
                 .get()
                 .build()
 
@@ -66,30 +122,30 @@ class UpdateChecker(
                 if (!response.isSuccessful) {
                     throw UpdateException("Error al descargar: código ${response.code}")
                 }
-                
+
                 val body = response.body ?: throw UpdateException("Respuesta vacía del servidor")
                 val contentLength = body.contentLength()
-                
+
                 if (contentLength <= 0) {
                     throw UpdateException("Tamaño de archivo inválido")
                 }
-                
+
                 body.byteStream().use { input ->
                     FileOutputStream(apkFile).use { output ->
                         val buffer = ByteArray(8192)
                         var bytesRead: Int
                         var totalBytesRead = 0L
-                        
+
                         while (input.read(buffer).also { bytesRead = it } != -1) {
                             output.write(buffer, 0, bytesRead)
                             totalBytesRead += bytesRead
-                            
+
                             val progress = (totalBytesRead * 100 / contentLength).toInt()
                             emit(DownloadState.Downloading(progress))
                         }
                     }
                 }
-                
+
                 emit(DownloadState.Downloaded(apkFile))
             }
         } catch (e: Exception) {
@@ -100,29 +156,39 @@ class UpdateChecker(
 
     /**
      * Inicia la instalación del APK descargado.
-     * 
+     *
      * Requiere que la aplicación tenga el permiso REQUEST_INSTALL_PACKAGES
      * y un FileProvider configurado en el AndroidManifest.xml
-     * 
+     *
      * @param context Contexto de Android
      * @param apkFile Archivo APK a instalar
      */
     fun installUpdate(context: Context, apkFile: File) {
         try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && !context.packageManager.canRequestPackageInstalls()) {
+                val settingsIntent = Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES).apply {
+                    data = Uri.parse("package:${context.packageName}")
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                }
+                context.startActivity(settingsIntent)
+                throw UpdateException("Habilita el permiso para instalar apps desconocidas y vuelve a intentar.")
+            }
+
             val apkUri: Uri = FileProvider.getUriForFile(
                 context,
                 "${context.packageName}.FileProvider",
                 apkFile
             )
-            
+
             val installIntent = Intent(Intent.ACTION_VIEW).apply {
                 setDataAndType(apkUri, "application/vnd.android.package-archive")
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                 addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
             }
-            
+
             context.startActivity(installIntent)
         } catch (e: Exception) {
+            if (e is UpdateException) throw e
             Log.e(TAG, "Error al instalar actualización", e)
             throw UpdateException("Error al iniciar instalación", e)
         }
@@ -133,7 +199,12 @@ class UpdateChecker(
      * Si `apkUrl` apunta a GitHub, consulta `https://api.github.com/repos/{owner}/{repo}/releases/latest`.
      * Emite UpdateCheckState.Loading, UpdateAvailable, UpToDate o Error.
      */
-    fun checkForUpdates(context: Context, currentVersionName: String = com.kraata.harmony.BuildConfig.VERSION_NAME): Flow<UpdateCheckState> = flow {
+    @Suppress("UNUSED_PARAMETER")
+    fun checkForUpdates(
+        context: Context,
+        currentVersionName: String = BuildConfig.VERSION_NAME,
+        currentFlavor: String = BuildConfig.FLAVOR
+    ): Flow<UpdateCheckState> = flow {
         emit(UpdateCheckState.Loading)
         try {
             val uri = Uri.parse(apkUrl)
@@ -151,7 +222,7 @@ class UpdateChecker(
 
             val owner = segments[0]
             val repo = segments[1]
-            val apiUrl = "https://api.github.com/repos/$owner/$repo/releases/latest"
+            val apiUrl = "${githubApiBaseUrl.trimEnd('/')}/repos/$owner/$repo/releases/latest"
 
             val request = Request.Builder()
                 .url(apiUrl)
@@ -168,32 +239,18 @@ class UpdateChecker(
                 val body = response.body?.string() ?: throw UpdateException("Empty response from GitHub API")
                 val json = JSONObject(body)
 
-                // tag_name often like v1.2.3
-                var latestName = json.optString("tag_name", json.optString("name", ""))
-                if (latestName.startsWith("v") || latestName.startsWith("V")) latestName = latestName.substring(1)
-
-                val releaseNotes = json.optString("body", null)
-
-                // find asset download url
-                var downloadUrl: String? = null
-                val assets = json.optJSONArray("assets")
-                if (assets != null) {
-                    for (i in 0 until assets.length()) {
-                        val asset = assets.getJSONObject(i)
-                        val name = asset.optString("name")
-                        val url = asset.optString("browser_download_url")
-                        if (name.contains("apk") || name.contains("app-release") || name.endsWith(".apk")) {
-                            downloadUrl = url
-                            break
-                        }
-                        if (downloadUrl == null) downloadUrl = url
-                    }
+                val releaseNotes = json.optString("body").takeIf { it.isNotBlank() }
+                val apkAssets = extractApkAssets(json)
+                if (apkAssets.isEmpty()) {
+                    throw UpdateException("No APK assets found in latest release.")
                 }
 
-                if (downloadUrl == null) {
-                    // fallback to releases download URL pattern
-                    downloadUrl = "https://github.com/$owner/$repo/releases/latest/download/${uri.lastPathSegment}"
-                }
+                val selectedAsset = selectAssetForFlavor(apkAssets, currentFlavor)
+                    ?: throw UpdateException("No compatible APK found for flavor '$currentFlavor'.")
+
+                val latestName = extractSemverTag(json.optString("tag_name"))
+                    ?: extractSemverFromAssetName(selectedAsset.name)
+                    ?: throw UpdateException("Could not resolve release version from tag or APK name.")
 
                 val cmp = try {
                     compareVersion(latestName, currentVersionName)
@@ -204,7 +261,7 @@ class UpdateChecker(
                 val info = UpdateInfo(
                     latestVersionCode = 0,
                     latestVersionName = latestName,
-                    downloadUrl = downloadUrl,
+                    downloadUrl = selectedAsset.downloadUrl,
                     releaseNotes = releaseNotes,
                     mandatory = false,
                     checksum = null

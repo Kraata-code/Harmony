@@ -140,7 +140,7 @@ fun AboutScreen(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = "Fork de OuterTune By",
+                    text = "Fork de OuterTune desarrollado por",
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.secondary
                 )
@@ -168,7 +168,7 @@ fun AboutScreen(
  /*           IconLabelButton(
                 text = stringResource(R.string.wiki),
                 icon = Icons.Outlined.Info,
-                onClick = { uriHandler.openUri("https://github.com/OuterTune/OuterTune/wiki") },
+                onClick = { uriHandler.openUri("https://github.com/Kraata-code/Harmony/wiki") },
                 modifier = Modifier.padding(horizontal = 8.dp)
             )*/
         }
@@ -202,13 +202,13 @@ fun AboutScreen(
 //                PreferenceEntry(
 //                    title = { Text(stringResource(R.string.help_bug_report_action)) },
 //                    onClick = {
-//                        uriHandler.openUri("https://github.com/OuterTune/OuterTune/issues")
+//                        uriHandler.openUri("https://github.com/Kraata-code/Harmony/issues")
 //                    }
 //                )
 //                PreferenceEntry(
 //                    title = { Text(stringResource(R.string.help_support_forum)) },
 //                    onClick = {
-//                        uriHandler.openUri("https://github.com/OuterTune/OuterTune/discussions")
+//                        uriHandler.openUri("https://github.com/Kraata-code/Harmony/discussions")
 //                    }
 //                )
 //                PreferenceEntry(
