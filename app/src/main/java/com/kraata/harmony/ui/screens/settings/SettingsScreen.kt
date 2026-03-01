@@ -182,7 +182,7 @@ fun SettingsScreen(
                                 if (updateState is UpdateCheckState.UpdateAvailable) {
                                     val info = (updateState as UpdateCheckState.UpdateAvailable).info
                                     updateStatus = "Downloading ${info.latestVersionName}..."
-                                    checker.downloadUpdate(context).collect { dstate: com.kraata.harmony.data.DownloadState ->
+                                    checker.downloadUpdate(context, info.downloadUrl).collect { dstate: com.kraata.harmony.data.DownloadState ->
                                         when (dstate) {
                                             is com.kraata.harmony.data.DownloadState.Downloading -> updateStatus = "Downloading: ${dstate.progress}%"
                                             is com.kraata.harmony.data.DownloadState.Downloaded -> {
@@ -190,10 +190,11 @@ fun SettingsScreen(
                                                 try {
                                                     checker.installUpdate(context, dstate.file)
                                                 } catch (e: Exception) {
-                                                    updateStatus = "Install failed: ${e.message}"
+                                                    updateStatus = formatInstallErrorMessage(e.message)
                                                 }
                                             }
-                                            is com.kraata.harmony.data.DownloadState.Error -> updateStatus = "Download error: ${dstate.exception.message}"
+                                            is com.kraata.harmony.data.DownloadState.Error ->
+                                                updateStatus = formatDownloadErrorMessage(dstate.exception.message)
                                         }
                                     }
                                 } else {
@@ -205,7 +206,8 @@ fun SettingsScreen(
                                             is com.kraata.harmony.data.UpdateCheckState.Loading -> updateStatus = "Checking for updates..."
                                             is com.kraata.harmony.data.UpdateCheckState.UpToDate -> updateStatus = "App is up to date"
                                             is com.kraata.harmony.data.UpdateCheckState.UpdateAvailable -> updateStatus = "New version available"
-                                            is com.kraata.harmony.data.UpdateCheckState.Error -> updateStatus = "Update check failed: ${state.throwable.message}"
+                                            is com.kraata.harmony.data.UpdateCheckState.Error ->
+                                                updateStatus = formatCheckErrorMessage(state.throwable.message)
                                         }
                                     }
                                 }
@@ -243,4 +245,30 @@ fun SettingsScreen(
         windowInsets = TopBarInsets,
         scrollBehavior = scrollBehavior
     )
+}
+
+private fun formatCheckErrorMessage(message: String?): String {
+    return when {
+        message.isNullOrBlank() -> "Update check failed"
+        message.contains("No compatible APK found for flavor", ignoreCase = true) ->
+            "No compatible APK found for this app flavor"
+        else -> "Update check failed: $message"
+    }
+}
+
+private fun formatDownloadErrorMessage(message: String?): String {
+    return if (message.isNullOrBlank()) {
+        "Download error"
+    } else {
+        "Download error: $message"
+    }
+}
+
+private fun formatInstallErrorMessage(message: String?): String {
+    return when {
+        message.isNullOrBlank() -> "Install failed"
+        message.contains("apps desconocidas", ignoreCase = true) ->
+            "Enable install permission for this app and tap again"
+        else -> "Install failed: $message"
+    }
 }
