@@ -107,3 +107,6 @@ lint/tmp/
 
 /ffMetadataEx
 /app/src/main/llama.cpp/.git.bak
+
+# Local LLM model files (too large for regular Git)
+/app/src/main/assets/*.gguf
