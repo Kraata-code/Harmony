@@ -57,7 +57,7 @@ public:
      * Aplica truncamiento inteligente si es necesario.
      */
     std::vector<llama_token> prepareContext(
-            const std::vector<llama_token>& new_prompt_tokens
+            const std::vector<llama_token> &new_prompt_tokens
     ) {
         std::vector<llama_token> result;
 
@@ -100,7 +100,7 @@ public:
         return result;
     }
 
-    void addToHistory(const std::vector<llama_token>& tokens) {
+    void addToHistory(const std::vector<llama_token> &tokens) {
         conversation_history.insert(
                 conversation_history.end(),
                 tokens.begin(),
@@ -116,6 +116,7 @@ public:
     }
 
     bool wasTruncated() const { return history_truncated; }
+
     size_t getHistorySize() const { return conversation_history.size(); }
 };
 
@@ -141,8 +142,8 @@ public:
      * Crea un fragmento seguro del prompt que cabe en el contexto disponible.
      */
     static Fragment createSafeFragment(
-            const std::string& prompt,
-            const llama_vocab* vocab,
+            const std::string &prompt,
+            const llama_vocab *vocab,
             int max_tokens
     ) {
         Fragment fragment;
@@ -163,7 +164,7 @@ public:
              estimated_tokens, max_tokens);
 
         int target_chars = max_tokens * 4;
-        std::string truncated = prompt.substr(0, std::min(target_chars, (int)prompt.length()));
+        std::string truncated = prompt.substr(0, std::min(target_chars, (int) prompt.length()));
 
         // Buscar punto de corte inteligente
         size_t cut_point = findIntelligentCutPoint(truncated, target_chars);
@@ -195,7 +196,7 @@ private:
      * Encuentra un punto de corte semánticamente apropiado.
      * Prioriza: punto final > salto de línea > espacio
      */
-    static size_t findIntelligentCutPoint(const std::string& text, int target_pos) {
+    static size_t findIntelligentCutPoint(const std::string &text, int target_pos) {
         size_t min_acceptable = target_pos * Config::TRUNCATE_THRESHOLD;
 
         // Buscar el último punto, signo de exclamación o interrogación
@@ -235,9 +236,9 @@ private:
  * Encapsula el contexto de Llama con gestión automática de recursos (RAII).
  */
 struct LlamaContext {
-    llama_model* model = nullptr;
-    llama_context* ctx = nullptr;
-    llama_sampler* sampler = nullptr;
+    llama_model *model = nullptr;
+    llama_context *ctx = nullptr;
+    llama_sampler *sampler = nullptr;
     std::unique_ptr<ConversationManager> conversation_manager;
 
     ~LlamaContext() {
@@ -275,13 +276,13 @@ extern "C" {
 
 JNIEXPORT jboolean JNICALL
 Java_com_kraata_harmony_viewmodels_LlamaBridge_initModel(
-        JNIEnv* env,
+        JNIEnv *env,
         jobject thiz,
         jstring modelPath,
         jint contextLength
 ) {
     try {
-        const char* path = env->GetStringUTFChars(modelPath, nullptr);
+        const char *path = env->GetStringUTFChars(modelPath, nullptr);
         LOGI("========================================");
         LOGI("Inicializando modelo Qwen2 desde: %s", path);
         LOGI("========================================");
@@ -312,7 +313,8 @@ Java_com_kraata_harmony_viewmodels_LlamaBridge_initModel(
                                   ? static_cast<int>(contextLength)
                                   : Config::DEFAULT_CONTEXT_TOKENS;
         const int model_ctx_train = llama_model_n_ctx_train(model);
-        const int max_supported_ctx = model_ctx_train > 0 ? model_ctx_train : Config::MAX_CONTEXT_TOKENS;
+        const int max_supported_ctx =
+                model_ctx_train > 0 ? model_ctx_train : Config::MAX_CONTEXT_TOKENS;
         const int clamped_ctx = std::max(
                 Config::MIN_CONTEXT_TOKENS,
                 std::min(requested_ctx, std::min(Config::MAX_CONTEXT_TOKENS, max_supported_ctx))
@@ -320,8 +322,11 @@ Java_com_kraata_harmony_viewmodels_LlamaBridge_initModel(
 
         llama_context_params cparams = llama_context_default_params();
         cparams.n_ctx = clamped_ctx;
-        cparams.n_batch = std::min(cparams.n_ctx, static_cast<uint32_t>(Config::DEFAULT_BATCH_TOKENS));
-        cparams.n_ubatch = cparams.n_batch;
+        // n_batch grande = prefill del prompt más rápido (procesa más tokens a la vez)
+        // n_ubatch menor = decode más eficiente en memoria (1 token por vez en generación)
+        cparams.n_batch = std::min(cparams.n_ctx,
+                                   static_cast<uint32_t>(Config::DEFAULT_BATCH_TOKENS));
+        cparams.n_ubatch = 128; // decode eficiente: menos memoria pressure por iteración
         cparams.n_threads = 4;          // Threads para inferencia
         cparams.n_threads_batch = 4;    // Threads para batch
 
@@ -381,7 +386,7 @@ Java_com_kraata_harmony_viewmodels_LlamaBridge_initModel(
         LOGI("========================================");
         return JNI_TRUE;
 
-    } catch (const std::exception& e) {
+    } catch (const std::exception &e) {
         LOGE("❌ Excepción en initModel: %s", e.what());
         return JNI_FALSE;
     }
@@ -389,18 +394,19 @@ Java_com_kraata_harmony_viewmodels_LlamaBridge_initModel(
 
 JNIEXPORT jstring JNICALL
 Java_com_kraata_harmony_viewmodels_LlamaBridge_generateText(
-        JNIEnv* env,
+        JNIEnv *env,
         jobject thiz,
         jstring prompt,
         jint maxTokens
 ) {
     if (!g_llama_context || !g_llama_context->isValid()) {
         LOGE("❌ Error: Modelo no inicializado");
-        return env->NewStringUTF("Error: Modelo no inicializado. Por favor, reinicia la aplicación.");
+        return env->NewStringUTF(
+                "Error: Modelo no inicializado. Por favor, reinicia la aplicación.");
     }
 
     try {
-        const char* prompt_cstr = env->GetStringUTFChars(prompt, nullptr);
+        const char *prompt_cstr = env->GetStringUTFChars(prompt, nullptr);
         std::string prompt_str(prompt_cstr);
         env->ReleaseStringUTFChars(prompt, prompt_cstr);
 
@@ -413,7 +419,7 @@ Java_com_kraata_harmony_viewmodels_LlamaBridge_generateText(
         auto ctx = g_llama_context->ctx;
         auto model = g_llama_context->model;
         auto sampler = g_llama_context->sampler;
-        const llama_vocab* vocab = llama_model_get_vocab(model);
+        const llama_vocab *vocab = llama_model_get_vocab(model);
 
         const int n_ctx = llama_n_ctx(ctx);
         const int n_batch = llama_n_batch(ctx);
@@ -425,7 +431,7 @@ Java_com_kraata_harmony_viewmodels_LlamaBridge_generateText(
         }
 
         // Reiniciar memoria KV para cada inferencia completa.
-        llama_memory_clear(llama_get_memory(ctx), false);
+        // llama_memory_clear(llama_get_memory(ctx), false);
 
         // ====================================================================
         // FASE 1: TOKENIZACIÓN Y VALIDACIÓN CON FRAGMENTACIÓN
@@ -499,7 +505,8 @@ Java_com_kraata_harmony_viewmodels_LlamaBridge_generateText(
         int prompt_offset = 0;
         while (prompt_offset < n_prompt_tokens) {
             const int chunk_size = std::min(n_batch, n_prompt_tokens - prompt_offset);
-            llama_batch batch = llama_batch_get_one(prompt_tokens.data() + prompt_offset, chunk_size);
+            llama_batch batch = llama_batch_get_one(prompt_tokens.data() + prompt_offset,
+                                                    chunk_size);
 
             const int decode_status = llama_decode(ctx, batch);
             if (decode_status != 0) {
@@ -622,15 +629,16 @@ Java_com_kraata_harmony_viewmodels_LlamaBridge_generateText(
 
         return env->NewStringUTF(generated_text.c_str());
 
-    } catch (const std::exception& e) {
+    } catch (const std::exception &e) {
         LOGE("❌ Excepción en generateText: %s", e.what());
-        return env->NewStringUTF("Error crítico durante la generación. Por favor, intenta nuevamente.");
+        return env->NewStringUTF(
+                "Error crítico durante la generación. Por favor, intenta nuevamente.");
     }
 }
 
 JNIEXPORT void JNICALL
 Java_com_kraata_harmony_viewmodels_LlamaBridge_releaseModel(
-        JNIEnv* env,
+        JNIEnv *env,
         jobject thiz
 ) {
     try {
@@ -646,7 +654,7 @@ Java_com_kraata_harmony_viewmodels_LlamaBridge_releaseModel(
         }
 
         LOGI("========================================");
-    } catch (const std::exception& e) {
+    } catch (const std::exception &e) {
         LOGE("❌ Excepción en releaseModel: %s", e.what());
     }
 }
@@ -657,7 +665,7 @@ Java_com_kraata_harmony_viewmodels_LlamaBridge_releaseModel(
  */
 JNIEXPORT void JNICALL
 Java_com_kraata_harmony_viewmodels_LlamaBridge_clearConversation(
-        JNIEnv* env,
+        JNIEnv *env,
         jobject thiz
 ) {
     try {
@@ -665,7 +673,7 @@ Java_com_kraata_harmony_viewmodels_LlamaBridge_clearConversation(
             g_llama_context->conversation_manager->clear();
             LOGI("✓ Historial de conversación limpiado");
         }
-    } catch (const std::exception& e) {
+    } catch (const std::exception &e) {
         LOGE("❌ Excepción en clearConversation: %s", e.what());
     }
 }
@@ -676,7 +684,7 @@ Java_com_kraata_harmony_viewmodels_LlamaBridge_clearConversation(
  */
 JNIEXPORT jstring JNICALL
 Java_com_kraata_harmony_viewmodels_LlamaBridge_getContextInfo(
-        JNIEnv* env,
+        JNIEnv *env,
         jobject thiz
 ) {
     try {
@@ -700,12 +708,12 @@ Java_com_kraata_harmony_viewmodels_LlamaBridge_getContextInfo(
                  n_ctx,
                  history_size,
                  truncated ? "Truncado" : "Completo",
-                 n_ctx - (int)history_size - Config::SAFETY_MARGIN
+                 n_ctx - (int) history_size - Config::SAFETY_MARGIN
         );
 
         return env->NewStringUTF(info_buffer);
 
-    } catch (const std::exception& e) {
+    } catch (const std::exception &e) {
         LOGE("❌ Excepción en getContextInfo: %s", e.what());
         return env->NewStringUTF("Error al obtener información");
     }
