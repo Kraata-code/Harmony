@@ -251,8 +251,8 @@ fun SettingsScreen(
 private fun formatCheckErrorMessage(message: String?): String {
     return when {
         message.isNullOrBlank() -> "Update check failed"
-        message.contains("No compatible APK found for flavor", ignoreCase = true) ->
-            "No compatible APK found for this app flavor"
+        message.contains("No compatible APK found", ignoreCase = true) ->
+            "No compatible APK found in latest release"
         else -> "Update check failed: $message"
     }
 }
