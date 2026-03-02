@@ -1,6 +1,7 @@
 /*
  * Copyright (C) 2024 z-huang/InnerTune
- * Copyright (C) 2025 O﻿ute﻿rTu﻿ne Project
+ * Copyright (C) 2025 OuterTune Project
+ * Copyright (C) 2026 Harmony Project
  *
  * SPDX-License-Identifier: GPL-3.0
  *
