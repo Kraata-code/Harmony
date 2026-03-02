@@ -42,8 +42,7 @@ class UpdateCheckerTest {
         val checker = createChecker(server)
         val state = checker.checkForUpdates(
             context = ApplicationProvider.getApplicationContext(),
-            currentVersionName = "1.0.0",
-            currentFlavor = "core"
+            currentVersionName = "1.0.0"
         ).last()
 
         assertTrue(state is UpdateCheckState.UpdateAvailable)
@@ -80,8 +79,7 @@ class UpdateCheckerTest {
         val checker = createChecker(server)
         val state = checker.checkForUpdates(
             context = ApplicationProvider.getApplicationContext(),
-            currentVersionName = "1.1.0",
-            currentFlavor = "core"
+            currentVersionName = "1.1.0"
         ).last()
 
         assertTrue(state is UpdateCheckState.UpToDate)
@@ -89,7 +87,7 @@ class UpdateCheckerTest {
     }
 
     @Test
-    fun `checkForUpdates returns error when no apk matches flavor`() = runBlocking {
+    fun `checkForUpdates returns update available when only one apk exists`() = runBlocking {
         val server = MockWebServer()
         server.start()
         server.enqueue(
@@ -111,18 +109,20 @@ class UpdateCheckerTest {
         val checker = createChecker(server)
         val state = checker.checkForUpdates(
             context = ApplicationProvider.getApplicationContext(),
-            currentVersionName = "1.0.0",
-            currentFlavor = "core"
+            currentVersionName = "1.0.0"
         ).last()
 
-        assertTrue(state is UpdateCheckState.Error)
-        val message = (state as UpdateCheckState.Error).throwable.message ?: ""
-        assertTrue(message.contains("No compatible APK found for flavor"))
+        assertTrue(state is UpdateCheckState.UpdateAvailable)
+        val info = (state as UpdateCheckState.UpdateAvailable).info
+        assertEquals(
+            "https://example.com/Harmony-1.1.0-full-release-2.apk",
+            info.downloadUrl
+        )
         server.shutdown()
     }
 
     @Test
-    fun `checkForUpdates prefers universal apk when multiple assets match flavor`() = runBlocking {
+    fun `checkForUpdates prefers universal apk when multiple assets are present`() = runBlocking {
         val server = MockWebServer()
         server.start()
         server.enqueue(
@@ -152,8 +152,7 @@ class UpdateCheckerTest {
         val checker = createChecker(server)
         val state = checker.checkForUpdates(
             context = ApplicationProvider.getApplicationContext(),
-            currentVersionName = "1.1.0",
-            currentFlavor = "core"
+            currentVersionName = "1.1.0"
         ).last()
 
         assertTrue(state is UpdateCheckState.UpdateAvailable)

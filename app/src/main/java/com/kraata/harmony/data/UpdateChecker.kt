@@ -66,20 +66,9 @@ class UpdateChecker(
             return semverInAssetRegex.find(assetName)?.groupValues?.get(1)
         }
 
-        internal fun assetMatchesFlavor(assetName: String, flavor: String): Boolean {
-            if (flavor.isBlank()) return false
-            val matcher = Regex(
-                """(^|[-_.])${Regex.escape(flavor.lowercase())}($|[-_.])""",
-                RegexOption.IGNORE_CASE
-            )
-            return matcher.containsMatchIn(assetName)
-        }
-
-        internal fun selectAssetForFlavor(assets: List<ReleaseAsset>, flavor: String): ReleaseAsset? {
-            val flavorAssets = assets.filter { assetMatchesFlavor(it.name, flavor) }
-            if (flavorAssets.isEmpty()) return null
-            return flavorAssets.firstOrNull { it.name.contains("universal", ignoreCase = true) }
-                ?: flavorAssets.first()
+        internal fun selectPreferredAsset(assets: List<ReleaseAsset>): ReleaseAsset? {
+            return assets.firstOrNull { it.name.contains("universal", ignoreCase = true) }
+                ?: assets.firstOrNull()
         }
 
         internal fun extractApkAssets(releaseJson: JSONObject): List<ReleaseAsset> {
@@ -209,11 +198,9 @@ class UpdateChecker(
      * Si `apkUrl` apunta a GitHub, consulta `https://api.github.com/repos/{owner}/{repo}/releases/latest`.
      * Emite UpdateCheckState.Loading, UpdateAvailable, UpToDate o Error.
      */
-    @Suppress("UNUSED_PARAMETER")
     fun checkForUpdates(
         context: Context,
-        currentVersionName: String = BuildConfig.VERSION_NAME,
-        currentFlavor: String = BuildConfig.FLAVOR
+        currentVersionName: String = BuildConfig.VERSION_NAME
     ): Flow<UpdateCheckState> = flow {
         emit(UpdateCheckState.Loading)
         try {
@@ -255,8 +242,8 @@ class UpdateChecker(
                     throw UpdateException("No APK assets found in latest release.")
                 }
 
-                val selectedAsset = selectAssetForFlavor(apkAssets, currentFlavor)
-                    ?: throw UpdateException("No compatible APK found for flavor '$currentFlavor'.")
+                val selectedAsset = selectPreferredAsset(apkAssets)
+                    ?: throw UpdateException("No compatible APK found in latest release.")
 
                 val latestName = extractSemverTag(json.optString("tag_name"))
                     ?: extractSemverFromAssetName(selectedAsset.name)
