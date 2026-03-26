@@ -39,17 +39,22 @@ android {
         externalNativeBuild {
             cmake {
                 cppFlags("-std=c++17")
-               arguments(
-            "-DGGML_USE_CPU=ON",
-            "-DLLAMA_BUILD_EXAMPLES=OFF", // Desactiva ejemplos
-            "-DLLAMA_BUILD_TESTS=OFF",     // Desactiva tests
-            "-DLLAMA_BUILD_SERVER=OFF",    // Desactiva el servidor HTTP
-            "-DLLAMA_CURL=OFF",            // Ya lo teníamos
-            "-DLLAMA_BUILD_COMMON=ON",     // Solo lo necesario para la lib
-            "-DLLAMA_BUILD_CLI=OFF",       // <--- ESTO ES CLAVE: Desactiva llama-cli
-            "-DLLAMA_BUILD_MTMD=OFF",      // <--- ESTO ELIMINA EL ERROR DE 'mtmd.h'
-            "-DANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES=ON"
-        )
+                arguments(
+                    "-DBUILD_SHARED_LIBS=ON",
+                    "-DGGML_BACKEND_DL=ON",
+                    "-DGGML_CPU_ALL_VARIANTS=ON",
+                    "-DGGML_NATIVE=OFF",
+                    "-DGGML_OPENMP=OFF",
+                    "-DGGML_LLAMAFILE=OFF",
+                    "-DLLAMA_BUILD_EXAMPLES=OFF",
+                    "-DLLAMA_BUILD_TESTS=OFF",
+                    "-DLLAMA_BUILD_SERVER=OFF",
+                    "-DLLAMA_BUILD_COMMON=ON",
+                    "-DLLAMA_BUILD_CLI=OFF",
+                    "-DLLAMA_BUILD_MTMD=OFF",
+                    "-DLLAMA_CURL=OFF",
+                    "-DANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES=ON"
+                )
             }
         }
     }
@@ -235,7 +240,7 @@ android {
     externalNativeBuild {
         cmake {
             path = file("CMakeLists.txt")
-            version = "3.22.1"
+            version = "3.31.6"
         }
     }
 }
