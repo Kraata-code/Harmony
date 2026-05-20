@@ -25,6 +25,12 @@ constraintlayout = "2.2.1"
 foundation = "1.10.0"
 foundationLayout = "1.10.0"
 ui = "1.10.0"
+agp = "8.13.0"
+coreKtx = "1.10.1"
+junit = "1.1.5"
+espressoCore = "3.5.1"
+appcompat = "1.6.1"
+material = "1.10.0"
 
 [libraries]
 annotation = { module = "androidx.annotation:annotation", version.ref = "annotation" }
@@ -103,6 +109,11 @@ constraintlayout = { group = "androidx.constraintlayout", name = "constraintlayo
 foundation = { group = "androidx.compose.foundation", name = "foundation", version.ref = "foundation" }
 foundation-layout = { group = "androidx.compose.foundation", name = "foundation-layout", version.ref = "foundationLayout" }
 ui = { group = "androidx.compose.ui", name = "ui", version.ref = "ui" }
+core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
+ext-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junit" }
+espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
+appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
+material = { group = "com.google.android.material", name = "material", version.ref = "material" }
 
 [plugins]
 aboutlibraries = { id = "com.mikepenz.aboutlibraries.plugin", version.ref = "aboutLibraries" }
@@ -110,3 +121,5 @@ kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", versi
 compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 hilt = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }
 kotlin-ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
+android-library = { id = "com.android.library", version.ref = "agp" }
+kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }

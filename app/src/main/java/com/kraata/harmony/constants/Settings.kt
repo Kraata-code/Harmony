@@ -39,7 +39,8 @@ enum class LyricsPosition {
     LEFT, CENTER, RIGHT
 }
 
-const val DEFAULT_ENABLED_TABS = "HSFMI"
+const val LEGACY_DEFAULT_ENABLED_TABS = "HSFMI"
+const val DEFAULT_ENABLED_TABS = "HSFMIN"
 const val DEFAULT_ENABLED_FILTERS = "ARP"
 
 /*

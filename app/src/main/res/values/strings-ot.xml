@@ -11,6 +11,9 @@ while also allowing users to translate our app as well. New, specific strings to
     <string name="folders">Folders</string>
     <string name="library">Library</string>
     <string name="AI">AI</string>
+    <string name="music_recognition">Music recognition</string>
+    <string name="music_recognition_placeholder_title">Music recognition is not available yet</string>
+    <string name="music_recognition_placeholder_description">The tab is now integrated in navigation, but the song identification flow is still pending implementation.</string>
 
     <!-- Home -->
     <string name="recent_activity">Recent activity</string>

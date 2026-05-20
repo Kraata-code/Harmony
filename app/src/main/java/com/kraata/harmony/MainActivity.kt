@@ -124,6 +124,7 @@ import com.kraata.harmony.constants.DefaultOpenTabKey
 import com.kraata.harmony.constants.DynamicThemeKey
 import com.kraata.harmony.constants.EnabledTabsKey
 import com.kraata.harmony.constants.HighContrastKey
+import com.kraata.harmony.constants.LEGACY_DEFAULT_ENABLED_TABS
 import com.kraata.harmony.constants.LibraryFilterKey
 import com.kraata.harmony.constants.MinMiniPlayerHeight
 import com.kraata.harmony.constants.MiniPlayerHeight
@@ -151,6 +152,7 @@ import com.kraata.harmony.ui.screens.BrowseScreen
 import com.kraata.harmony.ui.screens.HistoryScreen
 import com.kraata.harmony.ui.screens.HomeScreen
 import com.kraata.harmony.ui.screens.LoginScreen
+import com.kraata.harmony.ui.screens.MusicRecognitionScreen
 import com.kraata.harmony.ui.screens.MoodAndGenresScreen
 import com.kraata.harmony.ui.screens.Screens
 import com.kraata.harmony.ui.screens.SetupWizard
@@ -317,11 +319,18 @@ class MainActivity : ComponentActivity() {
 
             var filter by rememberEnumPreference(LibraryFilterKey, Screens.LibraryFilter.ALL)
             val (slimNav) = rememberPreference(SlimNavBarKey, defaultValue = false)
-            val (enabledTabs) = rememberPreference(
+            val (enabledTabs, onEnabledTabsChange) = rememberPreference(
                 EnabledTabsKey,
                 defaultValue = DEFAULT_ENABLED_TABS
             )
-            val navigationItems = Screens.getScreens(enabledTabs)
+            val effectiveEnabledTabs = remember(enabledTabs) {
+                if (enabledTabs == LEGACY_DEFAULT_ENABLED_TABS) {
+                    DEFAULT_ENABLED_TABS
+                } else {
+                    enabledTabs
+                }
+            }
+            val navigationItems = Screens.getScreens(effectiveEnabledTabs)
             val (defaultOpenTab, onDefaultOpenTabChange) = rememberPreference(
                 DefaultOpenTabKey,
                 defaultValue = Screens.Home.route
@@ -340,8 +349,14 @@ class MainActivity : ComponentActivity() {
                 }
             }
 
+            LaunchedEffect(enabledTabs) {
+                if (enabledTabs == LEGACY_DEFAULT_ENABLED_TABS) {
+                    onEnabledTabsChange(DEFAULT_ENABLED_TABS)
+                }
+            }
 
-            LaunchedEffect(useDarkTheme) {
+
+             LaunchedEffect(useDarkTheme) {
                 setSystemBarAppearance(useDarkTheme)
             }
             var themeColor by rememberSaveable(stateSaver = ColorSaver) {
@@ -635,6 +650,9 @@ class MainActivity : ComponentActivity() {
                                     }
                                     composable(Screens.AI.route) {
                                         AiScreen(navController, scrollBehavior)
+                                    }
+                                    composable(Screens.Identifier.route) {
+                                        MusicRecognitionScreen(navController, scrollBehavior)
                                     }
                                     composable("history") {
                                         HistoryScreen(navController)
