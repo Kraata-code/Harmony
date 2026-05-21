@@ -14,6 +14,7 @@ import androidx.annotation.StringRes
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.QueueMusic
 import androidx.compose.material.icons.rounded.Album
+import androidx.compose.material.icons.rounded.AllInbox
 import androidx.compose.material.icons.rounded.Audiotrack
 import androidx.compose.material.icons.rounded.Folder
 import androidx.compose.material.icons.rounded.Home
@@ -21,6 +22,7 @@ import androidx.compose.material.icons.rounded.LibraryMusic
 import androidx.compose.material.icons.rounded.MusicNote
 import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material.icons.rounded.AutoAwesome
+import androidx.compose.material.icons.rounded.MoreHoriz
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.kraata.harmony.R
@@ -38,8 +40,9 @@ sealed class Screens(
     data object Albums : Screens(R.string.albums, Icons.Rounded.Album, "albums")
     data object Playlists : Screens(R.string.playlists, Icons.AutoMirrored.Rounded.QueueMusic, "playlists")
     data object Library : Screens(R.string.library, Icons.Rounded.LibraryMusic, "library")
-    data object AI : Screens(R.string.AI, Icons.Rounded.AutoAwesome, "ai")
-    data object Identifier : Screens(R.string.music_recognition, Icons.Rounded.Audiotrack, "identifier")
+    data object  More : Screens(R.string.more,Icons.Rounded.MoreHoriz,"more")
+//    data object AI : Screens(R.string.AI, Icons.Rounded.AutoAwesome, "ai")AllInbox
+//    data object Identifier : Screens(R.string.music_recognition, Icons.Rounded.Contactless, "identifier")
 
     enum class LibraryFilter {
         ALL, ALBUMS, ARTISTS, PLAYLISTS, SONGS, FOLDERS
@@ -59,6 +62,7 @@ sealed class Screens(
          * L: Playlists
          * M: Library
          * I: AI (Inteligencia Artificial)
+         * O:More option(AI,Music recognition)
          *
          * Not/won't implement
          * P: Player
@@ -73,8 +77,9 @@ sealed class Screens(
             Albums to 'B',
             Playlists to 'L',
             Library to 'M',
-            AI to 'I',
-            Identifier to 'N'
+            More to 'O',
+//            AI to 'I',
+//            Identifier to 'N'
         )
 
         fun getAllScreens() = screenPairs.map { it.first }

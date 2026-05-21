@@ -10,6 +10,7 @@ while also allowing users to translate our app as well. New, specific strings to
     <!-- Bottom navigation -->
     <string name="folders">Folders</string>
     <string name="library">Library</string>
+    <string name="more">More</string>
     <string name="AI">AI</string>
     <string name="music_recognition">Music recognition</string>
     <string name="music_recognition_placeholder_title">Music recognition is not available yet</string>

@@ -35,7 +35,7 @@ import com.kraata.harmony.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MoreScreen(
+fun MusicRecognitionScreen(
     navController: NavController,
     scrollBehavior: TopAppBarScrollBehavior,
 ) {

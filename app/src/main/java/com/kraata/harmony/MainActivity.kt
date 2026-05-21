@@ -210,6 +210,7 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 import com.kraata.harmony.constants.FloatingMiniplayerKey
+import com.kraata.harmony.ui.screens.MoreScreen
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -648,12 +649,16 @@ class MainActivity : ComponentActivity() {
                                     composable(Screens.Library.route) {
                                         LibraryScreen(navController, scrollBehavior)
                                     }
-                                    composable(Screens.AI.route) {
-                                        AiScreen(navController, scrollBehavior)
+                                    composable(Screens.More.route) {
+                                        MoreScreen(navController, scrollBehavior)
                                     }
-                                    composable(Screens.Identifier.route) {
-                                        MusicRecognitionScreen(navController, scrollBehavior)
-                                    }
+
+//                                    composable(Screens.AI.route) {
+//                                        AiScreen(navController, scrollBehavior)
+//                                    }
+//                                    composable(Screens.Identifier.route) {
+//                                        MusicRecognitionScreen(navController, scrollBehavior)
+//                                    }
                                     composable("history") {
                                         HistoryScreen(navController)
                                     }
