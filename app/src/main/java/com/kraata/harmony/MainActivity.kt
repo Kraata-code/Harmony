@@ -50,7 +50,13 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.AutoAwesome
+import androidx.compose.material.icons.rounded.Contactless
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
@@ -84,6 +90,7 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -97,8 +104,6 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.util.fastForEach
 import androidx.core.net.toUri
 import androidx.core.util.Consumer
@@ -123,6 +128,7 @@ import com.kraata.harmony.constants.DarkModeKey
 import com.kraata.harmony.constants.DefaultOpenTabKey
 import com.kraata.harmony.constants.DynamicThemeKey
 import com.kraata.harmony.constants.EnabledTabsKey
+import com.kraata.harmony.constants.FloatingMiniplayerKey
 import com.kraata.harmony.constants.HighContrastKey
 import com.kraata.harmony.constants.LEGACY_DEFAULT_ENABLED_TABS
 import com.kraata.harmony.constants.LibraryFilterKey
@@ -146,14 +152,14 @@ import com.kraata.harmony.ui.menu.MenuState
 import com.kraata.harmony.ui.player.BottomSheetPlayer
 import com.kraata.harmony.ui.player.MiniPlayer
 import com.kraata.harmony.ui.screens.AccountScreen
-import com.kraata.harmony.ui.screens.AiScreen
 import com.kraata.harmony.ui.screens.AlbumScreen
+import com.kraata.harmony.ui.screens.AiScreen
 import com.kraata.harmony.ui.screens.BrowseScreen
 import com.kraata.harmony.ui.screens.HistoryScreen
 import com.kraata.harmony.ui.screens.HomeScreen
 import com.kraata.harmony.ui.screens.LoginScreen
-import com.kraata.harmony.ui.screens.MusicRecognitionScreen
 import com.kraata.harmony.ui.screens.MoodAndGenresScreen
+import com.kraata.harmony.ui.screens.MusicRecognitionScreen
 import com.kraata.harmony.ui.screens.Screens
 import com.kraata.harmony.ui.screens.SetupWizard
 import com.kraata.harmony.ui.screens.StatsScreen
@@ -209,8 +215,6 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import javax.inject.Inject
-import com.kraata.harmony.constants.FloatingMiniplayerKey
-import com.kraata.harmony.ui.screens.MoreScreen
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -272,9 +276,10 @@ class MainActivity : ComponentActivity() {
         lifecycleScope.launch(Dispatchers.IO) {
             try {
                 val checker = com.kraata.harmony.data.UpdateChecker()
-                checker.checkForUpdates(this@MainActivity).collect { state: com.kraata.harmony.data.UpdateCheckState ->
-                    com.kraata.harmony.data.UpdateRepository.update(state)
-                }
+                checker.checkForUpdates(this@MainActivity)
+                    .collect { state: com.kraata.harmony.data.UpdateCheckState ->
+                        com.kraata.harmony.data.UpdateRepository.update(state)
+                    }
             } catch (e: Exception) {
                 // non-fatal
                 Log.w(MAIN_TAG, "Initial update check failed: ${e.message}")
@@ -357,7 +362,7 @@ class MainActivity : ComponentActivity() {
             }
 
 
-             LaunchedEffect(useDarkTheme) {
+            LaunchedEffect(useDarkTheme) {
                 setSystemBarAppearance(useDarkTheme)
             }
             var themeColor by rememberSaveable(stateSaver = ColorSaver) {
@@ -556,6 +561,35 @@ class MainActivity : ComponentActivity() {
                         ) {
                             Log.v(MAIN_TAG, "RC-3")
 
+                            @Composable
+                            fun MoreNavigationMenu(
+                                expanded: Boolean,
+                                onDismiss: () -> Unit,
+                                onNavigate: (String) -> Unit,
+                            ) {
+                                DropdownMenu(
+                                    expanded = expanded,
+                                    onDismissRequest = onDismiss,
+                                ) {
+                                    DropdownMenuItem(
+                                        text = { Text(stringResource(R.string.AI)) },
+                                        leadingIcon = { Icon(Icons.Rounded.AutoAwesome, contentDescription = null) },
+                                        onClick = {
+                                            onDismiss()
+                                            onNavigate("ai")
+                                        }
+                                    )
+                                    DropdownMenuItem(
+                                        text = { Text(stringResource(R.string.music_recognition)) },
+                                        leadingIcon = {Icon(Icons.Rounded.Contactless, contentDescription = null)},
+                                        onClick = {
+                                            onDismiss()
+                                            onNavigate("identifier")
+                                        }
+                                    )
+                                }
+                            }
+
 
                             val navHost: @Composable() (() -> Unit) = @Composable {
                                 NavHost(
@@ -649,16 +683,13 @@ class MainActivity : ComponentActivity() {
                                     composable(Screens.Library.route) {
                                         LibraryScreen(navController, scrollBehavior)
                                     }
-                                    composable(Screens.More.route) {
-                                        MoreScreen(navController, scrollBehavior)
-                                    }
 
-//                                    composable(Screens.AI.route) {
-//                                        AiScreen(navController, scrollBehavior)
-//                                    }
-//                                    composable(Screens.Identifier.route) {
-//                                        MusicRecognitionScreen(navController, scrollBehavior)
-//                                    }
+                                    composable("ai") {
+                                        AiScreen(navController, scrollBehavior)
+                                    }
+                                    composable("identifier") {
+                                        MusicRecognitionScreen(navController, scrollBehavior)
+                                    }
                                     composable("history") {
                                         HistoryScreen(navController)
                                     }
@@ -862,6 +893,7 @@ class MainActivity : ComponentActivity() {
                                     animationSpec = NavigationBarAnimationSpec,
                                     label = ""
                                 )
+                                var moreMenuExpanded by remember { mutableStateOf(false) }
 
                                 NavigationBar(
                                     modifier = Modifier
@@ -897,12 +929,39 @@ class MainActivity : ComponentActivity() {
 //                                            it.route?.substringBefore("?")?.substringBefore("/") == screen.route
 //                                        } == true
                                         NavigationBarItem(
-                                            selected = navBackStackEntry?.destination?.hierarchy?.any { it.route == screen.route } == true,
+                                            selected = if (screen == Screens.More) {
+                                                navBackStackEntry?.destination?.hierarchy?.any {
+                                                    it.route == "ai" || it.route == "identifier"
+                                                } == true
+                                            } else {
+                                                navBackStackEntry?.destination?.hierarchy?.any { it.route == screen.route } == true
+                                            },
                                             icon = {
-                                                Icon(
-                                                    screen.icon,
-                                                    contentDescription = null
-                                                )
+                                                Box {
+                                                    Icon(
+                                                        screen.icon,
+                                                        contentDescription = null
+                                                    )
+                                                    if (screen == Screens.More) {
+                                                        MoreNavigationMenu(
+                                                            expanded = moreMenuExpanded,
+                                                            onDismiss = { moreMenuExpanded = false },
+                                                            onNavigate = { route ->
+                                                                if (playerBottomSheetState.isExpanded) {
+                                                                    playerBottomSheetState.collapseSoft()
+                                                                }
+                                                                navController.navigate(route) {
+                                                                    popUpTo(navController.graph.startDestinationId) {
+                                                                        saveState = true
+                                                                    }
+                                                                    launchSingleTop = true
+                                                                    restoreState = true
+                                                                }
+                                                                haptic.performHapticFeedback(HapticFeedbackType.ContextClick)
+                                                            }
+                                                        )
+                                                    }
+                                                }
                                             },
                                             label = {
                                                 if (!slimNav) {
@@ -914,6 +973,11 @@ class MainActivity : ComponentActivity() {
                                                 }
                                             },
                                             onClick = {
+                                                if (screen == Screens.More) {
+                                                    moreMenuExpanded = true
+                                                    haptic.performHapticFeedback(HapticFeedbackType.ContextClick)
+                                                    return@NavigationBarItem
+                                                }
                                                 if (playerBottomSheetState.isExpanded) {
                                                     playerBottomSheetState.collapseSoft()
                                                 }
@@ -957,6 +1021,7 @@ class MainActivity : ComponentActivity() {
                                         playerAwareWindowInsets.getLeft(density, layoutDirection).dp
                                     }
                                 }
+                                var moreMenuExpanded by remember { mutableStateOf(false) }
                                 NavigationRail(
                                     containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(
                                         6.dp
@@ -1003,12 +1068,40 @@ class MainActivity : ComponentActivity() {
 //                                                    it.route?.substringBefore("?")?.substringBefore("/") == screen.route
 //                                                } == true
                                         NavigationRailItem(
-                                            selected = navBackStackEntry?.destination?.hierarchy?.any { it.route == screen.route } == true,
+                                            selected = if (screen == Screens.More) {
+                                                navBackStackEntry?.destination?.hierarchy?.any {
+                                                    it.route == "ai" || it.route == "identifier"
+                                                } == true
+                                            } else {
+                                                navBackStackEntry?.destination?.hierarchy?.any { it.route == screen.route } == true
+                                            },
                                             icon = {
-                                                Icon(
-                                                    screen.icon,
-                                                    contentDescription = null
-                                                )
+                                                Box {
+                                                    Icon(
+                                                        screen.icon,
+                                                        contentDescription = null
+                                                    )
+                                                    if (screen == Screens.More) {
+                                                        MoreNavigationMenu(
+                                                            expanded = moreMenuExpanded,
+                                                            onDismiss = { moreMenuExpanded = false },
+                                                            onNavigate = { route ->
+                                                                if (playerBottomSheetState.isExpanded) {
+                                                                    playerBottomSheetState.collapseSoft()
+                                                                }
+                                                                navController.navigate(route) {
+                                                                    popUpTo(navController.graph.startDestinationId) {
+                                                                        saveState = true
+                                                                    }
+
+                                                                    launchSingleTop = true
+                                                                    restoreState = true
+                                                                }
+                                                                haptic.performHapticFeedback(HapticFeedbackType.ContextClick)
+                                                            }
+                                                        )
+                                                    }
+                                                }
                                             },
                                             label = {
                                                 if (!slimNav) {
@@ -1020,6 +1113,11 @@ class MainActivity : ComponentActivity() {
                                                 }
                                             },
                                             onClick = {
+                                                if (screen == Screens.More) {
+                                                    moreMenuExpanded = true
+                                                    haptic.performHapticFeedback(HapticFeedbackType.ContextClick)
+                                                    return@NavigationRailItem
+                                                }
                                                 if (playerBottomSheetState.isExpanded) {
                                                     playerBottomSheetState.collapseSoft()
                                                 }

@@ -31,6 +31,7 @@ junit = "1.1.5"
 espressoCore = "3.5.1"
 appcompat = "1.6.1"
 material = "1.10.0"
+remoteCreationCompose = "1.0.0-alpha11"
 
 [libraries]
 annotation = { module = "androidx.annotation:annotation", version.ref = "annotation" }
@@ -114,6 +115,7 @@ ext-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junit"
 espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
 appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
 material = { group = "com.google.android.material", name = "material", version.ref = "material" }
+remote-creation-compose = { group = "androidx.compose.remote", name = "remote-creation-compose", version.ref = "remoteCreationCompose" }
 
 [plugins]
 aboutlibraries = { id = "com.mikepenz.aboutlibraries.plugin", version.ref = "aboutLibraries" }
