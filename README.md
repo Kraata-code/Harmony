@@ -138,6 +138,15 @@ git clone https://github.com/mikooomich/ffmpeg-android-maker-prebuilt/ \
 
 ---
 
+## Contribuir
+
+Consulta la [guía de contribución](CONTRIBUTING.md) para preparar el entorno,
+crear commits y abrir pull requests. Las reglas para agentes de IA están en
+[AGENTS.md](AGENTS.md). Para reportes de conducta o seguridad, consulta el
+[Código de Conducta](CODE_OF_CONDUCT.md) y la [Política de seguridad](SECURITY.md).
+
+---
+
 ## Estructura de módulos
 
 | Módulo | Descripción |
