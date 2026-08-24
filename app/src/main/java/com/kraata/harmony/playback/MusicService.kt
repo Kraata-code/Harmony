@@ -990,7 +990,7 @@ class MusicService : MediaLibraryService(),
             // ====== Verificar cooldown de URLs fallidas ======
             failed403Urls[mediaId]?.let { failTime ->
                 val cooldownRemaining = url403CooldownMs - (System.currentTimeMillis() - failTime)
-                if (cooldownRemaining > 0) {
+                if (cooldownRemaining > 0 && !forceRefresh) {
                     Log.w(
                         TAG,
                         "PLAYING: URL for $mediaId failed recently, cooldown ${cooldownRemaining / 1000}s remaining"
@@ -1001,9 +1001,11 @@ class MusicService : MediaLibraryService(),
                         PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_FAILED
                     )
                 } else {
-                    // Cooldown expired, remove from failed list
                     failed403Urls.remove(mediaId)
-                    Log.i(TAG, "PLAYING: Cooldown expired for $mediaId, retrying...")
+                    Log.i(
+                        TAG,
+                        "PLAYING: ${if (forceRefresh) "Forced refresh" else "Cooldown expired"} for $mediaId, retrying..."
+                    )
                 }
             }
 
@@ -1324,8 +1326,10 @@ class MusicService : MediaLibraryService(),
         val currentMediaId = player.currentMediaItem?.mediaId
 
         // ====== Detección específica de errores 403 ======
-        val is403Error = error.cause?.cause is HttpDataSource.InvalidResponseCodeException &&
-                (error.cause?.cause as HttpDataSource.InvalidResponseCodeException).responseCode == 403
+        val is403Error = generateSequence(error.cause) { it.cause }
+            .filterIsInstance<HttpDataSource.InvalidResponseCodeException>()
+            .firstOrNull()
+            ?.responseCode == 403
 
         if (is403Error && currentMediaId != null) {
             val now = System.currentTimeMillis()
