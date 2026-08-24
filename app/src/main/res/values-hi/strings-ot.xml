@@ -1,5 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="music_recognition">संगीत की पहचान</string>
+    <string name="music_recognition_placeholder_title">गाने की पहचान करें</string>
+    <string name="music_recognition_placeholder_description">आस-पास का संगीत सुनने के लिए माइक्रोफ़ोन पर टैप करें।</string>
+    <string name="music_recognition_start">संगीत की पहचान शुरू करें</string>
+    <string name="music_recognition_stop">संगीत की पहचान रोकें</string>
+    <string name="music_recognition_listening">सुन रहा है...</string>
     <string name="library_empty">यहाँ आपकी संग्रह की सामग्री दिखाई देगी</string>
     <string name="android_auto">एंड्रॉइड ऑटो</string>
     <string name="folders">फ़ोल्डर</string>

@@ -1,5 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="music_recognition">Распознавание музыки</string>
+    <string name="music_recognition_placeholder_title">Распознать песню</string>
+    <string name="music_recognition_placeholder_description">Нажмите на микрофон, чтобы послушать музыку поблизости.</string>
+    <string name="music_recognition_start">Начать распознавание музыки</string>
+    <string name="music_recognition_stop">Остановить распознавание музыки</string>
+    <string name="music_recognition_listening">Слушаем...</string>
     <string name="library">Библиотека</string>
     <string name="recent_activity">Недавняя активность</string>
     <string name="local_history">Локальная</string>

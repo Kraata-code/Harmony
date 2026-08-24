@@ -1,5 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="music_recognition">Musikerkennung</string>
+    <string name="music_recognition_placeholder_title">Song identifizieren</string>
+    <string name="music_recognition_placeholder_description">Tippe auf das Mikrofon, um Musik in deiner Nähe zu erkennen.</string>
+    <string name="music_recognition_start">Musikerkennung starten</string>
+    <string name="music_recognition_stop">Musikerkennung stoppen</string>
+    <string name="music_recognition_listening">Höre zu...</string>
     <string name="err_stop_on_error">Ein Fehler ist aufgetreten. Wiedergabe angehalten</string>
     <string name="queue_searched_songs_ot">Suche:</string>
     <string name="recent_activity">Letzte Aktivität</string>

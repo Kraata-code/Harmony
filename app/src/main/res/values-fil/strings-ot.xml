@@ -1,3 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="music_recognition">Pagkilala sa musika</string>
+    <string name="music_recognition_placeholder_title">Tukuyin ang isang kanta</string>
+    <string name="music_recognition_placeholder_description">I-tap ang mikropono para makinig sa musikang nasa paligid.</string>
+    <string name="music_recognition_start">Simulan ang pagkilala sa musika</string>
+    <string name="music_recognition_stop">Ihinto ang pagkilala sa musika</string>
+    <string name="music_recognition_listening">Nakikinig...</string>
 </resources>

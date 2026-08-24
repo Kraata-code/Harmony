@@ -1,5 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="music_recognition">Nhận diện nhạc</string>
+    <string name="music_recognition_placeholder_title">Nhận diện bài hát</string>
+    <string name="music_recognition_placeholder_description">Nhấn vào micrô để nghe nhạc xung quanh.</string>
+    <string name="music_recognition_start">Bắt đầu nhận diện nhạc</string>
+    <string name="music_recognition_stop">Dừng nhận diện nhạc</string>
+    <string name="music_recognition_listening">Đang nghe...</string>
     <string name="select">Chế độ lựa chọn</string>
     <string name="grp_lyrics_format">Định dạng</string>
     <string name="sort_by_date_released">Ngày phát hành</string>

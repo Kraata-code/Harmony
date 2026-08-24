@@ -1,5 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="music_recognition">Musikigenkänning</string>
+    <string name="music_recognition_placeholder_title">Identifiera en låt</string>
+    <string name="music_recognition_placeholder_description">Tryck på mikrofonen för att lyssna efter musik i närheten.</string>
+    <string name="music_recognition_start">Starta musikigenkänning</string>
+    <string name="music_recognition_stop">Stoppa musikigenkänning</string>
+    <string name="music_recognition_listening">Lyssnar...</string>
     <string name="android_auto">Android Auto</string>
     <string name="folders">Mappar</string>
     <string name="library">Bibliotek</string>

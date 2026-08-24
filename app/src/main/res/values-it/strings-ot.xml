@@ -1,5 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="music_recognition">Riconoscimento musicale</string>
+    <string name="music_recognition_placeholder_title">Identifica una canzone</string>
+    <string name="music_recognition_placeholder_description">Tocca il microfono per ascoltare la musica nelle vicinanze.</string>
+    <string name="music_recognition_start">Avvia il riconoscimento musicale</string>
+    <string name="music_recognition_stop">Arresta il riconoscimento musicale</string>
+    <string name="music_recognition_listening">In ascolto...</string>
     <string name="song_added_to_queue">\"%s\" aggiunto alla coda</string>
     <string name="like_all">Mi piace tutto</string>
     <string name="library">Libreria</string>

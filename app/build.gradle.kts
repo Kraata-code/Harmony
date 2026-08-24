@@ -202,6 +202,7 @@ android {
                 "BSD-3-Clause",
                 "GNU LESSER GENERAL PUBLIC LICENSE, Version 2.1",
                 "GPL-3.0-only",
+                "GPL-3.0-or-later",
                 "EPL-2.0",
                 "MIT",
                 "MPL-2.0",

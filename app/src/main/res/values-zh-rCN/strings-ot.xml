@@ -1,5 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="music_recognition">音乐识别</string>
+    <string name="music_recognition_placeholder_title">识别歌曲</string>
+    <string name="music_recognition_placeholder_description">点按麦克风以聆听附近的音乐。</string>
+    <string name="music_recognition_start">开始音乐识别</string>
+    <string name="music_recognition_stop">停止音乐识别</string>
+    <string name="music_recognition_listening">正在聆听...</string>
     <string name="folders">文件夹</string>
     <string name="create_queue">新建队列</string>
     <string name="create_sync_playlist_description">注意：这允许与 YouTube Music 同步。这在以后是不可更改的。您无法将本地歌曲添加到同步的播放列表中。</string>

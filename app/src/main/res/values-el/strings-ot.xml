@@ -1,5 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="music_recognition">Αναγνώριση μουσικής</string>
+    <string name="music_recognition_placeholder_title">Αναγνώριση τραγουδιού</string>
+    <string name="music_recognition_placeholder_description">Πατήστε το μικρόφωνο για να ακούσετε μουσική κοντά σας.</string>
+    <string name="music_recognition_start">Έναρξη αναγνώρισης μουσικής</string>
+    <string name="music_recognition_stop">Διακοπή αναγνώρισης μουσικής</string>
+    <string name="music_recognition_listening">Ακρόαση...</string>
     <string name="select">Λειτουργία επιλογής</string>
     <string name="queue_searched_songs_ot">Αναζήτηση:</string>
     <string name="local_history">Τοπικό</string>

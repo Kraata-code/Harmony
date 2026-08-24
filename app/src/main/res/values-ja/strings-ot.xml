@@ -1,5 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="music_recognition">音楽認識</string>
+    <string name="music_recognition_placeholder_title">曲を特定</string>
+    <string name="music_recognition_placeholder_description">マイクをタップして、周囲の音楽を聴き取ります。</string>
+    <string name="music_recognition_start">音楽認識を開始</string>
+    <string name="music_recognition_stop">音楽認識を停止</string>
+    <string name="music_recognition_listening">聴き取り中...</string>
     <string name="grp_interface">インターフェイス</string>
     <string name="playlist_add_local_to_synced_note">注: 同期/リモートの再生リストに端末内の曲の追加はできません。その他の組み合わせは有効です</string>
     <string name="local_history">端末内</string>

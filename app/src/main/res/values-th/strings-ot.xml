@@ -1,5 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="music_recognition">การระบุเพลง</string>
+    <string name="music_recognition_placeholder_title">ระบุเพลง</string>
+    <string name="music_recognition_placeholder_description">แตะไมโครโฟนเพื่อฟังเพลงที่อยู่ใกล้เคียง</string>
+    <string name="music_recognition_start">เริ่มการระบุเพลง</string>
+    <string name="music_recognition_stop">หยุดการระบุเพลง</string>
+    <string name="music_recognition_listening">กำลังฟัง...</string>
     <string name="android_auto">แอนดรอยด์ออโต้</string>
     <string name="folders">โฟลเดอร์</string>
     <string name="library">ไลบรารี</string>

@@ -1,5 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="music_recognition">Prepoznavanje muzike</string>
+    <string name="music_recognition_placeholder_title">Prepoznaj pesmu</string>
+    <string name="music_recognition_placeholder_description">Dodirni mikrofon da bi slušao muziku u blizini.</string>
+    <string name="music_recognition_start">Pokreni prepoznavanje muzike</string>
+    <string name="music_recognition_stop">Zaustavi prepoznavanje muzike</string>
+    <string name="music_recognition_listening">Slušanje...</string>
     <string name="android_auto">Android Auto</string>
     <string name="folders">Fascikle</string>
     <string name="library">Biblioteka</string>

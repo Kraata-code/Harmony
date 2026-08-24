@@ -1,5 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="music_recognition">Reconocimiento de música</string>
+    <string name="music_recognition_placeholder_title">Identificar una canción</string>
+    <string name="music_recognition_placeholder_description">Toca el micrófono para escuchar la música que suena cerca.</string>
+    <string name="music_recognition_start">Iniciar reconocimiento de música</string>
+    <string name="music_recognition_stop">Detener reconocimiento de música</string>
+    <string name="music_recognition_listening">Escuchando...</string>
     <string name="player_background_style">Estilo del fondo del reproductor</string>
     <string name="err_play_next_on_error">Ha ocurrido un error. Reproduciendo siguiente</string>
     <string name="player_background_default">Seguir tema</string>

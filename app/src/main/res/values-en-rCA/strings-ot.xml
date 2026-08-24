@@ -1,5 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="music_recognition">Music recognition</string>
+    <string name="music_recognition_placeholder_title">Identify a song</string>
+    <string name="music_recognition_placeholder_description">Tap the microphone to listen for music nearby.</string>
+    <string name="music_recognition_start">Start music recognition</string>
+    <string name="music_recognition_stop">Stop music recognition</string>
+    <string name="music_recognition_listening">Listening...</string>
     <string name="grp_behavior">Behaviour</string>
     <string name="oobe_ytm_integration_description">Access your favourite tracks seamlessly</string>
 </resources>

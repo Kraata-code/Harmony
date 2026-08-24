@@ -1,5 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="music_recognition">Identifikasi musik</string>
+    <string name="music_recognition_placeholder_title">Identifikasi lagu</string>
+    <string name="music_recognition_placeholder_description">Ketuk mikrofon untuk mendengarkan musik di sekitar.</string>
+    <string name="music_recognition_start">Mulai identifikasi musik</string>
+    <string name="music_recognition_stop">Hentikan identifikasi musik</string>
+    <string name="music_recognition_listening">Mendengarkan...</string>
     <string name="android_auto">Android Auto</string>
     <string name="folders">Folder</string>
     <string name="library">Koleksi</string>

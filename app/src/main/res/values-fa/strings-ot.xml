@@ -1,5 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="music_recognition">شناسایی موسیقی</string>
+    <string name="music_recognition_placeholder_title">شناسایی یک آهنگ</string>
+    <string name="music_recognition_placeholder_description">برای شنیدن موسیقی اطراف، روی میکروفون ضربه بزنید.</string>
+    <string name="music_recognition_start">شروع شناسایی موسیقی</string>
+    <string name="music_recognition_stop">توقف شناسایی موسیقی</string>
+    <string name="music_recognition_listening">در حال گوش دادن...</string>
     <string name="android_auto">اندروید اتو</string>
     <string name="folders">پوشه ها</string>
     <string name="library">کتابخانه</string>

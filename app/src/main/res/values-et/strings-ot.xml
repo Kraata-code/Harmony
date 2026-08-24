@@ -1,5 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="music_recognition">Muusikatuvastus</string>
+    <string name="music_recognition_placeholder_title">Tuvasta lugu</string>
+    <string name="music_recognition_placeholder_description">Puuduta mikrofoni, et kuulata läheduses kõlavat muusikat.</string>
+    <string name="music_recognition_start">Käivita muusikatuvastus</string>
+    <string name="music_recognition_stop">Peata muusikatuvastus</string>
+    <string name="music_recognition_listening">Kuulan...</string>
     <string name="local_history">Kohalik</string>
     <string name="folders">Kaustad</string>
     <string name="android_auto">Android Auto</string>

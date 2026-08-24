@@ -1,5 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="music_recognition">音樂辨識</string>
+    <string name="music_recognition_placeholder_title">辨識歌曲</string>
+    <string name="music_recognition_placeholder_description">點選麥克風以聆聽附近的音樂。</string>
+    <string name="music_recognition_start">開始音樂辨識</string>
+    <string name="music_recognition_stop">停止音樂辨識</string>
+    <string name="music_recognition_listening">正在聆聽...</string>
     <string name="android_auto">Android Auto</string>
     <string name="folders">資料夾</string>
     <string name="library">媒體庫</string>

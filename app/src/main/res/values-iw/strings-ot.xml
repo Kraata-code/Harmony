@@ -1,5 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="music_recognition">זיהוי מוזיקה</string>
+    <string name="music_recognition_placeholder_title">זיהוי שיר</string>
+    <string name="music_recognition_placeholder_description">הקש על המיקרופון כדי להאזין למוזיקה בסביבה.</string>
+    <string name="music_recognition_start">התחלת זיהוי מוזיקה</string>
+    <string name="music_recognition_stop">עצירת זיהוי מוזיקה</string>
+    <string name="music_recognition_listening">מאזין...</string>
     <string name="folders">תיקיות</string>
     <string name="recent_activity">פעילות אחרונה</string>
     <string name="queue_local_history">היסטוריה (מקומי)</string>

@@ -1,5 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="music_recognition">Reconhecimento de música</string>
+    <string name="music_recognition_placeholder_title">Identificar uma música</string>
+    <string name="music_recognition_placeholder_description">Toque no microfone para ouvir a música ao seu redor.</string>
+    <string name="music_recognition_start">Iniciar reconhecimento de música</string>
+    <string name="music_recognition_stop">Parar reconhecimento de música</string>
+    <string name="music_recognition_listening">Ouvindo...</string>
     <string name="library">Biblioteca</string>
     <string name="audio_offload_description">Usar o caminho de descarga de áudio para a reprodução. Ao ativar, o consumo de energia pode diminuir, mas pode levar a problemas com a reprodução ou pós-processamento. Essa configuração não tem efeito em codificadores ou dispositivos não suportados</string>
     <string name="player_background_gradient">Gradiente</string>

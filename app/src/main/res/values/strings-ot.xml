@@ -13,8 +13,11 @@ while also allowing users to translate our app as well. New, specific strings to
     <string name="more">More</string>
     <string name="AI">AI</string>
     <string name="music_recognition">Music recognition</string>
-    <string name="music_recognition_placeholder_title">Music recognition is not available yet</string>
-    <string name="music_recognition_placeholder_description">The tab is now integrated in navigation, but the song identification flow is still pending implementation.</string>
+    <string name="music_recognition_placeholder_title">Identify a song</string>
+    <string name="music_recognition_placeholder_description">Tap the microphone to listen for music nearby.</string>
+    <string name="music_recognition_start">Start music recognition</string>
+    <string name="music_recognition_stop">Stop music recognition</string>
+    <string name="music_recognition_listening">Listening...</string>
 
     <!-- Home -->
     <string name="recent_activity">Recent activity</string>

@@ -1,5 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="music_recognition">Musiqinin tanınması</string>
+    <string name="music_recognition_placeholder_title">Mahnını müəyyən et</string>
+    <string name="music_recognition_placeholder_description">Yaxınlıqdakı musiqini dinləmək üçün mikrofona toxunun.</string>
+    <string name="music_recognition_start">Musiqinin tanınmasını başladın</string>
+    <string name="music_recognition_stop">Musiqinin tanınmasını dayandırın</string>
+    <string name="music_recognition_listening">Dinlənilir...</string>
     <string name="err_stop_on_too_many_errors">Daha çox səhvlər. Səslənmə dayandırıldı</string>
     <string name="folders">Qovluqlar</string>
     <string name="library">Kitabxana</string>

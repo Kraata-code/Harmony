@@ -1,5 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="music_recognition">Reconnaissance musicale</string>
+    <string name="music_recognition_placeholder_title">Identifier une chanson</string>
+    <string name="music_recognition_placeholder_description">Appuyez sur le microphone pour écouter la musique à proximité.</string>
+    <string name="music_recognition_start">Démarrer la reconnaissance musicale</string>
+    <string name="music_recognition_stop">Arrêter la reconnaissance musicale</string>
+    <string name="music_recognition_listening">Écoute en cours...</string>
     <string name="auto_playlist">Playlist Automatique</string>
     <string name="recent_activity">Activité récente</string>
     <string name="song_added_to_queue_end">\"%s\" ajouté à la fin de la file d\'attente</string>

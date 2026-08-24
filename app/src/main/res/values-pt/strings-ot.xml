@@ -1,5 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="music_recognition">Reconhecimento de música</string>
+    <string name="music_recognition_placeholder_title">Identificar uma música</string>
+    <string name="music_recognition_placeholder_description">Toque no microfone para ouvir música nas proximidades.</string>
+    <string name="music_recognition_start">Iniciar reconhecimento de música</string>
+    <string name="music_recognition_stop">Parar reconhecimento de música</string>
+    <string name="music_recognition_listening">A ouvir...</string>
     <string name="android_auto">Android Auto</string>
     <string name="folders">Pastas</string>
     <string name="library">Biblioteca</string>

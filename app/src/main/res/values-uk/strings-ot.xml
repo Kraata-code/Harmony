@@ -1,5 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="music_recognition">Розпізнавання музики</string>
+    <string name="music_recognition_placeholder_title">Розпізнати пісню</string>
+    <string name="music_recognition_placeholder_description">Натисніть на мікрофон, щоб прослухати музику поблизу.</string>
+    <string name="music_recognition_start">Почати розпізнавання музики</string>
+    <string name="music_recognition_stop">Зупинити розпізнавання музики</string>
+    <string name="music_recognition_listening">Слухаємо...</string>
     <string name="recent_activity">Нещодавна активність</string>
     <string name="sort_by_like_date">Коли сподобалося</string>
     <string name="attrib_zhuang">Zion Huang за InnerTune</string>

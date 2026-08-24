@@ -1,5 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="music_recognition">음악 인식</string>
+    <string name="music_recognition_placeholder_title">노래 인식</string>
+    <string name="music_recognition_placeholder_description">마이크를 탭하여 주변 음악을 들어보세요.</string>
+    <string name="music_recognition_start">음악 인식 시작</string>
+    <string name="music_recognition_stop">음악 인식 중지</string>
+    <string name="music_recognition_listening">듣는 중...</string>
     <string name="local_history">기기 파일</string>
     <string name="folders">폴더</string>
     <string name="library">라이브러리</string>

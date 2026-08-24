@@ -1,5 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="music_recognition">التعرّف على الموسيقى</string>
+    <string name="music_recognition_placeholder_title">التعرّف على أغنية</string>
+    <string name="music_recognition_placeholder_description">اضغط على الميكروفون للاستماع إلى الموسيقى القريبة.</string>
+    <string name="music_recognition_start">بدء التعرّف على الموسيقى</string>
+    <string name="music_recognition_stop">إيقاف التعرّف على الموسيقى</string>
+    <string name="music_recognition_listening">جارٍ الاستماع...</string>
     <string name="android_auto">اعدادات النضام التلقائية</string>
     <string name="folders">المجلدات</string>
     <string name="library">المكتبة</string>

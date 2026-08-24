@@ -1,5 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="music_recognition">Разпознаване на музика</string>
+    <string name="music_recognition_placeholder_title">Разпознаване на песен</string>
+    <string name="music_recognition_placeholder_description">Докоснете микрофона, за да слушате музика наблизо.</string>
+    <string name="music_recognition_start">Стартиране на разпознаването на музика</string>
+    <string name="music_recognition_stop">Спиране на разпознаването на музика</string>
+    <string name="music_recognition_listening">Слушане...</string>
     <string name="swipe2Queue">Плъзнете за добавите в опашка</string>
     <string name="lyrics_multiline_title">Четене на многоредов текст</string>
     <string name="lyrics_trim_title">Премахнете интервалите около текстовете</string>

@@ -1,5 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="music_recognition">Rozpoznawanie muzyki</string>
+    <string name="music_recognition_placeholder_title">Rozpoznaj utwór</string>
+    <string name="music_recognition_placeholder_description">Dotknij mikrofonu, aby posłuchać muzyki w pobliżu.</string>
+    <string name="music_recognition_start">Rozpocznij rozpoznawanie muzyki</string>
+    <string name="music_recognition_stop">Zatrzymaj rozpoznawanie muzyki</string>
+    <string name="music_recognition_listening">Słuchanie...</string>
     <string name="queues_title">Kolejki</string>
     <string name="auto_playlist">Playlista automatyczna</string>
     <string name="like_all">Polub wszystkie</string>

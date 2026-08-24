@@ -561,6 +561,16 @@ class MainActivity : ComponentActivity() {
                         ) {
                             Log.v(MAIN_TAG, "RC-3")
 
+                            fun navigateToTopLevelRoute(route: String) {
+                                navController.navigate(route) {
+                                    popUpTo(navController.graph.startDestinationId) {
+                                        saveState = true
+                                    }
+                                    launchSingleTop = true
+                                    restoreState = true
+                                }
+                            }
+
                             @Composable
                             fun MoreNavigationMenu(
                                 expanded: Boolean,
@@ -950,13 +960,7 @@ class MainActivity : ComponentActivity() {
                                                                 if (playerBottomSheetState.isExpanded) {
                                                                     playerBottomSheetState.collapseSoft()
                                                                 }
-                                                                navController.navigate(route) {
-                                                                    popUpTo(navController.graph.startDestinationId) {
-                                                                        saveState = true
-                                                                    }
-                                                                    launchSingleTop = true
-                                                                    restoreState = true
-                                                                }
+                                                                navigateToTopLevelRoute(route)
                                                                 haptic.performHapticFeedback(HapticFeedbackType.ContextClick)
                                                             }
                                                         )
@@ -987,18 +991,8 @@ class MainActivity : ComponentActivity() {
                                                         "scrollToTop",
                                                         true
                                                     )
-                                                } else if (navigationItems.none { scr -> navBackStackEntry?.destination?.hierarchy?.any { it.route == scr.route } == true }) {
-                                                    // this eye bleach allows you to navigate back when you tap on the navbar on a non-root page
-                                                    // TODO: nav3 allows us to access back stack... maybe do indicators properly and remove this hack
-                                                    navController.navigateUp()
                                                 } else {
-                                                    navController.navigate(screen.route) {
-                                                        popUpTo(navController.graph.startDestinationId) {
-                                                            saveState = true
-                                                        }
-                                                        launchSingleTop = true
-                                                        restoreState = true
-                                                    }
+                                                    navigateToTopLevelRoute(screen.route)
                                                 }
 
                                                 haptic.performHapticFeedback(HapticFeedbackType.ContextClick)
@@ -1089,14 +1083,7 @@ class MainActivity : ComponentActivity() {
                                                                 if (playerBottomSheetState.isExpanded) {
                                                                     playerBottomSheetState.collapseSoft()
                                                                 }
-                                                                navController.navigate(route) {
-                                                                    popUpTo(navController.graph.startDestinationId) {
-                                                                        saveState = true
-                                                                    }
-
-                                                                    launchSingleTop = true
-                                                                    restoreState = true
-                                                                }
+                                                                navigateToTopLevelRoute(route)
                                                                 haptic.performHapticFeedback(HapticFeedbackType.ContextClick)
                                                             }
                                                         )
@@ -1127,14 +1114,7 @@ class MainActivity : ComponentActivity() {
                                                         true
                                                     )
                                                 } else {
-                                                    navController.navigate(screen.route) {
-                                                        popUpTo(navController.graph.startDestinationId) {
-                                                            saveState = true
-                                                        }
-
-                                                        launchSingleTop = true
-                                                        restoreState = true
-                                                    }
+                                                    navigateToTopLevelRoute(screen.route)
                                                 }
 
                                                 haptic.performHapticFeedback(HapticFeedbackType.ContextClick)

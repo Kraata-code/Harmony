@@ -1,5 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="music_recognition">Reconeixement de música</string>
+    <string name="music_recognition_placeholder_title">Identifica una cançó</string>
+    <string name="music_recognition_placeholder_description">Toca el micròfon per escoltar la música del teu voltant.</string>
+    <string name="music_recognition_start">Inicia el reconeixement de música</string>
+    <string name="music_recognition_stop">Atura el reconeixement de música</string>
+    <string name="music_recognition_listening">Escoltant...</string>
     <string name="folders">Carpetes</string>
     <string name="library">Biblioteca</string>
     <string name="recent_activity">Activitat recent</string>
