@@ -7,3 +7,6 @@
 [submodule "taglib"]
 	path = taglib
 	url = https://github.com/OuterTune/taglib
+[submodule "music_identifier/src/main/cpp/chromaprint"]
+	path = music_identifier/src/main/cpp/chromaprint
+	url = https://github.com/acoustid/chromaprint.git

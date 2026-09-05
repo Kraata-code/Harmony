@@ -5,7 +5,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class MusicIdentifierServiceTest {
-    private val service = MusicIdentifierService()
+    private val service = MusicIdentifierService { _, _, _ -> "encoded-fingerprint" }
 
     @Test
     fun identifyFromBytes_returnsNoAudioForEmptyInput() {
@@ -16,12 +16,22 @@ class MusicIdentifierServiceTest {
 
     @Test
     fun identifyFromBytes_returnsStableFingerprintForSameInput() {
-        val audioData = byteArrayOf(1, 2, 3, 4, 5)
+        val audioData = byteArrayOf(1, 2, 3, 4)
 
-        val first = service.identifyFromBytes(audioData) as MusicIdentificationResult.Success
-        val second = service.identifyFromBytes(audioData) as MusicIdentificationResult.Success
+        val first = service.identifyFromBytes(
+            audioData,
+            mimeType = "audio/pcm",
+            sampleRate = 16_000,
+            channelCount = 1,
+        ) as MusicIdentificationResult.Success
+        val second = service.identifyFromBytes(
+            audioData,
+            mimeType = "audio/pcm",
+            sampleRate = 16_000,
+            channelCount = 1,
+        ) as MusicIdentificationResult.Success
 
-        assertEquals(first.fingerprint.sha256, second.fingerprint.sha256)
+        assertEquals(first.fingerprint.encoded, second.fingerprint.encoded)
         assertEquals(audioData.size, first.fingerprint.byteCount)
     }
 
@@ -30,6 +40,28 @@ class MusicIdentifierServiceTest {
         val result = service.identifyFromBytes(
             audioData = byteArrayOf(1, 2, 3),
             mimeType = "image/png",
+        )
+
+        assertTrue(result is MusicIdentificationResult.UnsupportedFormat)
+    }
+
+    @Test
+    fun identifyFromBytes_requiresPcmMetadata() {
+        val result = service.identifyFromBytes(
+            audioData = byteArrayOf(0, 0),
+            mimeType = "audio/pcm",
+        )
+
+        assertTrue(result is MusicIdentificationResult.UnsupportedFormat)
+    }
+
+    @Test
+    fun identifyFromBytes_rejectsUnalignedPcm() {
+        val result = service.identifyFromBytes(
+            audioData = byteArrayOf(0, 0, 0),
+            mimeType = "audio/pcm",
+            sampleRate = 16_000,
+            channelCount = 1,
         )
 
         assertTrue(result is MusicIdentificationResult.UnsupportedFormat)

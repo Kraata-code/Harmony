@@ -6,14 +6,16 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.media.AudioFormat
 import android.media.AudioRecord
-import android.media.MediaMetadataRetriever
 import android.media.MediaRecorder
 import android.net.Uri
 import android.os.Build
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
 import java.io.ByteArrayOutputStream
-import java.security.MessageDigest
+import java.io.File
+import kotlin.coroutines.cancellation.CancellationException
 import kotlin.math.max
 
 sealed interface AudioSource {
@@ -37,7 +39,7 @@ data class AudioSample(
 }
 
 data class AudioFingerprint(
-    val sha256: String,
+    val encoded: String,
     val byteCount: Int,
     val durationMs: Long?,
     val mimeType: String?,
@@ -67,7 +69,9 @@ sealed interface MusicIdentificationResult {
 }
 
 class MusicIdentifierService(
-    private val maxFileSizeBytes: Int = DEFAULT_MAX_FILE_SIZE_BYTES,
+    private val fingerprint: (ByteArray, Int, Int) -> String = { data, sampleRate, channelCount ->
+        Chromaprint.fingerprint(data, sampleRate, channelCount)
+    },
 ) {
     suspend fun identifyFromMicrophone(
         context: Context,
@@ -82,6 +86,7 @@ class MusicIdentifierService(
             val sample = recordMicrophoneSample(durationMs = durationMs, sampleRate = sampleRate)
             processAudio(sample)
         }.getOrElse { error ->
+            if (error is CancellationException) throw error
             MusicIdentificationResult.ProcessingError(
                 message = error.message ?: "Could not record microphone audio",
                 cause = error,
@@ -89,57 +94,24 @@ class MusicIdentifierService(
         }
     }
 
-    suspend fun identifyFromUri(
-        context: Context,
-        uri: Uri,
-        displayName: String? = null,
-    ): MusicIdentificationResult = withContext(Dispatchers.IO) {
-        runCatching {
-            val resolver = context.contentResolver
-            val mimeType = resolver.getType(uri)
+    suspend fun identifyFromFile(file: File): MusicIdentificationResult = withContext(Dispatchers.IO) {
+        if (!file.isFile || !file.canRead()) {
+            return@withContext MusicIdentificationResult.ProcessingError("Local audio file cannot be read")
+        }
 
-            if (mimeType != null && !mimeType.startsWith("audio/")) {
-                return@withContext MusicIdentificationResult.UnsupportedFormat("Unsupported mime type: $mimeType")
-            }
-
-            val audioData = resolver.openInputStream(uri)?.use { input ->
-                val output = ByteArrayOutputStream()
-                val buffer = ByteArray(DEFAULT_BUFFER_SIZE)
-                var totalBytes = 0
-
-                while (true) {
-                    val read = input.read(buffer)
-                    if (read == -1) break
-
-                    totalBytes += read
-                    if (totalBytes > maxFileSizeBytes) {
-                        return@withContext MusicIdentificationResult.UnsupportedFormat(
-                            "Audio file is larger than $maxFileSizeBytes bytes",
-                        )
-                    }
-
-                    output.write(buffer, 0, read)
-                }
-
-                output.toByteArray()
-            } ?: return@withContext MusicIdentificationResult.ProcessingError("Could not open audio uri")
-
-            val sample = AudioSample(
-                data = audioData,
-                source = AudioSource.File(uri = uri, displayName = displayName),
-                mimeType = mimeType,
-                durationMs = readDurationMs(context, uri),
-            )
-
-            processAudio(sample)
-        }.getOrElse { error ->
+        try {
+            processAudio(AudioFileDecoder().decode(file))
+        } catch (error: CancellationException) {
+            throw error
+        } catch (error: Throwable) {
             MusicIdentificationResult.ProcessingError(
-                message = error.message ?: "Could not process audio uri",
+                message = error.message ?: "Could not decode local audio file",
                 cause = error,
             )
         }
     }
 
+    // Raw PCM entry point for callers that already decoded the audio.
     fun identifyFromBytes(
         audioData: ByteArray,
         source: AudioSource = AudioSource.File(),
@@ -161,26 +133,51 @@ class MusicIdentifierService(
     fun processAudio(sample: AudioSample): MusicIdentificationResult {
         if (sample.data.isEmpty()) return MusicIdentificationResult.NoAudio
 
-        if (sample.mimeType != null && !sample.mimeType.startsWith("audio/")) {
-            return MusicIdentificationResult.UnsupportedFormat("Unsupported mime type: ${sample.mimeType}")
+        if (sample.mimeType != null && sample.mimeType != MIME_TYPE_PCM) {
+            return MusicIdentificationResult.UnsupportedFormat("Chromaprint requires raw PCM audio")
         }
 
-        val fingerprint = AudioFingerprint(
-            sha256 = sample.data.sha256(),
+        val sampleRate = sample.sampleRate
+            ?: return MusicIdentificationResult.UnsupportedFormat("PCM sample rate is required")
+        val channelCount = sample.channelCount
+            ?: return MusicIdentificationResult.UnsupportedFormat("PCM channel count is required")
+        if (sampleRate <= 1000 || channelCount !in 1..2) {
+            return MusicIdentificationResult.UnsupportedFormat("Unsupported PCM audio format")
+        }
+        if (sample.data.size % (PCM_16_BYTES_PER_SAMPLE * channelCount) != 0) {
+            return MusicIdentificationResult.UnsupportedFormat("PCM data is not aligned to its channels")
+        }
+
+        val encoded = runCatching {
+            fingerprint(sample.data, sampleRate, channelCount)
+        }.getOrElse { error ->
+            return MusicIdentificationResult.ProcessingError(
+                message = error.message ?: "Could not generate audio fingerprint",
+                cause = error,
+            )
+        }
+        if (encoded.isBlank()) {
+            return MusicIdentificationResult.ProcessingError("Could not generate audio fingerprint")
+        }
+
+        val durationMs = sample.durationMs?.takeIf { it > 0 } ?:
+            sample.data.size.toLong() * 1_000 / (PCM_16_BYTES_PER_SAMPLE * sampleRate * channelCount)
+        val audioFingerprint = AudioFingerprint(
+            encoded = encoded,
             byteCount = sample.byteCount,
-            durationMs = sample.durationMs,
+            durationMs = durationMs,
             mimeType = sample.mimeType,
             source = sample.source,
         )
 
         return MusicIdentificationResult.Success(
-            fingerprint = fingerprint,
+            fingerprint = audioFingerprint,
             sample = sample,
         )
     }
 
     @SuppressLint("MissingPermission")
-    private fun recordMicrophoneSample(
+    private suspend fun recordMicrophoneSample(
         durationMs: Long,
         sampleRate: Int,
     ): AudioSample {
@@ -190,7 +187,7 @@ class MusicIdentifierService(
 
         require(minBufferSize > 0) { "Unsupported microphone audio configuration" }
 
-        val bufferSize = max(minBufferSize, sampleRate * PCM_16_MONO_BYTES_PER_SAMPLE)
+        val bufferSize = max(minBufferSize, sampleRate * PCM_16_BYTES_PER_SAMPLE)
         val audioRecord = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             AudioRecord.Builder()
                 .setAudioSource(MediaRecorder.AudioSource.MIC)
@@ -220,15 +217,20 @@ class MusicIdentifierService(
         }
 
         return try {
-            val bytesToRead = ((sampleRate * PCM_16_MONO_BYTES_PER_SAMPLE) * (durationMs / 1000.0)).toInt()
+            require(durationMs > 0) { "Recording duration must be positive" }
+            val bytesToRead = ((sampleRate * PCM_16_BYTES_PER_SAMPLE) * (durationMs / 1000.0)).toInt()
             val output = ByteArrayOutputStream(bytesToRead.coerceAtLeast(bufferSize))
             val buffer = ByteArray(minBufferSize)
 
             audioRecord.startRecording()
 
             while (output.size() < bytesToRead) {
+                currentCoroutineContext().ensureActive()
                 val read = audioRecord.read(buffer, 0, minOf(buffer.size, bytesToRead - output.size()))
-                if (read > 0) output.write(buffer, 0, read)
+                if (read <= 0) {
+                    error("Could not read microphone audio (code=$read)")
+                }
+                output.write(buffer, 0, read)
             }
 
             AudioSample(
@@ -245,31 +247,13 @@ class MusicIdentifierService(
         }
     }
 
-    private fun readDurationMs(context: Context, uri: Uri): Long? {
-        val retriever = MediaMetadataRetriever()
-        return try {
-            retriever.setDataSource(context, uri)
-            retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)?.toLongOrNull()
-        } catch (_: RuntimeException) {
-            null
-        } finally {
-            retriever.release()
-        }
-    }
-
     private fun Context.hasPermission(permission: String): Boolean =
         Build.VERSION.SDK_INT < Build.VERSION_CODES.M || checkSelfPermission(permission) == PackageManager.PERMISSION_GRANTED
 
-    private fun ByteArray.sha256(): String = MessageDigest
-        .getInstance("SHA-256")
-        .digest(this)
-        .joinToString(separator = "") { byte -> "%02x".format(byte) }
-
     companion object {
         const val DEFAULT_RECORDING_DURATION_MS = 10_000L
-        const val DEFAULT_SAMPLE_RATE = 44_100
-        const val DEFAULT_MAX_FILE_SIZE_BYTES = 25 * 1024 * 1024
-        private const val PCM_16_MONO_BYTES_PER_SAMPLE = 2
+        const val DEFAULT_SAMPLE_RATE = 16_000
+        private const val PCM_16_BYTES_PER_SAMPLE = 2
         private const val MIME_TYPE_PCM = "audio/pcm"
     }
 }
