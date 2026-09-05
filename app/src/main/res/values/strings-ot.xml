@@ -18,6 +18,15 @@ while also allowing users to translate our app as well. New, specific strings to
     <string name="music_recognition_start">Start music recognition</string>
     <string name="music_recognition_stop">Stop music recognition</string>
     <string name="music_recognition_listening">Listening...</string>
+    <string name="acoustid_test">Update local metadata</string>
+    <string name="acoustid_test_title">Update local metadata</string>
+    <string name="acoustid_test_processing">Identifying the complete local file and updating its metadata...</string>
+    <string name="acoustid_test_match">Metadata updated:
+%1$s - %2$s</string>
+    <string name="acoustid_test_no_match">AcoustID returned no match.</string>
+    <string name="acoustid_test_low_confidence">Match skipped because confidence was only %d%%.</string>
+    <string name="acoustid_test_no_audio">The file contains no audio.</string>
+    <string name="acoustid_test_error">Metadata update failed: %1$s</string>
 
     <!-- Home -->
     <string name="recent_activity">Recent activity</string>

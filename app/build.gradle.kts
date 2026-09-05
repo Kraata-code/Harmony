@@ -14,6 +14,8 @@ plugins {
     alias(libs.plugins.aboutlibraries)
 }
 
+val acoustIdClientKey = providers.gradleProperty("acoustidClientKey").orNull.orEmpty()
+
 // Configuración de keystore con manejo seguro
 val keystorePropertiesFile = rootProject.file("keystore.properties")
 val keystoreProperties = Properties()
@@ -31,6 +33,7 @@ android {
         versionCode = 2
         versionName = "1.0.1"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        buildConfigField("String", "ACOUSTID_CLIENT_KEY", "\"$acoustIdClientKey\"")
 
         ndk {
             //noinspection ChromeOsAbiSupport
@@ -331,6 +334,7 @@ dependencies {
 
     // Módulos del proyecto
     implementation(project(":innertube"))
+    implementation(project(":music_identifier"))
     implementation(project(":kugou"))
     implementation(project(":lrclib"))
     implementation(project(":material-color-utilities"))

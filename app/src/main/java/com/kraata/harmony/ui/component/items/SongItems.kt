@@ -100,6 +100,7 @@ fun SongListItem(
 
     thumbnailSize: Int,
     onPlay: () -> Unit,
+    onLocalMetadataUpdated: () -> Unit = {},
     dragHandleModifier: Modifier? = null,
     modifier: Modifier = Modifier,
 ) {
@@ -156,7 +157,8 @@ fun SongListItem(
                                         playlistSong = playlistSong,
                                         playlist = playlist,
                                         navController = navController,
-                                        onDismiss = menuState::dismiss
+                                        onDismiss = menuState::dismiss,
+                                        onLocalMetadataUpdated = onLocalMetadataUpdated,
                                     )
                                 }
                             }
@@ -201,7 +203,8 @@ fun SongListItem(
                             SongMenu(
                                 originalSong = song,
                                 navController = navController,
-                                onDismiss = menuState::dismiss
+                                onDismiss = menuState::dismiss,
+                                onLocalMetadataUpdated = onLocalMetadataUpdated,
                             )
                         }
                     } else if (!inSelectMode) {

@@ -298,6 +298,10 @@ interface AlbumsDao : ArtistsDao {
     @Transaction
     @Query("DELETE FROM song_genre_map WHERE songId = :songID")
     fun unlinkSongGenres(songID: String)
+
+    @Transaction
+    @Query("DELETE FROM album_artist_map WHERE albumId = :albumID")
+    fun unlinkAlbumArtists(albumID: String)
     // endregion
 
     // region Deletes

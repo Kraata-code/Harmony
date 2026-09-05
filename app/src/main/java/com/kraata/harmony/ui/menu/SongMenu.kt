@@ -11,6 +11,7 @@
 package com.kraata.harmony.ui.menu
 
 import android.content.Intent
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
@@ -30,23 +31,31 @@ import androidx.compose.material.icons.rounded.LibraryAddCheck
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.PlaylistRemove
 import androidx.compose.material.icons.rounded.Radio
+import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.Share
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextRange
@@ -56,6 +65,8 @@ import androidx.compose.ui.util.fastSumBy
 import androidx.media3.exoplayer.offline.DownloadService
 import androidx.navigation.NavController
 import coil3.compose.AsyncImage
+import coil3.imageLoader
+import com.kraata.harmony.BuildConfig
 import com.kraata.harmony.LocalDatabase
 import com.kraata.harmony.LocalDownloadUtil
 import com.kraata.harmony.LocalPlayerConnection
@@ -85,8 +96,12 @@ import com.kraata.harmony.utils.joinByBullet
 import com.kraata.harmony.utils.makeTimeString
 import com.kraata.harmony.utils.rememberEnumPreference
 import com.kraata.harmony.utils.syncCoroutine
+import com.kraata.harmony.service.LocalSongMetadataUpdateResult
+import com.kraata.harmony.service.LocalSongMetadataUpdater
 import com.zionhuang.innertube.YouTube
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
@@ -98,8 +113,10 @@ fun SongMenu(
     event: Event? = null,
     navController: NavController,
     onDismiss: () -> Unit,
+    onLocalMetadataUpdated: () -> Unit = {},
 ) {
     val context = LocalContext.current
+    val resources = LocalResources.current
     val database = LocalDatabase.current
     val density = LocalDensity.current
     val downloadUtil = LocalDownloadUtil.current
@@ -113,6 +130,13 @@ fun SongMenu(
     val download by LocalDownloadUtil.current.getDownload(originalSong.id).collectAsState(initial = null)
     val coroutineScope =
         CoroutineScope(syncCoroutine) // rememberCoroutineScope has exception "rememberCoroutineScope left the composition"
+    val fileRecognitionScope = rememberCoroutineScope()
+    val localSongMetadataUpdater = remember(database, context) {
+        LocalSongMetadataUpdater(database, context)
+    }
+    var fileRecognitionMessage by remember { mutableStateOf<String?>(null) }
+    var fileRecognitionRunning by remember { mutableStateOf(false) }
+    var fileRecognitionJob by remember { mutableStateOf<Job?>(null) }
 
     val currentFormatState = database.format(originalSong.id).collectAsState(initial = null)
     val currentFormat = currentFormatState.value
@@ -173,6 +197,7 @@ fun SongMenu(
 
     HorizontalDivider()
 
+    val localPath = song.song.localPath
     GridMenu(
         contentPadding = PaddingValues(
             start = 8.dp,
@@ -226,6 +251,53 @@ fun SongMenu(
             title = R.string.add_to_playlist
         ) {
             showChoosePlaylistDialog = true
+        }
+
+        if (BuildConfig.DEBUG && song.song.isLocal && !localPath.isNullOrBlank()) {
+            GridMenuItem(
+                icon = Icons.Rounded.Search,
+                title = R.string.acoustid_test,
+                enabled = !fileRecognitionRunning,
+            ) {
+                fileRecognitionMessage = resources.getString(R.string.acoustid_test_processing)
+                fileRecognitionRunning = true
+                fileRecognitionJob = fileRecognitionScope.launch {
+                    try {
+                        when (val update = localSongMetadataUpdater.update(song)) {
+                            LocalSongMetadataUpdateResult.NoMatch -> {
+                                fileRecognitionMessage = resources.getString(R.string.acoustid_test_no_match)
+                            }
+
+                            is LocalSongMetadataUpdateResult.LowConfidence -> {
+                                fileRecognitionMessage = resources.getString(
+                                    R.string.acoustid_test_low_confidence,
+                                    (update.score * 100).roundToInt(),
+                                )
+                            }
+
+                            is LocalSongMetadataUpdateResult.Updated -> {
+                                context.imageLoader.memoryCache?.clear()
+                                onLocalMetadataUpdated()
+                                fileRecognitionMessage = resources.getString(
+                                    R.string.acoustid_test_match,
+                                    update.artist,
+                                    update.title,
+                                )
+                            }
+                        }
+                    } catch (error: CancellationException) {
+                        throw error
+                    } catch (error: Throwable) {
+                        fileRecognitionMessage = resources.getString(
+                            R.string.acoustid_test_error,
+                            error.message ?: "Unknown error",
+                        )
+                    } finally {
+                        fileRecognitionRunning = false
+                        fileRecognitionJob = null
+                    }
+                }
+            }
         }
 
         if (playlistSong != null && (playlist?.playlist?.isLocal == true
@@ -346,6 +418,34 @@ fun SongMenu(
                 }
             }
         }
+    }
+
+    fileRecognitionMessage?.let { message ->
+        AlertDialog(
+            onDismissRequest = {
+                if (fileRecognitionRunning) fileRecognitionJob?.cancel()
+                fileRecognitionMessage = null
+            },
+            title = { Text(stringResource(R.string.acoustid_test_title)) },
+            text = {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    if (fileRecognitionRunning) {
+                        CircularProgressIndicator()
+                    }
+                    Text(text = message)
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        if (fileRecognitionRunning) fileRecognitionJob?.cancel()
+                        fileRecognitionMessage = null
+                    },
+                ) {
+                    Text(stringResource(if (fileRecognitionRunning) android.R.string.cancel else android.R.string.ok))
+                }
+            },
+        )
     }
 
     /**

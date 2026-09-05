@@ -6,6 +6,15 @@
     <string name="music_recognition_start">Iniciar reconocimiento de música</string>
     <string name="music_recognition_stop">Detener reconocimiento de música</string>
     <string name="music_recognition_listening">Escuchando...</string>
+    <string name="acoustid_test">Actualizar metadatos locales</string>
+    <string name="acoustid_test_title">Actualizar metadatos locales</string>
+    <string name="acoustid_test_processing">Identificando el archivo local completo y actualizando sus metadatos...</string>
+    <string name="acoustid_test_match">Metadatos actualizados:
+%1$s - %2$s</string>
+    <string name="acoustid_test_no_match">AcoustID no devolvió ninguna coincidencia.</string>
+    <string name="acoustid_test_low_confidence">Coincidencia omitida porque la confianza era solo del %d%%.</string>
+    <string name="acoustid_test_no_audio">El archivo no contiene audio.</string>
+    <string name="acoustid_test_error">La actualización de metadatos falló: %1$s</string>
     <string name="player_background_style">Estilo del fondo del reproductor</string>
     <string name="err_play_next_on_error">Ha ocurrido un error. Reproduciendo siguiente</string>
     <string name="player_background_default">Seguir tema</string>

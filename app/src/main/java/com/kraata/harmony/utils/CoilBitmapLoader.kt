@@ -38,6 +38,7 @@ import com.kraata.harmony.R
 import com.google.common.util.concurrent.ListenableFuture
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.guava.future
+import java.io.File
 import java.util.concurrent.ExecutionException
 import javax.inject.Inject
 import kotlin.math.min
@@ -185,9 +186,14 @@ class LocalArtworkPathKeyer : Keyer<LocalArtworkPath> {
         data: LocalArtworkPath,
         options: Options
     ): String? {
-        return data.path + ";" + data.x + ";" + data.y
+        return data.path + ";" + data.x + ";" + data.y + ";" + data.lastModified
     }
 
 }
 
-data class LocalArtworkPath(val path: String?, val x: Int = -1, val y: Int = -1)
+data class LocalArtworkPath(
+    val path: String?,
+    val x: Int = -1,
+    val y: Int = -1,
+    val lastModified: Long = path?.let { File(it).lastModified() } ?: 0L,
+)

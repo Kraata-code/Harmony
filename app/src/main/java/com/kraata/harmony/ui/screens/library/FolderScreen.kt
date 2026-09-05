@@ -545,6 +545,11 @@ fun FolderScreen(
                             )
                         )
                     },
+                    onLocalMetadataUpdated = {
+                        coroutineScope.launch(Dispatchers.IO) {
+                            viewModel.getLocalSongs()
+                        }
+                    },
                     modifier = Modifier
                         .fillMaxWidth()
                         .animateItem()

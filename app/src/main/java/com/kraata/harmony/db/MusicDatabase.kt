@@ -50,6 +50,8 @@ import com.kraata.harmony.db.entities.SongGenreMap
 import com.kraata.harmony.db.entities.SortedSongAlbumMap
 import com.kraata.harmony.db.entities.SortedSongArtistMap
 import com.kraata.harmony.extensions.toSQLiteQuery
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneOffset
@@ -72,6 +74,12 @@ class MusicDatabase(
             runInTransaction {
                 block(this@MusicDatabase)
             }
+        }
+    }
+
+    suspend fun awaitTransaction(block: MusicDatabase.() -> Unit) = withContext(Dispatchers.IO) {
+        delegate.runInTransaction {
+            block(this@MusicDatabase)
         }
     }
 
