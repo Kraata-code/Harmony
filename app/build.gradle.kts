@@ -347,6 +347,11 @@ dependencies {
     // Bibliotecas de información
     implementation(libs.aboutlibraries.compose.m3)
 
+    testImplementation(libs.junit)
+    testImplementation("androidx.test:core:1.6.1")
+    testImplementation("com.squareup.okhttp3:mockwebserver:5.1.0")
+    testImplementation("org.robolectric:robolectric:4.14.1")
+
     // Soporte para Android N (SDK 24)
     // WebKit 1.14.0 es la última versión compatible con minSdk 24
     implementation("androidx.webkit:webkit:1.14.0")

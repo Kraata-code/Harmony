@@ -3,11 +3,14 @@ package com.kraata.harmony.service
 import android.os.SystemClock
 import com.kraata.harmony.BuildConfig
 import java.util.concurrent.TimeUnit
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.coroutines.withContext
+import kotlin.time.Duration.Companion.milliseconds
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.json.JSONArray
@@ -35,6 +38,7 @@ internal data class MusicBrainzMetadata(
     val releaseStatus: String?,
     val releaseType: String?,
     val media: String?,
+    val coverArtReleaseIds: List<String> = emptyList(),
 )
 
 internal class MusicMetadataClient(
@@ -51,40 +55,53 @@ internal class MusicMetadataClient(
         )
         val release = chooseRelease(recording.optJSONArray("releases"))
         val releaseDetails = release?.optString("id")?.takeIf { it.isNotBlank() }?.let { releaseId ->
-            getJson(
-                "https://musicbrainz.org/ws/2/release/$releaseId" +
-                    "?inc=artist-credits+media+labels+release-groups+genres&fmt=json",
-            )
+            try {
+                withTimeoutOrNull(RELEASE_DETAILS_TIMEOUT_MS.milliseconds) {
+                    getJson(
+                        "https://musicbrainz.org/ws/2/release/$releaseId" +
+                            "?inc=artist-credits+media+labels+release-groups+genres&fmt=json",
+                    )
+                }
+            } catch (exception: CancellationException) {
+                throw exception
+            } catch (_: Exception) {
+                null
+            }
         }
 
         parseMusicBrainzMetadata(recording, releaseDetails ?: release, recordingId)
     }
 
     suspend fun downloadCover(metadata: MusicBrainzMetadata): ByteArray? = withContext(Dispatchers.IO) {
-        val urls = listOfNotNull(
+        val urls = buildList {
             metadata.releaseId?.takeIf { it.isNotBlank() }?.let {
-                "https://coverartarchive.org/release/$it/front-500"
-            },
+                add("https://coverartarchive.org/release/$it/front-500")
+            }
             metadata.releaseGroupId?.takeIf { it.isNotBlank() }?.let {
-                "https://coverartarchive.org/release-group/$it/front-500"
-            },
-        )
+                add("https://coverartarchive.org/release-group/$it/front-500")
+            }
+            metadata.coverArtReleaseIds
+                .asSequence()
+                .filterNot { it == metadata.releaseId }
+                .take(MAX_ALTERNATIVE_COVER_RELEASES)
+                .map { "https://coverartarchive.org/release/$it/front-500" }
+                .forEach(::add)
+        }
 
         for (url in urls) {
-            val bytes = httpClient.newCall(
-                Request.Builder()
-                    .url(url)
-                    .header("User-Agent", USER_AGENT)
-                    .build(),
-            ).execute().use { response ->
-                if (response.code == 404) {
-                    null
-                } else {
-                    if (!response.isSuccessful) {
-                        error("Cover Art Archive request failed: HTTP ${response.code}")
-                    }
-                    response.body?.bytes()
+            val bytes = try {
+                httpClient.newCall(
+                    Request.Builder()
+                        .url(url)
+                        .header("User-Agent", USER_AGENT)
+                        .build(),
+                ).execute().use { response ->
+                    if (response.isSuccessful) response.body.bytes() else null
                 }
+            } catch (exception: CancellationException) {
+                throw exception
+            } catch (_: Exception) {
+                null
             }
             if (bytes != null && bytes.isNotEmpty()) return@withContext bytes
         }
@@ -96,7 +113,7 @@ internal class MusicMetadataClient(
         repeat(MAX_ATTEMPTS) { attempt ->
             val elapsed = SystemClock.elapsedRealtime() - lastRequestAt
             if (elapsed < MIN_REQUEST_INTERVAL_MS) {
-                delay(MIN_REQUEST_INTERVAL_MS - elapsed)
+                delay((MIN_REQUEST_INTERVAL_MS - elapsed).milliseconds)
             }
 
             lastRequestAt = SystemClock.elapsedRealtime()
@@ -107,7 +124,7 @@ internal class MusicMetadataClient(
                     .header("User-Agent", USER_AGENT)
                     .build(),
             ).execute().use { response ->
-                val body = response.body?.string().orEmpty()
+                val body = response.body.string()
                 if (response.isSuccessful) {
                     JSONObject(body)
                 } else {
@@ -123,7 +140,7 @@ internal class MusicMetadataClient(
             }
 
             if (result != null) return@withLock result
-            if (retryAfterMillis > 0) delay(retryAfterMillis)
+            if (retryAfterMillis > 0) delay(retryAfterMillis.milliseconds)
         }
 
         error("MusicBrainz request failed: $url")
@@ -137,12 +154,13 @@ internal class MusicMetadataClient(
     }
 
     private companion object {
-        // ponytail: one process-wide slot is enough for this manual updater; no scheduler needed.
         val requestMutex = Mutex()
         var lastRequestAt = 0L
         val RETRYABLE_CODES = setOf(429, 500, 502, 503, 504)
         const val MAX_ATTEMPTS = 2
         const val MIN_REQUEST_INTERVAL_MS = 1_000L
+        const val RELEASE_DETAILS_TIMEOUT_MS = 10_000L
+        const val MAX_ALTERNATIVE_COVER_RELEASES = 3
         const val USER_AGENT = "Harmony/${BuildConfig.VERSION_NAME} (local metadata updater)"
     }
 }
@@ -158,11 +176,23 @@ internal fun parseMusicBrainzMetadata(
         .distinct()
     val releaseGroup = release?.optJSONObject("release-group")
     val track = findTrack(release, recordingId)
+    val releaseId = release?.optString("id")?.trim()?.takeIf { it.isNotEmpty() }
+    val coverArtReleaseIds = buildList {
+        releaseId?.let(::add)
+        recording.optJSONArray("releases")?.let { releases ->
+            for (index in 0 until releases.length()) {
+                releases.optJSONObject(index)
+                    ?.optString("id")
+                    ?.trim()
+                    ?.takeIf { it.isNotEmpty() }
+                    ?.let(::add)
+            }
+        }
+    }.distinct()
     val labelInfo = release?.optJSONArray("label-info")?.optJSONObject(0)
     val label = labelInfo?.optJSONObject("label")?.optString("name")
         ?.trim()
         ?.takeIf { it.isNotEmpty() }
-    // ponytail: trust MusicBrainz's explicit translation relation; no language heuristics.
     val title = translatedOriginalTitle(recording)
         ?: recording.optString("title").trim().ifBlank { error("MusicBrainz title is missing") }
 
@@ -182,12 +212,13 @@ internal fun parseMusicBrainzMetadata(
         barcode = release?.optString("barcode")?.trim()?.takeIf { it.isNotEmpty() },
         isrcs = parseStrings(recording.optJSONArray("isrcs")),
         recordingId = recording.optString("id").trim().ifBlank { recordingId },
-        releaseId = release?.optString("id")?.trim()?.takeIf { it.isNotEmpty() },
+        releaseId = releaseId,
         releaseGroupId = releaseGroup?.optString("id")?.trim()?.takeIf { it.isNotEmpty() },
         releaseCountry = release?.optString("country")?.trim()?.takeIf { it.isNotEmpty() },
         releaseStatus = release?.optString("status")?.trim()?.takeIf { it.isNotEmpty() },
         releaseType = releaseGroup?.optString("primary-type")?.trim()?.takeIf { it.isNotEmpty() },
         media = track?.third,
+        coverArtReleaseIds = coverArtReleaseIds,
     )
 }
 

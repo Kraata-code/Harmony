@@ -8,6 +8,10 @@ import okhttp3.FormBody
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.json.JSONObject
+import java.util.Locale
+
+private const val TAG = "AcoustIdClient"
+private const val CONSENSUS_MIN_SCORE = 0.90
 
 internal data class AcoustIdMatch(
     val artistNames: List<String>,
@@ -25,7 +29,11 @@ internal class AcoustIdClient(
 ) {
     private val httpClient = OkHttpClient()
 
-    suspend fun lookup(fingerprint: String, durationMs: Long?): AcoustIdMatch? = withContext(Dispatchers.IO) {
+    suspend fun lookup(
+        fingerprint: String,
+        durationMs: Long?,
+        fileNameHint: String? = null,
+    ): AcoustIdMatch? = withContext(Dispatchers.IO) {
         require(clientKey.isNotBlank()) { "AcoustID client key is not configured" }
         require(fingerprint.isNotBlank()) { "Audio fingerprint cannot be empty" }
 
@@ -46,7 +54,7 @@ internal class AcoustIdClient(
 
         if (BuildConfig.DEBUG) Log.d(TAG, "lookup duration=${durationMs}ms")
         httpClient.newCall(request).execute().use { response ->
-            val body = response.body?.string().orEmpty()
+            val body = response.body.string()
             if (BuildConfig.DEBUG) Log.d(TAG, "response HTTP ${response.code}")
             if (!response.isSuccessful) {
                 val message = runCatching {
@@ -57,17 +65,20 @@ internal class AcoustIdClient(
                         message.takeIf { it.isNotBlank() }?.let { ": $it" }.orEmpty(),
                 )
             }
-            parseAcoustIdResponse(body, durationMs)
+            parseAcoustIdResponse(body, durationMs, fileNameHint)
         }
     }
 
     private companion object {
         const val LOOKUP_URL = "https://api.acoustid.org/v2/lookup"
-        const val TAG = "AcoustIdClient"
     }
 }
 
-internal fun parseAcoustIdResponse(body: String, durationMs: Long? = null): AcoustIdMatch? {
+internal fun parseAcoustIdResponse(
+    body: String,
+    durationMs: Long? = null,
+    fileNameHint: String? = null,
+): AcoustIdMatch? {
     val root = JSONObject(body)
     if (root.optString("status") != "ok") {
         val message = root.optJSONObject("error")?.optString("message").orEmpty()
@@ -75,11 +86,17 @@ internal fun parseAcoustIdResponse(body: String, durationMs: Long? = null): Acou
     }
 
     val results = root.optJSONArray("results") ?: return null
-    var bestScore = Double.NEGATIVE_INFINITY
-    var bestMatch: AcoustIdMatch? = null
-    // ponytail: reject clearly wrong recordings while allowing trim/remaster drift.
+    val durationCompatibleCandidates = ArrayList<AcoustIdMatch>()
+    val unknownDurationCandidates = ArrayList<AcoustIdMatch>()
     val expectedDurationMs = durationMs?.takeIf { it > 0L } ?: -1L
     val maxDurationDriftMs = expectedDurationMs.takeIf { it > 0L }?.let { maxOf(10_000L, it / 20L) }
+    if (BuildConfig.DEBUG) {
+        Log.d(
+            TAG,
+            "results=${results.length()} expectedDuration=${durationMs ?: "unknown"}ms " +
+                "maxDrift=${maxDurationDriftMs ?: "unchecked"}ms",
+        )
+    }
 
     for (resultIndex in 0 until results.length()) {
         val result = results.optJSONObject(resultIndex) ?: continue
@@ -91,11 +108,6 @@ internal fun parseAcoustIdResponse(body: String, durationMs: Long? = null): Acou
             val title = recording.optString("title").trim()
             val recordingId = recording.optString("id").trim()
             val recordingLengthMs = recording.optLong("length", -1L)
-            if (maxDurationDriftMs != null && recordingLengthMs > 0L &&
-                kotlin.math.abs(recordingLengthMs - expectedDurationMs) > maxDurationDriftMs
-            ) {
-                continue
-            }
             val artists = recording.optJSONArray("artists")
             val artistNames = buildList {
                 if (artists != null) {
@@ -108,20 +120,97 @@ internal fun parseAcoustIdResponse(body: String, durationMs: Long? = null): Acou
                     }
                 }
             }
-            if (score > bestScore && title.isNotEmpty() && artistNames.isNotEmpty() &&
+            val durationDeltaMs = recordingLengthMs
+                .takeIf { it > 0L && expectedDurationMs > 0L }
+                ?.let { kotlin.math.abs(it - expectedDurationMs) }
+            val durationMissing = maxDurationDriftMs != null && recordingLengthMs <= 0L
+            val durationRejected = maxDurationDriftMs != null &&
+                recordingLengthMs > 0L && durationDeltaMs != null && durationDeltaMs > maxDurationDriftMs
+            val fieldsValid = title.isNotEmpty() && artistNames.isNotEmpty() &&
                 acoustId.isNotEmpty() && recordingId.isNotEmpty()
-            ) {
-                bestScore = score
-                bestMatch = AcoustIdMatch(
+            if (BuildConfig.DEBUG) {
+                val status = when {
+                    durationMissing -> "DEFERRED(duration-missing)"
+                    durationRejected -> "REJECTED(duration-mismatch)"
+                    title.isEmpty() -> "REJECTED(missing-title)"
+                    artistNames.isEmpty() -> "REJECTED(missing-artist)"
+                    acoustId.isEmpty() -> "REJECTED(missing-acoustid)"
+                    recordingId.isEmpty() -> "REJECTED(missing-recording-id)"
+                    else -> "ELIGIBLE"
+                }
+                Log.d(
+                    TAG,
+                    "candidate score=$score recording=$recordingId title=$title " +
+                        "artist=${artistNames.joinToString(", ")} " +
+                        "length=${recordingLengthMs.takeIf { it > 0L } ?: "unknown"}ms " +
+                    "delta=${durationDeltaMs ?: "unknown"}ms status=$status",
+                )
+            }
+            if (!durationRejected && fieldsValid) {
+                val match = AcoustIdMatch(
                     artistNames = artistNames,
                     title = title,
                     score = score,
                     acoustId = acoustId,
                     recordingId = recordingId,
                 )
+                if (durationMissing) {
+                    unknownDurationCandidates += match
+                } else {
+                    durationCompatibleCandidates += match
+                }
             }
         }
     }
 
+    val bestMatch = durationCompatibleCandidates.maxByOrNull(AcoustIdMatch::score)
+        ?: repeatedFilenameMatch(unknownDurationCandidates, fileNameHint)
+    if (BuildConfig.DEBUG) {
+        Log.d(
+            TAG,
+            "selected recording=${bestMatch?.recordingId ?: "none"} " +
+                "score=${bestMatch?.score ?: "none"}",
+        )
+    }
     return bestMatch
 }
+
+private fun repeatedFilenameMatch(
+    candidates: List<AcoustIdMatch>,
+    fileNameHint: String?,
+): AcoustIdMatch? {
+    val repeatedGroups = candidates.groupBy(::candidateKey).values.filter { group ->
+        group.distinctBy(AcoustIdMatch::acoustId).size > 1
+    }
+    val filenameGroups = repeatedGroups.filter { group ->
+        fileNameHint != null && group.any { matchesFileName(it, fileNameHint) }
+    }
+    val consensusGroups = repeatedGroups.filter { group ->
+        group.filter { it.score >= CONSENSUS_MIN_SCORE }
+            .distinctBy(AcoustIdMatch::acoustId)
+            .size > 1
+    }
+    val groups = filenameGroups.ifEmpty { consensusGroups }
+    return groups
+        .maxWithOrNull(
+            compareBy<List<AcoustIdMatch>> {
+                it.distinctBy(AcoustIdMatch::acoustId).size
+            }.thenBy { group -> group.maxOf(AcoustIdMatch::score) },
+        )
+        ?.maxByOrNull(AcoustIdMatch::score)
+}
+
+private fun candidateKey(match: AcoustIdMatch): String =
+    normalizedTokens("${match.artist} ${match.title}").sorted().joinToString(" ")
+
+private fun matchesFileName(match: AcoustIdMatch, fileName: String): Boolean {
+    val candidateTokens = normalizedTokens("${match.artist} ${match.title}")
+    val fileTokens = normalizedTokens(fileName)
+    return candidateTokens.isNotEmpty() && candidateTokens.all(fileTokens::contains)
+}
+
+private fun normalizedTokens(value: String): Set<String> =
+    value.lowercase(Locale.ROOT)
+        .split(Regex("[^\\p{L}\\p{N}]+"))
+        .filter { it.length > 1 }
+        .toSet()

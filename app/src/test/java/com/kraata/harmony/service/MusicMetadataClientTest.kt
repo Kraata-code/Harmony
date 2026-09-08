@@ -1,5 +1,11 @@
 package com.kraata.harmony.service
 
+import kotlinx.coroutines.runBlocking
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.OkHttpClient
+import okhttp3.Protocol
+import okhttp3.Response
+import okhttp3.ResponseBody.Companion.toResponseBody
 import org.json.JSONObject
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -50,7 +56,12 @@ class MusicMetadataClientTest {
                     {"name": "Artist Two", "artist": {"id": "artist-two", "name": "Artist Two"}}
                   ],
                   "genres": [{"name": "Rock"}],
-                  "isrcs": ["US-AAA-24-00001"]
+                  "isrcs": ["US-AAA-24-00001"],
+                  "releases": [
+                    {"id": "release-id"},
+                    {"id": "alternate-release-id"},
+                    {"id": "release-id"}
+                  ]
                 }
                 """.trimIndent(),
             ),
@@ -96,6 +107,67 @@ class MusicMetadataClientTest {
         assertEquals(listOf("US-AAA-24-00001"), metadata.isrcs)
         assertEquals("release-id", metadata.releaseId)
         assertEquals("release-group-id", metadata.releaseGroupId)
+        assertEquals(listOf("release-id", "alternate-release-id"), metadata.coverArtReleaseIds)
+    }
+
+    @Test
+    fun downloadsCoverFromAnAlternateRelease() = runBlocking {
+        val requestedPaths = mutableListOf<String>()
+        val client = OkHttpClient.Builder()
+            .addInterceptor { chain ->
+                val path = chain.request().url.encodedPath
+                requestedPaths += path
+                val found = path == "/release/alternate-release-id/front-500"
+                val code = when {
+                    found -> 200
+                    path == "/release/release-id/front-500" -> 503
+                    else -> 404
+                }
+                Response.Builder()
+                    .request(chain.request())
+                    .protocol(Protocol.HTTP_1_1)
+                    .code(code)
+                    .message(if (found) "OK" else "Not Found")
+                    .body(
+                        if (found) {
+                            "cover".toByteArray().toResponseBody("image/jpeg".toMediaType())
+                        } else {
+                            ByteArray(0).toResponseBody(null)
+                        },
+                    )
+                    .build()
+            }
+            .build()
+        val metadata = parseMusicBrainzMetadata(
+            recording = JSONObject(
+                """
+                {
+                  "id": "recording-id",
+                  "title": "Song",
+                  "artist-credit": [{"name": "Artist"}],
+                  "releases": [{"id": "release-id"}, {"id": "alternate-release-id"}]
+                }
+                """.trimIndent(),
+            ),
+            release = JSONObject(
+                """
+                {"id": "release-id", "release-group": {"id": "release-group-id"}}
+                """.trimIndent(),
+            ),
+            recordingId = "recording-id",
+        )
+
+        val cover = MusicMetadataClient(client).downloadCover(metadata)
+
+        assertEquals("cover", cover?.toString(Charsets.UTF_8))
+        assertEquals(
+            listOf(
+                "/release/release-id/front-500",
+                "/release-group/release-group-id/front-500",
+                "/release/alternate-release-id/front-500",
+            ),
+            requestedPaths,
+        )
     }
 
     @Test

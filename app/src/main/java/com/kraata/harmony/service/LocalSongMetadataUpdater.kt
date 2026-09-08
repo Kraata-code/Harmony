@@ -31,6 +31,7 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.ZoneOffset
 import java.util.Locale
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import com.kraata.harmony.utils.dataStore
@@ -69,6 +70,7 @@ internal class LocalSongMetadataUpdater(
         val match = acoustIdClient.lookup(
             fingerprint = fingerprint.encoded,
             durationMs = fingerprint.durationMs,
+            fileNameHint = file.name,
         ) ?: run {
             debug("no AcoustID match")
             return@withContext LocalSongMetadataUpdateResult.NoMatch
@@ -79,7 +81,14 @@ internal class LocalSongMetadataUpdater(
             return@withContext LocalSongMetadataUpdateResult.LowConfidence(match.score)
         }
 
-        val metadata = metadataClient.lookup(match.recordingId)
+        val metadata = try {
+            metadataClient.lookup(match.recordingId)
+        } catch (exception: CancellationException) {
+            throw exception
+        } catch (exception: Exception) {
+            debug("MusicBrainz unavailable; using AcoustID metadata: ${exception.message}")
+            match.toFallbackMetadata()
+        }
         debug("musicbrainz title=${metadata.title} release=${metadata.releaseId}")
         val artwork = metadataClient.downloadCover(metadata)
         debug("cover downloaded=${artwork != null}")
@@ -202,7 +211,7 @@ internal class LocalSongMetadataUpdater(
             if (TagLib.savePictures(descriptor.dup().detachFd(), pictures.toTypedArray())) {
                 savedArtwork = artworkPicture
             } else if (artworkPicture.mimeType == MIME_WEBP) {
-                val jpegArtwork = artworkBytes?.let { compressArtwork(it, file, forceJpeg = true) }
+                val jpegArtwork = compressArtwork(artworkBytes, file, forceJpeg = true)
                 if (jpegArtwork != null) {
                     val jpegPictures = current.pictures
                         .filterNot { it.pictureType.equals("Front Cover", ignoreCase = true) }
@@ -234,7 +243,6 @@ internal class LocalSongMetadataUpdater(
             bitmap
         }
 
-        // ponytail: cap artwork to 500px; album art does not need the source resolution.
         val useJpeg = forceJpeg || file.extension.lowercase(Locale.ROOT) in JPEG_CONTAINERS
         val format = when {
             useJpeg -> Bitmap.CompressFormat.JPEG
@@ -380,6 +388,30 @@ internal class LocalSongMetadataUpdater(
         if (BuildConfig.DEBUG) Log.d(TAG, message)
     }
 }
+
+internal fun AcoustIdMatch.toFallbackMetadata(): MusicBrainzMetadata = MusicBrainzMetadata(
+    title = title,
+    artists = artistNames,
+    artistIds = emptyList(),
+    album = null,
+    albumArtists = emptyList(),
+    albumArtistIds = emptyList(),
+    genres = emptyList(),
+    date = null,
+    trackNumber = null,
+    discNumber = null,
+    label = null,
+    catalogNumber = null,
+    barcode = null,
+    isrcs = emptyList(),
+    recordingId = recordingId,
+    releaseId = null,
+    releaseGroupId = null,
+    releaseCountry = null,
+    releaseStatus = null,
+    releaseType = null,
+    media = null,
+)
 
 private fun setProperty(
     properties: HashMap<String, Array<String>>,
