@@ -126,7 +126,8 @@ fun SongMenu(
 
     val syncMode by rememberEnumPreference(key = YtmSyncModeKey, defaultValue = SyncMode.RW)
 
-    val song = originalSong
+    val liveSong by database.song(originalSong.id).collectAsState(initial = originalSong)
+    val song = liveSong ?: originalSong
     val download by LocalDownloadUtil.current.getDownload(originalSong.id).collectAsState(initial = null)
     val coroutineScope =
         CoroutineScope(syncCoroutine) // rememberCoroutineScope has exception "rememberCoroutineScope left the composition"

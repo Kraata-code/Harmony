@@ -220,6 +220,7 @@ fun HomeScreen(
                                     originalSong = it,
                                     navController = navController,
                                     onDismiss = menuState::dismiss,
+                                    onLocalMetadataUpdated = viewModel::refresh,
                                 )
                             }
                         },

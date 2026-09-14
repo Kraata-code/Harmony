@@ -30,6 +30,7 @@ import com.kraata.harmony.db.entities.AlbumWithSongs
 import com.kraata.harmony.db.entities.ArtistEntity
 import com.kraata.harmony.db.entities.Song
 import com.kraata.harmony.db.entities.SongAlbumMap
+import com.kraata.harmony.db.entities.SongEntity
 import com.kraata.harmony.extensions.reversed
 import com.zionhuang.innertube.models.AlbumItem
 import kotlinx.coroutines.flow.Flow
@@ -140,7 +141,15 @@ interface AlbumsDao : ArtistsDao {
     """)
     fun artistAlbumsPreview(artistId: String, previewSize: Int = 6): Flow<List<Album>>
 
-    @RawQuery(observedEntities = [AlbumEntity::class])
+    @RawQuery(
+        observedEntities = [
+            AlbumEntity::class,
+            AlbumArtistMap::class,
+            ArtistEntity::class,
+            SongAlbumMap::class,
+            SongEntity::class,
+        ]
+    )
     fun _getAlbum(query: SupportSQLiteQuery): Flow<List<Album>>
 
     fun albums(filter: AlbumFilter, sortType: AlbumSortType, descending: Boolean): Flow<List<Album>> {

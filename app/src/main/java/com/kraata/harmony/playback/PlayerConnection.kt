@@ -27,6 +27,7 @@ import com.kraata.harmony.extensions.currentMetadata
 import com.kraata.harmony.extensions.getCurrentQueueIndex
 import com.kraata.harmony.extensions.getQueueWindows
 import com.kraata.harmony.extensions.metadata
+import com.kraata.harmony.models.toMediaMetadata
 import com.kraata.harmony.playback.queues.Queue
 import com.kraata.harmony.utils.reportException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -38,6 +39,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import org.akanework.gramophone.logic.utils.SemanticLyrics
@@ -59,7 +61,14 @@ class PlayerConnection(
         playWhenReady && playbackState != STATE_ENDED
     }.stateIn(scope, SharingStarted.Lazily, player.playWhenReady && player.playbackState != STATE_ENDED)
     val waitingForNetworkConnection: StateFlow<Boolean> = service.waitingForNetworkConnection.asStateFlow()
-    val mediaMetadata = MutableStateFlow(player.currentMetadata)
+    private val playerMediaMetadata = MutableStateFlow(player.currentMetadata)
+    val mediaMetadata = playerMediaMetadata
+        .flatMapLatest { metadata ->
+            database.song(metadata?.id).map { song ->
+                song?.takeIf { it.song.isLocal }?.toMediaMetadata() ?: metadata
+            }
+        }
+        .stateIn(scope, SharingStarted.Lazily, player.currentMetadata)
     val currentSong = mediaMetadata.flatMapLatest {
         database.song(it?.id)
     }
@@ -99,7 +108,7 @@ class PlayerConnection(
         repeatMode.value = player.repeatMode
 
         scope.launch {
-            mediaMetadata.value = player.currentMetadata ?: database.getResumptionQueue()?.getCurrentSong()
+            playerMediaMetadata.value = player.currentMetadata ?: database.getResumptionQueue()?.getCurrentSong()
         }
     }
 
@@ -161,7 +170,7 @@ class PlayerConnection(
     }
 
     override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
-        mediaMetadata.value = mediaItem?.metadata
+        playerMediaMetadata.value = mediaItem?.metadata
         currentMediaItemIndex.value = player.currentMediaItemIndex
         currentWindowIndex.value = player.getCurrentQueueIndex()
         updateCanSkipPreviousAndNext()

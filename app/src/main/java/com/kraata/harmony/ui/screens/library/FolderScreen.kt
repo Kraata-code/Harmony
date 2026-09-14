@@ -548,6 +548,7 @@ fun FolderScreen(
                     onLocalMetadataUpdated = {
                         coroutineScope.launch(Dispatchers.IO) {
                             viewModel.getLocalSongs()
+                            if (isSearching) viewModel.searchInDir(query.text)
                         }
                     },
                     modifier = Modifier

@@ -210,7 +210,14 @@ class MusicService : MediaLibraryService(),
     lateinit var sleepTimer: SleepTimer
 
     // Player vars
-    val currentMediaMetadata = MutableStateFlow<MediaMetadata?>(null)
+    private val playerMediaMetadata = MutableStateFlow<MediaMetadata?>(null)
+    val currentMediaMetadata = playerMediaMetadata
+        .flatMapLatest { metadata ->
+            database.song(metadata?.id).map { song ->
+                song?.takeIf { it.song.isLocal }?.toMediaMetadata() ?: metadata
+            }
+        }
+        .stateIn(offloadScope, SharingStarted.Lazily, null)
 
     private val currentSong = currentMediaMetadata.flatMapLatest { mediaMetadata ->
         database.song(mediaMetadata?.id)
@@ -1526,7 +1533,7 @@ class MusicService : MediaLibraryService(),
             }
         }
         if (events.containsAny(EVENT_TIMELINE_CHANGED, EVENT_POSITION_DISCONTINUITY)) {
-            currentMediaMetadata.value = player.currentMetadata
+            playerMediaMetadata.value = player.currentMetadata
         }
     }
 
