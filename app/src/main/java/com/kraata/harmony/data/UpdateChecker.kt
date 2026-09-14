@@ -149,7 +149,11 @@ class UpdateChecker(
             }
         } catch (e: Exception) {
             Log.e(TAG, "Error durante la descarga", e)
-            emit(DownloadState.Error(UpdateException("Error al descargar actualización", e)))
+            emit(
+                DownloadState.Error(
+                    e as? UpdateException ?: UpdateException("Error al descargar actualización", e)
+                )
+            )
         }
     }.flowOn(Dispatchers.IO)
 
