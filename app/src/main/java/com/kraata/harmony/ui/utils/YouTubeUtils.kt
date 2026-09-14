@@ -10,21 +10,27 @@
 
 package com.kraata.harmony.ui.utils
 
+import kotlin.math.roundToInt
+
 fun String.resize(
     width: Int? = null,
     height: Int? = null,
 ): String {
     if (width == null && height == null) return this
-    "https://lh3\\.googleusercontent\\.com/.*=w(\\d+)-h(\\d+).*".toRegex().matchEntire(this)?.groupValues?.let { group ->
-        val (W, H) = group.drop(1).map { it.toInt() }
+    "https://(?:lh3|yt3)\\.googleusercontent\\.com/.*=w(\\d+)((?:-[^-?]+)?-h)(\\d+)(.*)".toRegex()
+        .matchEntire(this)?.groupValues?.let { group ->
+        val originalWidth = group[1].toInt()
+        val originalHeight = group[3].toInt()
         var w = width
         var h = height
-        if (w != null && h == null) h = (w / W) * H
-        if (w == null && h != null) w = (h / H) * W
-        return "${split("=w")[0]}=w$w-h$h-p-l90-rj"
+        if (w != null && h == null) h = (w.toFloat() / originalWidth * originalHeight).roundToInt()
+        if (w == null && h != null) w = (h.toFloat() / originalHeight * originalWidth).roundToInt()
+        return "${group[0].substringBefore("=w")}=w$w${group[2]}$h${group[4]}"
     }
-    if (this matches "https://yt3\\.ggpht\\.com/.*=s(\\d+)".toRegex()) {
-        return "$this-s${width ?: height}"
+
+    "https://yt3\\.ggpht\\.com/.*=s(\\d+)(.*)".toRegex().matchEntire(this)?.groupValues?.let { group ->
+        return "${group[0].substringBefore("=s")}=s${width ?: height}${group[2]}"
     }
+
     return this
 }

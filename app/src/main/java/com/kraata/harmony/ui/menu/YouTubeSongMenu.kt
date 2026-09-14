@@ -65,6 +65,7 @@ import com.kraata.harmony.ui.component.items.ListItem
 import com.kraata.harmony.ui.dialog.AddToPlaylistDialog
 import com.kraata.harmony.ui.dialog.AddToQueueDialog
 import com.kraata.harmony.ui.dialog.ArtistDialog
+import com.kraata.harmony.utils.getThumbnailModel
 import com.kraata.harmony.utils.joinByBullet
 import com.kraata.harmony.utils.makeTimeString
 import com.kraata.harmony.utils.syncCoroutine
@@ -114,7 +115,7 @@ fun YouTubeSongMenu(
         ),
         thumbnailContent = {
             AsyncImage(
-                model = song.thumbnail,
+                model = getThumbnailModel(song.thumbnail),
                 contentDescription = null,
                 modifier = Modifier
                     .size(ListThumbnailSize)

@@ -15,6 +15,7 @@ import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.PrimaryKey
+import com.kraata.harmony.ui.utils.resize
 import com.kraata.harmony.utils.LocalArtworkPath
 import com.kraata.harmony.utils.syncCoroutine
 import com.zionhuang.innertube.YouTube
@@ -116,7 +117,10 @@ data class SongEntity(
         return if (isLocal) {
             LocalArtworkPath(thumbnailUrl ?: localPath, sizeX, sizeY)
         } else {
-            thumbnailUrl
+            thumbnailUrl?.resize(
+                sizeX.takeIf { it > 0 } ?: 544,
+                sizeY.takeIf { it > 0 } ?: 544,
+            )
         }
     }
 

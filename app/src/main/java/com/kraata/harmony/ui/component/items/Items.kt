@@ -94,8 +94,8 @@ import com.kraata.harmony.models.toMediaMetadata
 import com.kraata.harmony.playback.queues.ListQueue
 import com.kraata.harmony.ui.component.PlayingIndicator
 import com.kraata.harmony.ui.component.PlayingIndicatorBox
-import com.kraata.harmony.utils.LocalArtworkPath
 import com.kraata.harmony.utils.getDownloadState
+import com.kraata.harmony.utils.getThumbnailModel
 import com.kraata.harmony.utils.joinByBullet
 import com.kraata.harmony.utils.makeTimeString
 import com.kraata.harmony.utils.reportException
@@ -602,7 +602,7 @@ fun YouTubeCardItem(
                 val thumbnailRatio = 1f
 
                 AsyncImage(
-                    model = item.thumbnail,
+                    model = getThumbnailModel(item.thumbnail),
                     contentDescription = null,
                     modifier = Modifier
                         .fillMaxSize()
@@ -674,11 +674,7 @@ fun ItemThumbnail(
     ) {
         AsyncImage(
             imageLoader = context.imageLoader,
-            model = if (thumbnailUrl?.startsWith("/storage") == true) {
-                LocalArtworkPath(thumbnailUrl, preferredSize, preferredSize)
-            } else {
-                thumbnailUrl
-            },
+            model = getThumbnailModel(thumbnailUrl, preferredSize, preferredSize),
 //            placeholder = rememberVectorPainter(placeholderIcon),
             contentDescription = null,
             modifier = Modifier

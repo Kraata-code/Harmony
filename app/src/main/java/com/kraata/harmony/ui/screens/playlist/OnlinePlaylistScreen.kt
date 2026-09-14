@@ -139,6 +139,7 @@ import com.kraata.harmony.ui.menu.YouTubePlaylistMenu
 import com.kraata.harmony.ui.menu.YouTubeSongMenu
 import com.kraata.harmony.ui.utils.backToMain
 import com.kraata.harmony.utils.getDownloadState
+import com.kraata.harmony.utils.getThumbnailModel
 import com.kraata.harmony.utils.rememberPreference
 import com.kraata.harmony.viewmodels.OnlinePlaylistViewModel
 import com.zionhuang.innertube.models.SongItem
@@ -328,7 +329,7 @@ fun OnlinePlaylistScreen(
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     AsyncImage(
-                                        model = playlist.thumbnail,
+                                        model = getThumbnailModel(playlist.thumbnail),
                                         contentDescription = null,
                                         modifier = Modifier
                                             .size(AlbumThumbnailSize)

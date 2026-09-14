@@ -39,6 +39,7 @@ import com.kraata.harmony.extensions.metadata
 import com.kraata.harmony.extensions.toMediaItem
 import com.kraata.harmony.extensions.toggleRepeatMode
 import com.kraata.harmony.extensions.toggleShuffleMode
+import com.kraata.harmony.ui.utils.resize
 import com.kraata.harmony.utils.reportException
 import com.google.common.collect.ImmutableList
 import com.google.common.util.concurrent.Futures
@@ -202,7 +203,7 @@ class MediaLibrarySessionCallback @Inject constructor(
                         "${MusicService.ARTIST}/${artist.id}",
                         artist.artist.name,
                         context.resources.getQuantityString(R.plurals.n_song, artist.songCount, artist.songCount),
-                        artist.artist.thumbnailUrl?.toUri(),
+                        artist.artist.thumbnailUrl?.resize(544, 544)?.toUri(),
                         MediaMetadata.MEDIA_TYPE_ARTIST
                     )
                 }
@@ -212,7 +213,7 @@ class MediaLibrarySessionCallback @Inject constructor(
                         "${MusicService.ALBUM}/${album.id}",
                         album.album.title,
                         album.artists.joinToString { it.name },
-                        album.album.thumbnailUrl?.toUri(),
+                        album.album.thumbnailUrl?.resize(544, 544)?.toUri(),
                         MediaMetadata.MEDIA_TYPE_ALBUM
                     )
                 }
@@ -475,7 +476,7 @@ class MediaLibrarySessionCallback @Inject constructor(
                     .setTitle(song.title)
                     .setSubtitle(artists.joinToString { it.name })
                     .setArtist(artists.joinToString { it.name })
-                    .setArtworkUri(song.thumbnailUrl?.toUri())
+                    .setArtworkUri(song.thumbnailUrl?.resize(544, 544)?.toUri())
                     .setIsPlayable(isPlayable)
                     .setIsBrowsable(isBrowsable)
                     .setMediaType(MEDIA_TYPE_MUSIC)
@@ -493,7 +494,7 @@ class MediaLibrarySessionCallback @Inject constructor(
                 .setTitle(title)
                 .setSubtitle(artists.joinToString { it.name })
                 .setArtist(artists.joinToString { it.name })
-                .setArtworkUri(thumbnailUrl?.toUri())
+                .setArtworkUri(thumbnailUrl?.resize(544, 544)?.toUri())
                 .setAlbumTitle(album?.title)
                 .setIsPlayable(isPlayable)
                 .setIsBrowsable(isBrowsable)

@@ -200,10 +200,10 @@ import com.kraata.harmony.ui.theme.OuterTuneTheme
 import com.kraata.harmony.ui.theme.extractThemeColor
 import com.kraata.harmony.ui.utils.appBarScrollBehavior
 import com.kraata.harmony.utils.ActivityLauncherHelper
-import com.kraata.harmony.utils.LocalArtworkPath
 import com.kraata.harmony.utils.NetworkConnectivityObserver
 import com.kraata.harmony.utils.SyncUtils
 import com.kraata.harmony.utils.coilCoroutine
+import com.kraata.harmony.utils.getThumbnailModel
 import com.kraata.harmony.utils.lmScannerCoroutine
 import com.kraata.harmony.utils.rememberEnumPreference
 import com.kraata.harmony.utils.rememberPreference
@@ -387,15 +387,9 @@ class MainActivity : ComponentActivity() {
                     coroutineScope.launch(coilCoroutine) {
                         var ret = DefaultThemeColor
                         if (song != null) {
-                            val uri =
-                                (if (song.isLocal) song.localPath else song.thumbnailUrl)?.toUri()
-                            if (uri != null) {
-                                val model = if (uri.toString().startsWith("/storage/")) {
-                                    LocalArtworkPath(uri.toString(), 100, 100)
-                                } else {
-                                    uri
-                                }
-
+                            val thumbnailUrl = if (song.isLocal) song.localPath else song.thumbnailUrl
+                            val model = thumbnailUrl?.let { getThumbnailModel(it, 100, 100) }
+                            if (model != null) {
                                 val result = applicationContext.imageLoader.execute(
                                     ImageRequest.Builder(applicationContext)
                                         .data(model)

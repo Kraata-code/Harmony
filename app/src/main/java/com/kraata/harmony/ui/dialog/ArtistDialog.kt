@@ -33,6 +33,7 @@ import com.kraata.harmony.constants.ListItemHeight
 import com.kraata.harmony.constants.ListThumbnailSize
 import com.kraata.harmony.db.entities.ArtistEntity
 import com.kraata.harmony.models.MediaMetadata
+import com.kraata.harmony.utils.getThumbnailModel
 
 @JvmName("ArtistDialogMediaMetadataArtist")
 @Composable
@@ -108,7 +109,7 @@ fun ArtistDialog(
                     contentAlignment = Alignment.Center
                 ) {
                     AsyncImage(
-                        model = artist.thumbnailUrl,
+                        model = getThumbnailModel(artist.thumbnailUrl),
                         contentDescription = null,
                         modifier = Modifier
                             .size(ListThumbnailSize)
