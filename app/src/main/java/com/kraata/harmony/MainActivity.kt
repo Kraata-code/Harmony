@@ -1151,11 +1151,8 @@ class MainActivity : ComponentActivity() {
                                     navController = navController
                                 )
                                 if (isFloatingMiniplayer) {
-                                    val isMiniPlayerVisible by remember {
-                                        derivedStateOf {
-                                            playerBottomSheetState.isCollapsed && !playerBottomSheetState.isDismissed
-                                        }
-                                    }
+                                    val isMiniPlayerVisible =
+                                        playerBottomSheetState.isCollapsed && !playerBottomSheetState.isDismissed
                                     androidx.compose.animation.AnimatedVisibility(
                                         visible = isMiniPlayerVisible,
                                         enter = androidx.compose.animation.fadeIn(
