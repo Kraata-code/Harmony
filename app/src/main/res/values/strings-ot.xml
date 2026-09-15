@@ -18,6 +18,13 @@ while also allowing users to translate our app as well. New, specific strings to
     <string name="music_recognition_start">Start music recognition</string>
     <string name="music_recognition_stop">Stop music recognition</string>
     <string name="music_recognition_listening">Listening...</string>
+    <string name="music_recognition_recognizing">Checking the recording...</string>
+    <string name="music_recognition_result">%1$s - %2$s</string>
+    <string name="music_recognition_no_match">No match found.</string>
+    <string name="music_recognition_no_audio">No audio was captured.</string>
+    <string name="music_recognition_permission_required">Microphone permission is required.</string>
+    <string name="music_recognition_error">Music recognition failed.</string>
+    <string name="music_recognition_test_file">Test current local file</string>
     <string name="acoustid_test">Update local metadata</string>
     <string name="acoustid_test_title">Update local metadata</string>
     <string name="acoustid_test_processing">Identifying the complete local file and updating its metadata...</string>

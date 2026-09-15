@@ -29,6 +29,13 @@ android {
         jvmTarget = "11"
     }
 
+    sourceSets {
+        getByName("debug") {
+            assets.srcDir(rootProject.file("now-playing-native-assets"))
+            jniLibs.srcDir(rootProject.file("now-playing-native-libs"))
+        }
+    }
+
 }
 
 dependencies {

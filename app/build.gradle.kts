@@ -239,6 +239,15 @@ android {
 
     androidResources {
         generateLocaleConfig = true
+        // Database shards have no extension; avoid re-compressing them during APK packaging.
+        noCompress += fileTree(rootProject.file("now-playing-databases")).files.map { it.name }
+    }
+
+    // The large Now Playing shards are only needed for local debug experiments.
+    sourceSets {
+        getByName("debug") {
+            assets.srcDir(rootProject.file("now-playing-databases"))
+        }
     }
 
     externalNativeBuild {
