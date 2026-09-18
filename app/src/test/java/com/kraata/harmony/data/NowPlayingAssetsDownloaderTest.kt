@@ -13,6 +13,7 @@ import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import okio.Buffer
 import org.junit.After
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -46,7 +47,7 @@ class NowPlayingAssetsDownloaderTest {
     }
 
     @Test
-    fun installsCoreAndRegionFromArchives() = runBlocking {
+    fun installsCoreAndSelectedRegionsFromArchives() = runBlocking {
         server.enqueue(
             MockResponse().setBody(
                 zip(
@@ -56,6 +57,7 @@ class NowPlayingAssetsDownloaderTest {
             ),
         )
         server.enqueue(MockResponse().setBody(zip("MXshard" to "shard")))
+        server.enqueue(MockResponse().setBody(zip("USXA shard" to "shard")))
         val downloader = NowPlayingAssetsDownloader(
             client = OkHttpClient(),
             releaseBaseUrl = server.url("/").toString().trimEnd('/'),
@@ -63,9 +65,11 @@ class NowPlayingAssetsDownloaderTest {
 
         downloader.download(context, NowPlayingAssetsDownloader.Component.CORE).collect()
         downloader.download(context, NowPlayingAssetsDownloader.Component.MX).collect()
+        downloader.download(context, NowPlayingAssetsDownloader.Component.US_XA).collect()
 
         assertTrue(downloader.isInstalled(context, NowPlayingAssetsDownloader.Component.CORE))
         assertTrue(downloader.isInstalled(context, NowPlayingAssetsDownloader.Component.MX))
+        assertTrue(downloader.isInstalled(context, NowPlayingAssetsDownloader.Component.US_XA))
         assertTrue(NativeNowPlayingMatcher.isReady(context))
     }
 
@@ -86,6 +90,19 @@ class NowPlayingAssetsDownloaderTest {
 
         assertTrue(failed)
         assertFalse(downloader.isInstalled(context, NowPlayingAssetsDownloader.Component.CORE))
+    }
+
+    @Test
+    fun sumsApproximateSizes() {
+        assertEquals(
+            "424 MB",
+            NowPlayingAssetsDownloader.totalApproximateSize(
+                listOf(
+                    NowPlayingAssetsDownloader.Component.MX,
+                    NowPlayingAssetsDownloader.Component.US_XA,
+                ),
+            ),
+        )
     }
 
     private fun zip(vararg entries: Pair<String, String>): Buffer {

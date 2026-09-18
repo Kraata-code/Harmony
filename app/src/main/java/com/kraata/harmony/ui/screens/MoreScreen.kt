@@ -111,13 +111,12 @@ fun MusicRecognitionScreen(
     var matchedSong by remember { mutableStateOf<SongItem?>(null) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
     var recognitionJob by remember { mutableStateOf<Job?>(null) }
-    val (storedShardGroup) = rememberPreference(
+    val (storedShardGroups) = rememberPreference(
         NowPlayingShardGroupKey,
         NowPlayingAssetsDownloader.defaultShardGroup(),
     )
-    val shardGroup = storedShardGroup.takeIf {
-        it == NativeNowPlayingMatcher.MX_SHARD_GROUP || it == NativeNowPlayingMatcher.US_XA_SHARD_GROUP
-    } ?: NowPlayingAssetsDownloader.defaultShardGroup()
+    val shardGroups = storedShardGroups.split(',')
+        .filter { it in NativeNowPlayingMatcher.SUPPORTED_SHARD_GROUPS }
 
     val startRecognition: (File?) -> Unit = { file ->
         recognitionJob?.cancel()
@@ -136,13 +135,18 @@ fun MusicRecognitionScreen(
                 when (identification) {
                     is MusicIdentificationResult.Success -> {
                         isLookingUp = true
-                        val nativeMatch = if (NativeNowPlayingMatcher.isReady(context, shardGroup)) {
+                        val installedShardGroups = shardGroups.filter {
+                            NativeNowPlayingMatcher.isComponentInstalled(context, it)
+                        }
+                        val nativeMatch = if (
+                            NativeNowPlayingMatcher.isReady(context) && installedShardGroups.isNotEmpty()
+                        ) {
                             try {
                                 withContext(Dispatchers.Default) {
                                     NativeNowPlayingMatcher.recognize(
                                         context,
                                         identification.sample,
-                                        shardGroup,
+                                        installedShardGroups,
                                     )
                                 }
                             } catch (cancellation: CancellationException) {

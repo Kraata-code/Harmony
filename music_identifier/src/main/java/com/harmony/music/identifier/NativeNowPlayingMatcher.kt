@@ -129,7 +129,7 @@ object NativeNowPlayingMatcher {
         shardGroup: String,
     ): NativeNowPlayingMatch? = recognize(context, sample, setOf(shardGroup))
 
-    internal fun recognize(
+    fun recognize(
         context: Context,
         sample: AudioSample,
         shardGroups: Collection<String>,

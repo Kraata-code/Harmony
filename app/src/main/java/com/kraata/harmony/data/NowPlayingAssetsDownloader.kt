@@ -23,11 +23,11 @@ class NowPlayingAssetsDownloader(
     enum class Component(
         val directory: String,
         val archiveName: String,
-        val approximateSize: String,
+        val approximateSizeMb: Int,
     ) {
-        CORE(NativeNowPlayingMatcher.CORE_COMPONENT, "harmony-now-playing-core.zip", "52 MB"),
-        MX(NativeNowPlayingMatcher.MX_SHARD_GROUP, "harmony-now-playing-mx.zip", "211 MB"),
-        US_XA(NativeNowPlayingMatcher.US_XA_SHARD_GROUP, "harmony-now-playing-us-xa.zip", "213 MB"),
+        CORE(NativeNowPlayingMatcher.CORE_COMPONENT, "harmony-now-playing-core.zip", 52),
+        MX(NativeNowPlayingMatcher.MX_SHARD_GROUP, "harmony-now-playing-mx.zip", 211),
+        US_XA(NativeNowPlayingMatcher.US_XA_SHARD_GROUP, "harmony-now-playing-us-xa.zip", 213),
     }
 
     fun isInstalled(context: android.content.Context, component: Component): Boolean =
@@ -149,6 +149,9 @@ class NowPlayingAssetsDownloader(
     }
 
     companion object {
+        fun totalApproximateSize(components: Collection<Component>): String =
+            "${components.sumOf { it.approximateSizeMb }} MB"
+
         fun defaultShardGroup(): String = if (Locale.getDefault().country.equals("MX", ignoreCase = true)) {
             NativeNowPlayingMatcher.MX_SHARD_GROUP
         } else {

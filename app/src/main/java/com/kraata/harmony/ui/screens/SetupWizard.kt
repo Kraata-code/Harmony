@@ -49,6 +49,7 @@ import androidx.compose.material.icons.automirrored.rounded.ArrowForward
 import androidx.compose.material.icons.automirrored.rounded.NavigateBefore
 import androidx.compose.material.icons.automirrored.rounded.NavigateNext
 import androidx.compose.material.icons.rounded.AccountCircle
+import androidx.compose.material.icons.rounded.Audiotrack
 import androidx.compose.material.icons.rounded.Autorenew
 import androidx.compose.material.icons.rounded.Block
 import androidx.compose.material.icons.rounded.Cached
@@ -129,6 +130,7 @@ import com.kraata.harmony.ui.screens.Screens.LibraryFilter
 import com.kraata.harmony.ui.screens.settings.fragments.AccountFrag
 import com.kraata.harmony.ui.screens.settings.fragments.LocalScannerFrag
 import com.kraata.harmony.ui.screens.settings.fragments.LocalizationFrag
+import com.kraata.harmony.ui.screens.settings.fragments.NowPlayingAssetsFrag
 import com.kraata.harmony.ui.screens.settings.fragments.ThemeAppFrag
 import com.kraata.harmony.utils.dlCoroutine
 import com.kraata.harmony.utils.formatFileSize
@@ -182,6 +184,10 @@ fun SetupWizard(
         FloatingMiniplayerKey,
         defaultValue = false
     )
+
+    LaunchedEffect(Unit) {
+        if (oobeStatus == 6) oobeStatus = 5
+    }
 
     LaunchedEffect(localLibEnable) {
         var containsFolders = enabledTabs.contains('F')
@@ -825,8 +831,34 @@ fun SetupWizard(
                         }
                     }
 
-                    // exit page
+                    // music recognition
                     5 -> {
+                        Icon(
+                            imageVector = Icons.Rounded.Audiotrack,
+                            contentDescription = null,
+                            modifier = Modifier
+                                .size(80.dp)
+                                .padding(16.dp),
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+
+                        Text(
+                            text = stringResource(R.string.music_recognition_data),
+                            style = MaterialTheme.typography.headlineMedium,
+                            fontWeight = FontWeight.Bold,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp)
+                        )
+
+                        ElevatedCard(
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            NowPlayingAssetsFrag(wizardMode = true)
+                        }
+                    }
+
+                    // exit page
+                    6 -> {
                         Column(
                             modifier = Modifier.fillMaxSize(),
                             horizontalAlignment = Alignment.CenterHorizontally,
