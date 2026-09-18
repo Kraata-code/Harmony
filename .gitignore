@@ -110,3 +110,6 @@ lint/tmp/
 
 # Local LLM model files (too large for regular Git)
 /app/src/main/assets/*.gguf
+
+# Local Now Playing archives (generated/downloaded assets)
+/now-playing-databases/*.7z
