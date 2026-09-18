@@ -107,6 +107,7 @@ val DownloadExtraPathKey = stringPreferencesKey("dlExtraPath") // previously "do
 val DownloadPathKey = stringPreferencesKey("dlPath") // previously "downloadPath"
 val MaxImageCacheSizeKey = intPreferencesKey("maxImageCacheSize")
 val MaxSongCacheSizeKey = intPreferencesKey("maxSongCacheSize")
+val NowPlayingShardGroupKey = stringPreferencesKey("nowPlayingShardGroup")
 
 
 /**

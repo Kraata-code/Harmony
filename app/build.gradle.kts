@@ -15,6 +15,9 @@ plugins {
 }
 
 val acoustIdClientKey = providers.gradleProperty("acoustidClientKey").orNull.orEmpty()
+val nowPlayingBaseUrl = providers.gradleProperty("nowPlayingBaseUrl")
+    .orElse("https://github.com/Kraata-code/Harmony/releases/latest/download")
+    .get()
 
 // Configuración de keystore con manejo seguro
 val keystorePropertiesFile = rootProject.file("keystore.properties")
@@ -34,6 +37,11 @@ android {
         versionName = "1.0.1"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         buildConfigField("String", "ACOUSTID_CLIENT_KEY", "\"$acoustIdClientKey\"")
+        buildConfigField(
+            "String",
+            "NOW_PLAYING_BASE_URL",
+            "\"${nowPlayingBaseUrl.replace("\\", "\\\\").replace("\"", "\\\"")}\"",
+        )
 
         ndk {
             //noinspection ChromeOsAbiSupport
@@ -239,15 +247,6 @@ android {
 
     androidResources {
         generateLocaleConfig = true
-        // Database shards have no extension; avoid re-compressing them during APK packaging.
-        noCompress += fileTree(rootProject.file("now-playing-databases")).files.map { it.name }
-    }
-
-    // The large Now Playing shards are only needed for local debug experiments.
-    sourceSets {
-        getByName("debug") {
-            assets.srcDir(rootProject.file("now-playing-databases"))
-        }
     }
 
     externalNativeBuild {

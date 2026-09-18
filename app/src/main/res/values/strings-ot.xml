@@ -25,6 +25,16 @@ while also allowing users to translate our app as well. New, specific strings to
     <string name="music_recognition_permission_required">Microphone permission is required.</string>
     <string name="music_recognition_error">Music recognition failed.</string>
     <string name="music_recognition_test_file">Test current local file</string>
+    <string name="music_recognition_data">Music recognition data</string>
+    <string name="music_recognition_data_region">Database region</string>
+    <string name="music_recognition_data_core">Core database</string>
+    <string name="music_recognition_data_region_download">Selected region database</string>
+    <string name="music_recognition_data_mx">Mexico</string>
+    <string name="music_recognition_data_us_xa">United States and other regions</string>
+    <string name="music_recognition_data_installed">Installed</string>
+    <string name="music_recognition_data_not_installed">Tap to download</string>
+    <string name="music_recognition_data_error">Could not download recognition data.</string>
+    <string name="music_recognition_data_with_size">%1$s (~%2$s)</string>
     <string name="acoustid_test">Update local metadata</string>
     <string name="acoustid_test_title">Update local metadata</string>
     <string name="acoustid_test_processing">Identifying the complete local file and updating its metadata...</string>

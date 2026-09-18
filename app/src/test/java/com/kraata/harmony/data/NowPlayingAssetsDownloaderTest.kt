@@ -1,0 +1,102 @@
+package com.kraata.harmony.data
+
+import android.content.Context
+import androidx.test.core.app.ApplicationProvider
+import com.harmony.music.identifier.NativeNowPlayingMatcher
+import java.io.ByteArrayOutputStream
+import java.util.zip.ZipEntry
+import java.util.zip.ZipOutputStream
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.flow.collect
+import okhttp3.OkHttpClient
+import okhttp3.mockwebserver.MockResponse
+import okhttp3.mockwebserver.MockWebServer
+import okio.Buffer
+import org.junit.After
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
+import org.junit.Before
+import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
+
+@RunWith(RobolectricTestRunner::class)
+@Config(sdk = [35])
+class NowPlayingAssetsDownloaderTest {
+    private lateinit var server: MockWebServer
+    private lateinit var context: Context
+
+    @Before
+    fun setUp() {
+        server = MockWebServer()
+        server.start()
+        context = ApplicationProvider.getApplicationContext()
+        NativeNowPlayingMatcher.componentDirectory(context, NativeNowPlayingMatcher.CORE_COMPONENT)
+            .parentFile
+            ?.deleteRecursively()
+    }
+
+    @After
+    fun tearDown() {
+        NativeNowPlayingMatcher.componentDirectory(context, NativeNowPlayingMatcher.CORE_COMPONENT)
+            .parentFile
+            ?.deleteRecursively()
+        server.shutdown()
+    }
+
+    @Test
+    fun installsCoreAndRegionFromArchives() = runBlocking {
+        server.enqueue(
+            MockResponse().setBody(
+                zip(
+                    NativeNowPlayingMatcher.CORE_DATABASE to "database",
+                    NativeNowPlayingMatcher.CONFIG_FILE to "config",
+                ),
+            ),
+        )
+        server.enqueue(MockResponse().setBody(zip("MXshard" to "shard")))
+        val downloader = NowPlayingAssetsDownloader(
+            client = OkHttpClient(),
+            releaseBaseUrl = server.url("/").toString().trimEnd('/'),
+        )
+
+        downloader.download(context, NowPlayingAssetsDownloader.Component.CORE).collect()
+        downloader.download(context, NowPlayingAssetsDownloader.Component.MX).collect()
+
+        assertTrue(downloader.isInstalled(context, NowPlayingAssetsDownloader.Component.CORE))
+        assertTrue(downloader.isInstalled(context, NowPlayingAssetsDownloader.Component.MX))
+        assertTrue(NativeNowPlayingMatcher.isReady(context))
+    }
+
+    @Test
+    fun rejectsArchivePathTraversal() = runBlocking {
+        server.enqueue(MockResponse().setBody(zip("../outside" to "bad")))
+        val downloader = NowPlayingAssetsDownloader(
+            client = OkHttpClient(),
+            releaseBaseUrl = server.url("/").toString().trimEnd('/'),
+        )
+
+        var failed = false
+        try {
+            downloader.download(context, NowPlayingAssetsDownloader.Component.CORE).collect()
+        } catch (_: IllegalArgumentException) {
+            failed = true
+        }
+
+        assertTrue(failed)
+        assertFalse(downloader.isInstalled(context, NowPlayingAssetsDownloader.Component.CORE))
+    }
+
+    private fun zip(vararg entries: Pair<String, String>): Buffer {
+        val bytes = ByteArrayOutputStream()
+        ZipOutputStream(bytes).use { zip ->
+            entries.forEach { (name, content) ->
+                zip.putNextEntry(ZipEntry(name))
+                zip.write(content.toByteArray())
+                zip.closeEntry()
+            }
+        }
+        return Buffer().write(bytes.toByteArray())
+    }
+}

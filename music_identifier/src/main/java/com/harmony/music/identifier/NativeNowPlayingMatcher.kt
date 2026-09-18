@@ -15,9 +15,44 @@ data class NativeNowPlayingMatch(
 )
 
 object NativeNowPlayingMatcher {
+    const val CORE_COMPONENT = "core"
+    const val MX_SHARD_GROUP = "mx"
+    const val US_XA_SHARD_GROUP = "us-xa"
+    const val CORE_DATABASE = "matcher_tah.leveldb"
+    const val CONFIG_FILE = "v3_config_tah.pb"
+    const val COMPLETE_MARKER = ".complete"
+
     private const val DATA_DIRECTORY = "native_now_playing"
-    private const val CORE_ASSET = "matcher_tah.leveldb"
-    private const val CONFIG_ASSET = "v3_config_tah.pb"
+
+    val SUPPORTED_SHARD_GROUPS = setOf(MX_SHARD_GROUP, US_XA_SHARD_GROUP)
+
+    fun componentDirectory(context: Context, component: String): File {
+        require(component == CORE_COMPONENT || component in SUPPORTED_SHARD_GROUPS) {
+            "Unsupported Now Playing component: $component"
+        }
+        return File(dataDirectory(context), component)
+    }
+
+    fun isComponentInstalled(context: Context, component: String): Boolean {
+        val directory = componentDirectory(context, component)
+        if (!File(directory, COMPLETE_MARKER).isFile) return false
+
+        return when (component) {
+            CORE_COMPONENT -> File(directory, CORE_DATABASE).isFile &&
+                File(directory, CONFIG_FILE).isFile
+            else -> directory.listFiles().orEmpty().any { it.isFile && it.name != COMPLETE_MARKER }
+        }
+    }
+
+    fun isReady(context: Context, shardGroup: String? = null): Boolean =
+        isComponentInstalled(context, CORE_COMPONENT) &&
+            if (shardGroup == null) {
+                SUPPORTED_SHARD_GROUPS.any { isComponentInstalled(context, it) }
+            } else {
+                isComponentInstalled(context, shardGroup)
+            }
+
+    private fun dataDirectory(context: Context): File = File(context.filesDir, DATA_DIRECTORY)
 
     fun recognize(context: Context, pcm: ByteArray, sampleRate: Int): NativeNowPlayingMatch? =
         recognize(context, pcm, sampleRate, DEFAULT_SHARD_GROUPS)
@@ -31,20 +66,30 @@ object NativeNowPlayingMatcher {
         require(pcm.isNotEmpty() && pcm.size % 2 == 0) { "PCM data must contain 16-bit samples" }
         require(sampleRate > 0) { "PCM sample rate must be positive" }
 
-        val databaseDirectory = File(context.filesDir, DATA_DIRECTORY).apply { mkdirs() }
-        val assets = mutableListOf(CORE_ASSET)
-        shardGroups.distinct().forEach { group ->
+        check(isComponentInstalled(context, CORE_COMPONENT)) {
+            "Now Playing core data is not installed"
+        }
+
+        val coreDirectory = componentDirectory(context, CORE_COMPONENT)
+        val shardFiles = shardGroups.distinct().flatMap { group ->
             require(group in SUPPORTED_SHARD_GROUPS) { "Unsupported shard group: $group" }
-            context.assets.list(group)?.mapTo(assets) { "$group/$it" }
+            if (!isComponentInstalled(context, group)) {
+                emptyList()
+            } else {
+                componentDirectory(context, group).listFiles().orEmpty()
+                    .filter { it.isFile && it.name != COMPLETE_MARKER }
+                    .sortedBy(File::getName)
+            }
         }
-        val paths = assets.map { asset ->
-            copyAsset(context, asset, File(databaseDirectory, asset)).absolutePath
-        }
+        check(shardFiles.isNotEmpty()) { "No Now Playing shard group is installed" }
+
+        val paths = listOf(File(coreDirectory, CORE_DATABASE), *shardFiles.toTypedArray())
+            .map(File::getAbsolutePath)
         val names = paths.map { File(it).name }.toTypedArray()
         val pointer = NnfpV3Recognizer.init(
             names,
             paths.toTypedArray(),
-            context.assets.open(CONFIG_ASSET).use { it.readBytes() },
+            File(coreDirectory, CONFIG_FILE).readBytes(),
         )
         check(pointer != 0L) { "Native Now Playing matcher failed to initialize" }
 
@@ -77,6 +122,12 @@ object NativeNowPlayingMatcher {
         }
         return recognize(context, toMonoPcm(sample.data, channelCount), sampleRate)
     }
+
+    fun recognize(
+        context: Context,
+        sample: AudioSample,
+        shardGroup: String,
+    ): NativeNowPlayingMatch? = recognize(context, sample, setOf(shardGroup))
 
     internal fun recognize(
         context: Context,
@@ -130,19 +181,8 @@ object NativeNowPlayingMatcher {
         return encoded.copyOf(index)
     }
 
-    private fun copyAsset(context: Context, asset: String, target: File): File {
-        if (!target.exists()) {
-            target.parentFile?.mkdirs()
-            context.assets.open(asset).use { input ->
-                target.outputStream().use { output -> input.copyTo(output) }
-            }
-        }
-        return target
-    }
-
     private const val MIME_TYPE_PCM = "audio/pcm"
-    private val DEFAULT_SHARD_GROUPS = listOf("mx", "us-xa")
-    private val SUPPORTED_SHARD_GROUPS = setOf("mx", "us-xa")
+    private val DEFAULT_SHARD_GROUPS = listOf(MX_SHARD_GROUP, US_XA_SHARD_GROUP)
 
     private fun parseResult(data: ByteArray): NativeNowPlayingMatch? {
         var match: NativeNowPlayingMatch? = null

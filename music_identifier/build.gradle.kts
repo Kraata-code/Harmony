@@ -30,8 +30,7 @@ android {
     }
 
     sourceSets {
-        getByName("debug") {
-            assets.srcDir(rootProject.file("now-playing-native-assets"))
+        getByName("main") {
             jniLibs.srcDir(rootProject.file("now-playing-native-libs"))
         }
     }

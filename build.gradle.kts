@@ -1,3 +1,5 @@
+import org.gradle.api.tasks.bundling.Zip
+
 plugins {
     alias(libs.plugins.hilt) apply (false)
     alias(libs.plugins.kotlin.ksp) apply (false)
@@ -18,6 +20,32 @@ buildscript {
 
 tasks.register<Delete>("Clean") {
     delete(rootProject.layout.buildDirectory)
+}
+
+val nowPlayingOutput = layout.buildDirectory.dir("now-playing")
+
+tasks.register<Zip>("packageNowPlayingCore") {
+    from(layout.projectDirectory.dir("now-playing-native-assets")) {
+        include("matcher_tah.leveldb", "v3_config_tah.pb")
+    }
+    archiveFileName.set("harmony-now-playing-core.zip")
+    destinationDirectory.set(nowPlayingOutput)
+}
+
+tasks.register<Zip>("packageNowPlayingMx") {
+    from(layout.projectDirectory.dir("now-playing-databases/mx"))
+    archiveFileName.set("harmony-now-playing-mx.zip")
+    destinationDirectory.set(nowPlayingOutput)
+}
+
+tasks.register<Zip>("packageNowPlayingUsXa") {
+    from(layout.projectDirectory.dir("now-playing-databases/us-xa"))
+    archiveFileName.set("harmony-now-playing-us-xa.zip")
+    destinationDirectory.set(nowPlayingOutput)
+}
+
+tasks.register("packageNowPlayingAssets") {
+    dependsOn("packageNowPlayingCore", "packageNowPlayingMx", "packageNowPlayingUsXa")
 }
 
 subprojects {
