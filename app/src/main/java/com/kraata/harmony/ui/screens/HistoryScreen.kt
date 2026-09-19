@@ -53,6 +53,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.listSaver
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -72,6 +73,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastAny
 import androidx.compose.ui.util.fastForEachReversed
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.media3.common.MediaItem
 import androidx.navigation.NavController
 import com.kraata.harmony.LocalDatabase
 import com.kraata.harmony.LocalMenuState
@@ -85,8 +87,9 @@ import com.kraata.harmony.constants.ListThumbnailSize
 import com.kraata.harmony.constants.SwipeToQueueKey
 import com.kraata.harmony.constants.TopBarInsets
 import com.kraata.harmony.db.entities.EventWithSong
-import com.kraata.harmony.extensions.toMediaItem
+import com.kraata.harmony.extensions.isInternetConnected
 import com.kraata.harmony.extensions.togglePlayPause
+import com.kraata.harmony.extensions.toMediaItem
 import com.kraata.harmony.models.toMediaMetadata
 import com.kraata.harmony.playback.queues.ListQueue
 import com.kraata.harmony.ui.component.ChipsRow
@@ -104,10 +107,15 @@ import com.kraata.harmony.ui.utils.backToMain
 import com.kraata.harmony.utils.rememberPreference
 import com.kraata.harmony.viewmodels.DateAgo
 import com.kraata.harmony.viewmodels.HistoryViewModel
+import com.zionhuang.innertube.YouTube
+import com.zionhuang.innertube.models.SongItem
 import com.zionhuang.innertube.utils.parseCookieString
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import java.time.format.DateTimeFormatter
 import kotlin.math.roundToInt
 
@@ -115,11 +123,14 @@ import kotlin.math.roundToInt
 @Composable
 fun HistoryScreen(
     navController: NavController,
+    recognitionOnly: Boolean = false,
+    onPlaybackStarted: () -> Unit = {},
     viewModel: HistoryViewModel = hiltViewModel(),
 ) {
     val database = LocalDatabase.current
     val density = LocalDensity.current
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
     val menuState = LocalMenuState.current
     val playerConnection = LocalPlayerConnection.current ?: return
     val isPlaying by playerConnection.isPlaying.collectAsState()
@@ -171,14 +182,6 @@ fun HistoryScreen(
         BackHandler(onBack = onExitSelectionMode)
     }
 
-    // no multiselect for remote hisory (yet)
-    val historyPage by viewModel.historyPage
-
-    val innerTubeCookie by rememberPreference(InnerTubeCookieKey, "")
-    val isLoggedIn = remember(innerTubeCookie) {
-        "SAPISID" in parseCookieString(innerTubeCookie)
-    }
-
     fun dateAgoToString(dateAgo: DateAgo): String {
         return when (dateAgo) {
             DateAgo.Today -> context.getString(R.string.today)
@@ -189,7 +192,9 @@ fun HistoryScreen(
         }
     }
 
-    val eventsMap by viewModel.events.collectAsState()
+    // Keep recognition records separate from actual playback history.
+    val eventsMap by (if (recognitionOnly) viewModel.recognitionEvents else viewModel.events)
+        .collectAsState()
     val filteredEventsMap = remember(eventsMap, searchQuery) {
         if (searchQuery.text.isEmpty()) eventsMap
         else eventsMap
@@ -215,6 +220,73 @@ fun HistoryScreen(
     }
 
     val lazyListState = rememberLazyListState()
+
+    val historyPage by viewModel.historyPage
+    val innerTubeCookie by rememberPreference(InnerTubeCookieKey, "")
+    val isLoggedIn = remember(innerTubeCookie) {
+        "SAPISID" in parseCookieString(innerTubeCookie)
+    }
+
+    fun playRecognition(event: EventWithSong) {
+        val play = { item: MediaItem ->
+            if (item.mediaId == mediaMetadata?.id) {
+                playerConnection.player.togglePlayPause()
+            } else {
+                playerConnection.player.setMediaItem(item)
+                playerConnection.player.prepare()
+                playerConnection.player.playWhenReady = true
+            }
+        }
+
+        if (event.song.song.thumbnailUrl.isNullOrBlank() && context.isInternetConnected()) {
+            scope.launch {
+                val onlineSong = try {
+                    YouTube.search(
+                        "${event.song.title} ${event.song.artists.joinToString { it.name }}",
+                        YouTube.SearchFilter.FILTER_SONG,
+                    ).getOrNull()?.items.orEmpty()
+                        .filterIsInstance<SongItem>()
+                        .firstOrNull()
+                } catch (cancellation: CancellationException) {
+                    throw cancellation
+                } catch (_: Exception) {
+                    null
+                }
+
+                if (onlineSong != null) {
+                    val metadata = onlineSong.toMediaMetadata()
+                    val existingSong = database.song(metadata.id).first()?.song
+                    database.awaitTransaction {
+                        if (existingSong == null) {
+                            insert(metadata)
+                        } else {
+                            // Keep user-owned state while refreshing descriptive metadata.
+                            update(
+                                existingSong.copy(
+                                    title = metadata.title,
+                                    duration = metadata.duration,
+                                    thumbnailUrl = metadata.thumbnailUrl,
+                                    trackNumber = metadata.trackNumber,
+                                    discNumber = metadata.discNumber,
+                                    albumId = metadata.album?.id,
+                                    albumName = metadata.album?.title,
+                                    year = metadata.year,
+                                )
+                            )
+                        }
+                        updateRecognitionEvent(event.event.id, metadata.id)
+                    }
+                    play(onlineSong.toMediaItem())
+                } else {
+                    play(event.song.toMediaItem())
+                }
+                onPlaybackStarted()
+            }
+        } else {
+            play(event.song.toMediaItem())
+            onPlaybackStarted()
+        }
+    }
 
     Box(Modifier.fillMaxSize()) {
         ScrollToTopManager(navController, lazyListState)
@@ -275,25 +347,27 @@ fun HistoryScreen(
                 Spacer(Modifier.height(1.dp)) // for Compose ui 1.8
             }
 
-            item {
-                ChipsRow(
-                    chips = if (isLoggedIn) listOf(
-                        HistorySource.LOCAL to stringResource(R.string.local_history),
-                        HistorySource.REMOTE to stringResource(R.string.remote_history),
-                    ) else {
-                        listOf(HistorySource.LOCAL to stringResource(R.string.local_history))
-                    },
-                    currentValue = historySource,
-                    onValueUpdate = {
-                        viewModel.historySource.value = it
-                        if (it == HistorySource.REMOTE) {
-                            viewModel.fetchRemoteHistory()
+            if (!recognitionOnly) {
+                item {
+                    ChipsRow(
+                        chips = if (isLoggedIn) listOf(
+                            HistorySource.LOCAL to stringResource(R.string.local_history),
+                            HistorySource.REMOTE to stringResource(R.string.remote_history),
+                        ) else {
+                            listOf(HistorySource.LOCAL to stringResource(R.string.local_history))
+                        },
+                        currentValue = historySource,
+                        onValueUpdate = {
+                            viewModel.historySource.value = it
+                            if (it == HistorySource.REMOTE) {
+                                viewModel.fetchRemoteHistory()
+                            }
                         }
-                    }
-                )
+                    )
+                }
             }
 
-            if (historySource == HistorySource.REMOTE && isLoggedIn) {
+            if (!recognitionOnly && historySource == HistorySource.REMOTE && isLoggedIn) {
                 historyPage?.sections?.forEach { section ->
                     stickyHeader {
                         NavigationTitle(
@@ -347,7 +421,6 @@ fun HistoryScreen(
                                             }
                                         },
                                         onLongClick = {
-
                                             menuState.show {
                                                 YouTubeSongMenu(
                                                     song = song,
@@ -355,14 +428,11 @@ fun HistoryScreen(
                                                     onDismiss = menuState::dismiss
                                                 )
                                             }
-
                                         }
                                     )
                                     .animateItem()
                             )
                         }
-
-
 
                         SwipeToQueueBox(
                             item = song.toMediaItem(),
@@ -370,7 +440,6 @@ fun HistoryScreen(
                             snackbarHostState = snackbarHostState,
                             content = { content() },
                         )
-
                     }
                 }
             } else {
@@ -409,15 +478,15 @@ fun HistoryScreen(
 
                             thumbnailSize = thumbnailSize,
                             onPlay = {
-                                if (event.song.id == mediaMetadata?.id) {
+                                if (recognitionOnly) {
+                                    playRecognition(event)
+                                } else if (event.song.id == mediaMetadata?.id) {
                                     playerConnection.player.togglePlayPause()
                                 } else {
                                     playerConnection.playQueue(
                                         ListQueue(
                                             title = "${context.getString(R.string.queue_local_history)}: ${
-                                                dateAgoToString(
-                                                    dateAgo
-                                                )
+                                                dateAgoToString(dateAgo)
                                             }",
                                             items = eventsGroup.map { it.song.toMediaMetadata() },
                                             startIndex = index
@@ -476,7 +545,13 @@ fun HistoryScreen(
     }
 
     TopAppBar(
-        title = { Text(stringResource(R.string.history)) },
+        title = {
+            Text(
+                stringResource(
+                    if (recognitionOnly) R.string.music_recognition_history else R.string.history
+                )
+            )
+        },
         navigationIcon = {
             IconButton(
                 onClick = {

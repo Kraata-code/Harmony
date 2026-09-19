@@ -74,6 +74,7 @@ interface SongsDao {
         WHERE id IN (SELECT songId
                      FROM event
                      WHERE timestamp > :fromTimeStamp
+                       AND playTime > 0
                      GROUP BY songId
                      ORDER BY SUM(playTime) DESC
                      LIMIT :limit

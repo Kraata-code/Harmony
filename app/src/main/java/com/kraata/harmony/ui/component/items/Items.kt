@@ -682,7 +682,8 @@ fun ItemThumbnail(
     ) {
         AsyncImage(
             imageLoader = context.imageLoader,
-            model = getThumbnailModel(thumbnailUrl, preferredSize, preferredSize),
+            model = getThumbnailModel(thumbnailUrl, preferredSize, preferredSize)
+                ?: R.drawable.placeholder_icon,
 //            placeholder = rememberVectorPainter(placeholderIcon),
             contentDescription = null,
             modifier = Modifier

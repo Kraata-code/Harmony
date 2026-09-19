@@ -123,6 +123,7 @@ interface AlbumsDao : ArtistsDao {
             JOIN song ON album.id = song.albumId
             JOIN event ON song.id = event.songId
         WHERE event.timestamp > :fromTimeStamp
+          AND event.playTime > 0
         GROUP BY album.id
         ORDER BY SUM(event.playTime) DESC
         LIMIT :limit OFFSET :offset;
@@ -203,11 +204,13 @@ interface AlbumsDao : ArtistsDao {
                        JOIN
                    (SELECT songId, SUM(playTime) AS newPlayTime
                     FROM event
-                    WHERE timestamp > (:now - 86400000 * 30 * 1)
+                     WHERE timestamp > (:now - 86400000 * 30 * 1)
+                       AND playTime > 0
                     GROUP BY songId
                     ORDER BY newPlayTime) as n
                    ON event.songId = n.songId
-              WHERE timestamp < (:now - 86400000 * 30 * 1)
+               WHERE timestamp < (:now - 86400000 * 30 * 1)
+                 AND playTime > 0
               GROUP BY n.songId
               ORDER BY oldPlayTime) AS t
                  JOIN song on song.id = t.eid
@@ -224,6 +227,7 @@ interface AlbumsDao : ArtistsDao {
                  JOIN
              song ON event.songId = song.id
         WHERE event.timestamp > (:now - 86400000 * 7 * 2)
+          AND event.playTime > 0
         GROUP BY song.albumId
         HAVING song.albumId IS NOT NULL
         ORDER BY sum(event.playTime) DESC

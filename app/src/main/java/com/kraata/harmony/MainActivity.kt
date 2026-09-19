@@ -695,7 +695,18 @@ class MainActivity : ComponentActivity() {
                                         MusicRecognitionScreen(navController, scrollBehavior)
                                     }
                                     composable("history") {
-                                        HistoryScreen(navController)
+                                        HistoryScreen(navController, onPlaybackStarted = {
+                                            playerBottomSheetState.collapseSoft()
+                                        })
+                                    }
+                                    composable("recognition-history") {
+                                        HistoryScreen(
+                                            navController = navController,
+                                            recognitionOnly = true,
+                                            onPlaybackStarted = {
+                                                playerBottomSheetState.collapseSoft()
+                                            },
+                                        )
                                     }
                                     composable("stats") {
                                         StatsScreen(navController)
@@ -1145,12 +1156,11 @@ class MainActivity : ComponentActivity() {
                             // REEMPLAZA COMPLETAMENTE EL if (oobeStatus >= OOBE_VERSION) { ... }
 
                             if (oobeStatus >= OOBE_VERSION) {
-                                // 1. BottomSheetPlayer (reproductor expandido)
-                                BottomSheetPlayer(
-                                    state = playerBottomSheetState,
-                                    navController = navController
-                                )
                                 if (isFloatingMiniplayer) {
+                                    BottomSheetPlayer(
+                                        state = playerBottomSheetState,
+                                        navController = navController
+                                    )
                                     val isMiniPlayerVisible =
                                         playerBottomSheetState.isCollapsed && !playerBottomSheetState.isDismissed
                                     androidx.compose.animation.AnimatedVisibility(

@@ -97,15 +97,17 @@ interface DatabaseDao : SongsDao, AlbumsDao, ArtistsDao, PlaylistsDao, QueueDao 
                  JOIN song ON song.id = map.relatedSongId
         WHERE songId IN (SELECT songId
                          FROM (SELECT songId
-                               FROM event
-                               ORDER BY ROWID DESC
-                               LIMIT 5)
+                                FROM event
+                                WHERE playTime > 0
+                                ORDER BY ROWID DESC
+                                LIMIT 5)
                          UNION
                          SELECT songId
                          FROM (SELECT songId
-                               FROM event
-                               WHERE timestamp > :now - 86400000 * 7
-                               GROUP BY songId
+                                FROM event
+                                WHERE timestamp > :now - 86400000 * 7
+                                  AND playTime > 0
+                                GROUP BY songId
                                ORDER BY SUM(playTime) DESC
                                LIMIT 5)
                          UNION
@@ -126,10 +128,17 @@ interface DatabaseDao : SongsDao, AlbumsDao, ArtistsDao, PlaylistsDao, QueueDao 
     fun lyrics(id: String?): Flow<LyricsEntity?>
 
     @Transaction
-    @Query("SELECT * FROM event ORDER BY rowId DESC")
+    @Query("SELECT * FROM event WHERE playTime > 0 ORDER BY rowId DESC")
     fun events(): Flow<List<EventWithSong>>
 
-    @Query("DELETE FROM event")
+    @Transaction
+    @Query("SELECT * FROM event WHERE playTime = 0 ORDER BY rowId DESC")
+    fun recognitionEvents(): Flow<List<EventWithSong>>
+
+    @Query("UPDATE event SET songId = :songId WHERE id = :eventId")
+    fun updateRecognitionEvent(eventId: Long, songId: String)
+
+    @Query("DELETE FROM event WHERE playTime > 0")
     fun clearListenHistory()
 
     @Query("SELECT * FROM search_history WHERE `query` LIKE :query || '%' ORDER BY id DESC")

@@ -29,18 +29,21 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.QueueMusic
 import androidx.compose.material.icons.rounded.Mic
-import androidx.compose.material.icons.rounded.MusicNote
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.LargeFloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SmallFloatingActionButton
 import androidx.compose.material3.Text
@@ -68,19 +71,26 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.navigation.NavController
 import coil3.compose.AsyncImage
+import coil3.imageLoader
+import coil3.request.ImageRequest
 import com.harmony.music.identifier.MusicIdentificationResult
 import com.harmony.music.identifier.MusicIdentifierService
 import com.harmony.music.identifier.NativeNowPlayingMatch
 import com.harmony.music.identifier.NativeNowPlayingMatcher
 import com.kraata.harmony.BuildConfig
+import com.kraata.harmony.LocalDatabase
 import com.kraata.harmony.LocalPlayerAwareWindowInsets
 import com.kraata.harmony.LocalPlayerConnection
 import com.kraata.harmony.R
 import com.kraata.harmony.constants.NowPlayingShardGroupKey
 import com.kraata.harmony.data.NowPlayingAssetsDownloader
+import com.kraata.harmony.db.entities.Event
+import com.kraata.harmony.db.entities.SongEntity
+import com.kraata.harmony.models.MediaMetadata
 import com.kraata.harmony.models.toMediaMetadata
 import com.kraata.harmony.playback.queues.ListQueue
 import com.kraata.harmony.ui.dialog.DefaultDialog
+import com.kraata.harmony.utils.CoilBitmapLoader
 import com.kraata.harmony.utils.getThumbnailModel
 import com.kraata.harmony.utils.rememberPreference
 import com.zionhuang.innertube.YouTube
@@ -91,6 +101,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
+import java.time.LocalDateTime
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -99,6 +110,7 @@ fun MusicRecognitionScreen(
     scrollBehavior: TopAppBarScrollBehavior,
 ) {
     val context = LocalContext.current
+    val database = LocalDatabase.current
     val resources = LocalResources.current
     val scope = rememberCoroutineScope()
     val playerConnection = LocalPlayerConnection.current
@@ -158,11 +170,10 @@ fun MusicRecognitionScreen(
                             }
                         } else null
                         val identifiedMatch = nativeMatch
-                        match = identifiedMatch
                         if (identifiedMatch == null) {
                             errorMessage = resources.getString(R.string.music_recognition_no_match)
                         } else {
-                            matchedSong = try {
+                            val identifiedSong = try {
                                 YouTube.search(
                                     "${identifiedMatch.artist} ${identifiedMatch.title}",
                                     YouTube.SearchFilter.FILTER_SONG,
@@ -174,6 +185,39 @@ fun MusicRecognitionScreen(
                             } catch (_: Exception) {
                                 null
                             }
+                            matchedSong = identifiedSong
+                            val metadata = identifiedSong?.toMediaMetadata() ?: MediaMetadata(
+                                id = identifiedMatch.googleId.ifBlank { SongEntity.generateSongId() },
+                                title = identifiedMatch.title,
+                                artists = listOf(
+                                    MediaMetadata.Artist(
+                                        id = null,
+                                        name = identifiedMatch.artist,
+                                    ),
+                                ),
+                                duration = -1,
+                                genre = null,
+                            )
+                            identifiedSong?.let { song ->
+                                getThumbnailModel(song.thumbnail, 1080, 1080)?.let { thumbnailModel ->
+                                    context.imageLoader.execute(
+                                        ImageRequest.Builder(context)
+                                            .data(thumbnailModel)
+                                            .build()
+                                    )
+                                }
+                            }
+                            database.awaitTransaction {
+                                insert(metadata)
+                                insert(
+                                    Event(
+                                        songId = metadata.id,
+                                        timestamp = LocalDateTime.now(),
+                                        playTime = 0,
+                                    )
+                                )
+                            }
+                            match = identifiedMatch
                         }
                     }
 
@@ -417,11 +461,13 @@ fun MusicRecognitionScreen(
                                     modifier = Modifier.fillMaxSize(),
                                 )
                             } else {
-                                Icon(
-                                    imageVector = Icons.Rounded.MusicNote,
+                                AsyncImage(
+                                    model = remember(context) {
+                                        CoilBitmapLoader.drawPlaceholder(context)
+                                    },
                                     contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.primary,
-                                    modifier = Modifier.size(72.dp),
+                                    contentScale = ContentScale.Crop,
+                                    modifier = Modifier.fillMaxSize(),
                                 )
                             }
                         }
@@ -469,6 +515,23 @@ fun MusicRecognitionScreen(
                     }
                 }
             }
+        }
+
+        IconButton(
+            onClick = { navController.navigate("recognition-history") },
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .windowInsetsPadding(
+                    LocalPlayerAwareWindowInsets.current.only(
+                        WindowInsetsSides.Top + WindowInsetsSides.End
+                    )
+                )
+                .padding(8.dp)
+        ) {
+            Icon(
+                imageVector = Icons.AutoMirrored.Rounded.QueueMusic,
+                contentDescription = stringResource(R.string.music_recognition_history)
+            )
         }
     }
 
