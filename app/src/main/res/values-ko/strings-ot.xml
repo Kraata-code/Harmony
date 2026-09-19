@@ -242,4 +242,22 @@
         <item quantity="other">초</item>
     </plurals>
     <string name="att_project_support">프로젝트 지원</string>
+    <string name="music_recognition_data_required_title">인식 데이터 필요</string>
+    <string name="music_recognition_data_required_message">음악 인식을 사용하기 전에 핵심 데이터베이스와 지역 데이터베이스를 다운로드하세요.</string>
+    <string name="music_recognition_data_install">데이터 설치</string>
+    <string name="music_recognition_data_region">인식에 사용하는 지역</string>
+    <string name="music_recognition_data_core">핵심 데이터베이스</string>
+    <string name="music_recognition_data_region_download">선택한 지역 데이터베이스</string>
+    <string name="music_recognition_data_mx">멕시코</string>
+    <string name="music_recognition_data_us_xa">미국 및 기타 지역</string>
+    <string name="music_recognition_data_installed">설치됨</string>
+    <string name="music_recognition_data_not_installed">탭하여 다운로드</string>
+    <string name="music_recognition_data_selected">인식에 선택됨</string>
+    <string name="music_recognition_data_not_selected">선택되지 않음</string>
+    <string name="music_recognition_data_no_region_selected">선택한 지역 없음</string>
+    <string name="music_recognition_data_error">인식 데이터를 다운로드할 수 없습니다.</string>
+    <string name="music_recognition_data_delete">인식 데이터 삭제</string>
+    <string name="music_recognition_data_delete_region_confirm">%1$s의 다운로드 데이터를 삭제할까요?</string>
+    <string name="music_recognition_data_delete_error">인식 데이터를 삭제할 수 없습니다.</string>
+    <string name="music_recognition_data_with_size">%1$s(~%2$s)</string>
 </resources>

@@ -272,4 +272,22 @@
     <string name="scanner_strict_file_paths_description">Деактивира всяко интелигентно съпоставяне на метаданни. Това може да причини проблеми, ако файловете се преместват в локалното ви хранилище, но позволява една и съща песен в различни папки.</string>
     <string name="scanner_type_tooltip">Системният скенер е по-бърз, но може да извлече някои метаданни неправилно в сравнение с други инструменти за извличане. Моля, обърнете внимание, че превключването на скенери няма автоматично да презареди метаданните на съществуващите песни.</string>
     <string name="restore_lm_tooltip">За нови инсталации на приложението, персонализираното изтегляне и пътищата за сканиране на локални медии може да не работят. За да разрешите това, премахнете ги и ги добавете отново.</string>
+    <string name="music_recognition_data_required_title">Необходими са данни за разпознаване</string>
+    <string name="music_recognition_data_required_message">Изтеглете основната база данни и регионална база данни, преди да използвате разпознаването на музика.</string>
+    <string name="music_recognition_data_install">Инсталиране на данни</string>
+    <string name="music_recognition_data_region">Региони, използвани за разпознаване</string>
+    <string name="music_recognition_data_core">Основна база данни</string>
+    <string name="music_recognition_data_region_download">Избрана регионална база данни</string>
+    <string name="music_recognition_data_mx">Мексико</string>
+    <string name="music_recognition_data_us_xa">Съединените щати и други региони</string>
+    <string name="music_recognition_data_installed">Инсталирано</string>
+    <string name="music_recognition_data_not_installed">Докоснете за изтегляне</string>
+    <string name="music_recognition_data_selected">Избрано за разпознаване</string>
+    <string name="music_recognition_data_not_selected">Не е избрано</string>
+    <string name="music_recognition_data_no_region_selected">Няма избран регион</string>
+    <string name="music_recognition_data_error">Данните за разпознаване не могат да бъдат изтеглени.</string>
+    <string name="music_recognition_data_delete">Изтриване на данните за разпознаване</string>
+    <string name="music_recognition_data_delete_region_confirm">Да се изтрият ли изтеглените данни за %1$s?</string>
+    <string name="music_recognition_data_delete_error">Данните за разпознаване не могат да бъдат изтрити.</string>
+    <string name="music_recognition_data_with_size">%1$s (~%2$s)</string>
 </resources>

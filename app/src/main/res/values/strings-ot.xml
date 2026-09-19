@@ -19,6 +19,9 @@ while also allowing users to translate our app as well. New, specific strings to
     <string name="music_recognition_stop">Stop music recognition</string>
     <string name="music_recognition_listening">Listening...</string>
     <string name="music_recognition_recognizing">Checking the recording...</string>
+    <string name="music_recognition_data_required_title">Recognition data required</string>
+    <string name="music_recognition_data_required_message">Download the core database and a region database before using music recognition.</string>
+    <string name="music_recognition_data_install">Install data</string>
     <string name="music_recognition_result">%1$s - %2$s</string>
     <string name="music_recognition_no_match">No match found.</string>
     <string name="music_recognition_no_audio">No audio was captured.</string>
@@ -37,6 +40,9 @@ while also allowing users to translate our app as well. New, specific strings to
     <string name="music_recognition_data_not_selected">Not selected</string>
     <string name="music_recognition_data_no_region_selected">No region selected</string>
     <string name="music_recognition_data_error">Could not download recognition data.</string>
+    <string name="music_recognition_data_delete">Delete recognition data</string>
+    <string name="music_recognition_data_delete_region_confirm">Delete the downloaded data for %1$s?</string>
+    <string name="music_recognition_data_delete_error">Could not delete recognition data.</string>
     <string name="music_recognition_data_with_size">%1$s (~%2$s)</string>
     <string name="acoustid_test">Update local metadata</string>
     <string name="acoustid_test_title">Update local metadata</string>

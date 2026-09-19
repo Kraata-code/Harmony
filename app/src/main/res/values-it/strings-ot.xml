@@ -274,4 +274,22 @@
     <string name="scanner_strict_file_paths_description">Disabilita tutte le corrispondenze intelligenti dei metadati. Ciò può causare problemi se i file vengono spostati nella memoria locale, ma consente lo stesso brano in cartelle diverse</string>
     <string name="scanner_type_tooltip">Lo scanner di sistema è più veloce, ma potrebbe estrarre in modo errato alcuni metadati rispetto ad altri estrattori. Tieni presente che il cambio di scanner non ricaricherà automaticamente i metadati dei brani esistenti.</string>
     <string name="restore_lm_tooltip">Per le nuove installazioni dell\'app, i percorsi personalizzati di download e di scansione dei media locali potrebbero non funzionare. Per risolvere il problema, rimuovili e aggiungili nuovamente.</string>
+    <string name="music_recognition_data_required_title">Dati di riconoscimento necessari</string>
+    <string name="music_recognition_data_required_message">Scarica il database principale e un database regionale prima di usare il riconoscimento musicale.</string>
+    <string name="music_recognition_data_install">Installa dati</string>
+    <string name="music_recognition_data_region">Regioni utilizzate per il riconoscimento</string>
+    <string name="music_recognition_data_core">Database principale</string>
+    <string name="music_recognition_data_region_download">Database regionale selezionato</string>
+    <string name="music_recognition_data_mx">Messico</string>
+    <string name="music_recognition_data_us_xa">Stati Uniti e altre regioni</string>
+    <string name="music_recognition_data_installed">Installato</string>
+    <string name="music_recognition_data_not_installed">Tocca per scaricare</string>
+    <string name="music_recognition_data_selected">Selezionato per il riconoscimento</string>
+    <string name="music_recognition_data_not_selected">Non selezionato</string>
+    <string name="music_recognition_data_no_region_selected">Nessuna regione selezionata</string>
+    <string name="music_recognition_data_error">Impossibile scaricare i dati di riconoscimento.</string>
+    <string name="music_recognition_data_delete">Elimina i dati di riconoscimento</string>
+    <string name="music_recognition_data_delete_region_confirm">Eliminare i dati scaricati per %1$s?</string>
+    <string name="music_recognition_data_delete_error">Impossibile eliminare i dati di riconoscimento.</string>
+    <string name="music_recognition_data_with_size">%1$s (~%2$s)</string>
 </resources>

@@ -16,7 +16,22 @@ data class NativeNowPlayingMatch(
 
 object NativeNowPlayingMatcher {
     const val CORE_COMPONENT = "core"
+    const val AR_SHARD_GROUP = "ar"
+    const val AU_SHARD_GROUP = "au"
+    const val BR_SHARD_GROUP = "br"
+    const val CA_SHARD_GROUP = "ca"
+    const val CH_SHARD_GROUP = "ch"
+    const val DE_SHARD_GROUP = "de"
+    const val ES_SHARD_GROUP = "es"
+    const val FR_SHARD_GROUP = "fr"
+    const val GB_SHARD_GROUP = "gb"
+    const val IE_SHARD_GROUP = "ie"
+    const val IN_SHARD_GROUP = "in"
+    const val IT_SHARD_GROUP = "it"
+    const val JP_SHARD_GROUP = "jp"
     const val MX_SHARD_GROUP = "mx"
+    const val NL_SHARD_GROUP = "nl"
+    const val RU_SHARD_GROUP = "ru"
     const val US_XA_SHARD_GROUP = "us-xa"
     const val CORE_DATABASE = "matcher_tah.leveldb"
     const val CONFIG_FILE = "v3_config_tah.pb"
@@ -24,7 +39,25 @@ object NativeNowPlayingMatcher {
 
     private const val DATA_DIRECTORY = "native_now_playing"
 
-    val SUPPORTED_SHARD_GROUPS = setOf(MX_SHARD_GROUP, US_XA_SHARD_GROUP)
+    val SUPPORTED_SHARD_GROUPS = listOf(
+        AR_SHARD_GROUP,
+        AU_SHARD_GROUP,
+        BR_SHARD_GROUP,
+        CA_SHARD_GROUP,
+        CH_SHARD_GROUP,
+        DE_SHARD_GROUP,
+        ES_SHARD_GROUP,
+        FR_SHARD_GROUP,
+        GB_SHARD_GROUP,
+        IE_SHARD_GROUP,
+        IN_SHARD_GROUP,
+        IT_SHARD_GROUP,
+        JP_SHARD_GROUP,
+        MX_SHARD_GROUP,
+        NL_SHARD_GROUP,
+        RU_SHARD_GROUP,
+        US_XA_SHARD_GROUP,
+    )
 
     fun componentDirectory(context: Context, component: String): File {
         require(component == CORE_COMPONENT || component in SUPPORTED_SHARD_GROUPS) {
@@ -182,7 +215,7 @@ object NativeNowPlayingMatcher {
     }
 
     private const val MIME_TYPE_PCM = "audio/pcm"
-    private val DEFAULT_SHARD_GROUPS = listOf(MX_SHARD_GROUP, US_XA_SHARD_GROUP)
+    private val DEFAULT_SHARD_GROUPS = SUPPORTED_SHARD_GROUPS
 
     private fun parseResult(data: ByteArray): NativeNowPlayingMatch? {
         var match: NativeNowPlayingMatch? = null

@@ -8,4 +8,22 @@
     <string name="music_recognition_listening">Listening...</string>
     <string name="grp_behavior">Behaviour</string>
     <string name="oobe_ytm_integration_description">Access your favourite tracks seamlessly</string>
+    <string name="music_recognition_data_required_title">Recognition data required</string>
+    <string name="music_recognition_data_required_message">Download the core database and a regional database before using music recognition.</string>
+    <string name="music_recognition_data_install">Install data</string>
+    <string name="music_recognition_data_region">Regions used for recognition</string>
+    <string name="music_recognition_data_core">Core database</string>
+    <string name="music_recognition_data_region_download">Selected regional database</string>
+    <string name="music_recognition_data_mx">Mexico</string>
+    <string name="music_recognition_data_us_xa">United States and other regions</string>
+    <string name="music_recognition_data_installed">Installed</string>
+    <string name="music_recognition_data_not_installed">Tap to download</string>
+    <string name="music_recognition_data_selected">Selected for recognition</string>
+    <string name="music_recognition_data_not_selected">Not selected</string>
+    <string name="music_recognition_data_no_region_selected">No region selected</string>
+    <string name="music_recognition_data_error">Could not download recognition data.</string>
+    <string name="music_recognition_data_delete">Delete recognition data</string>
+    <string name="music_recognition_data_delete_region_confirm">Delete the downloaded data for %1$s?</string>
+    <string name="music_recognition_data_delete_error">Could not delete recognition data.</string>
+    <string name="music_recognition_data_with_size">%1$s (~%2$s)</string>
 </resources>

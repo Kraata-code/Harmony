@@ -40,4 +40,22 @@
     <string name="create_sync_playlist_description">หมายเหตุ: วิธีนี้ช่วยให้สามารถซิงค์กับ YouTube Music ได้ แต่คุณไม่สามารถเพิ่มเพลงในเครื่องลงในเพลย์ลิสต์ที่ซิงค์นี้ได้</string>
     <string name="disc_number">เพลงที่</string>
     <string name="extra_details">รายละเอียดเพิ่มเติม</string>
+    <string name="music_recognition_data_required_title">ต้องใช้ข้อมูลการระบุเพลง</string>
+    <string name="music_recognition_data_required_message">ดาวน์โหลดฐานข้อมูลหลักและฐานข้อมูลภูมิภาคก่อนใช้การระบุเพลง</string>
+    <string name="music_recognition_data_install">ติดตั้งข้อมูล</string>
+    <string name="music_recognition_data_region">ภูมิภาคที่ใช้สำหรับการระบุเพลง</string>
+    <string name="music_recognition_data_core">ฐานข้อมูลหลัก</string>
+    <string name="music_recognition_data_region_download">ฐานข้อมูลภูมิภาคที่เลือก</string>
+    <string name="music_recognition_data_mx">เม็กซิโก</string>
+    <string name="music_recognition_data_us_xa">สหรัฐอเมริกาและภูมิภาคอื่นๆ</string>
+    <string name="music_recognition_data_installed">ติดตั้งแล้ว</string>
+    <string name="music_recognition_data_not_installed">แตะเพื่อดาวน์โหลด</string>
+    <string name="music_recognition_data_selected">เลือกเพื่อใช้ระบุเพลง</string>
+    <string name="music_recognition_data_not_selected">ไม่ได้เลือก</string>
+    <string name="music_recognition_data_no_region_selected">ยังไม่ได้เลือกภูมิภาค</string>
+    <string name="music_recognition_data_error">ดาวน์โหลดข้อมูลการระบุเพลงไม่ได้</string>
+    <string name="music_recognition_data_delete">ลบข้อมูลการระบุเพลง</string>
+    <string name="music_recognition_data_delete_region_confirm">ลบข้อมูลที่ดาวน์โหลดสำหรับ %1$s ไหม</string>
+    <string name="music_recognition_data_delete_error">ลบข้อมูลการระบุเพลงไม่ได้</string>
+    <string name="music_recognition_data_with_size">%1$s (~%2$s)</string>
 </resources>

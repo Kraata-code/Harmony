@@ -242,4 +242,22 @@
     <string name="speed_medium">Srednje</string>
     <string name="speed_fast">Brzo</string>
     <string name="speed_very_fast">Veoma brzo</string>
+    <string name="music_recognition_data_required_title">Потребни су подаци за препознавање</string>
+    <string name="music_recognition_data_required_message">Пре коришћења препознавања музике преузмите основну и регионалну базу података.</string>
+    <string name="music_recognition_data_install">Инсталирај податке</string>
+    <string name="music_recognition_data_region">Региони који се користе за препознавање</string>
+    <string name="music_recognition_data_core">Основна база података</string>
+    <string name="music_recognition_data_region_download">Изабрана регионална база података</string>
+    <string name="music_recognition_data_mx">Мексико</string>
+    <string name="music_recognition_data_us_xa">Сједињене Државе и други региони</string>
+    <string name="music_recognition_data_installed">Инсталирано</string>
+    <string name="music_recognition_data_not_installed">Додирните за преузимање</string>
+    <string name="music_recognition_data_selected">Изабрано за препознавање</string>
+    <string name="music_recognition_data_not_selected">Није изабрано</string>
+    <string name="music_recognition_data_no_region_selected">Није изабран регион</string>
+    <string name="music_recognition_data_error">Преузимање података за препознавање није успело.</string>
+    <string name="music_recognition_data_delete">Обриши податке за препознавање</string>
+    <string name="music_recognition_data_delete_region_confirm">Обрисати преузете податке за %1$s?</string>
+    <string name="music_recognition_data_delete_error">Брисање података за препознавање није успело.</string>
+    <string name="music_recognition_data_with_size">%1$s (~%2$s)</string>
 </resources>

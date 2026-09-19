@@ -11,4 +11,22 @@
     <string name="library">Bibliotek</string>
     <string name="recent_activity">Senaste aktiviteten</string>
     <string name="local_history">Lokal</string>
+    <string name="music_recognition_data_required_title">Identifieringsdata krävs</string>
+    <string name="music_recognition_data_required_message">Ladda ner kärndatabasen och en regional databas innan du använder musikidentifiering.</string>
+    <string name="music_recognition_data_install">Installera data</string>
+    <string name="music_recognition_data_region">Regioner som används för identifiering</string>
+    <string name="music_recognition_data_core">Kärndatabas</string>
+    <string name="music_recognition_data_region_download">Vald regional databas</string>
+    <string name="music_recognition_data_mx">Mexiko</string>
+    <string name="music_recognition_data_us_xa">USA och andra regioner</string>
+    <string name="music_recognition_data_installed">Installerad</string>
+    <string name="music_recognition_data_not_installed">Tryck för att ladda ner</string>
+    <string name="music_recognition_data_selected">Vald för identifiering</string>
+    <string name="music_recognition_data_not_selected">Inte vald</string>
+    <string name="music_recognition_data_no_region_selected">Ingen region vald</string>
+    <string name="music_recognition_data_error">Det gick inte att ladda ner identifieringsdata.</string>
+    <string name="music_recognition_data_delete">Ta bort identifieringsdata</string>
+    <string name="music_recognition_data_delete_region_confirm">Ta bort den nedladdade datan för %1$s?</string>
+    <string name="music_recognition_data_delete_error">Det gick inte att ta bort identifieringsdata.</string>
+    <string name="music_recognition_data_with_size">%1$s (~%2$s)</string>
 </resources>

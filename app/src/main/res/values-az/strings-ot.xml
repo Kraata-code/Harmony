@@ -73,4 +73,22 @@
     <string name="device_info_title">Cihaz məlumatları</string>
     <string name="help_bug_report_action">Xəta bildir</string>
     <string name="help_support_forum">Dəstək</string>
+    <string name="music_recognition_data_required_title">Tanıma məlumatları tələb olunur</string>
+    <string name="music_recognition_data_required_message">Musiqi tanıma funksiyasından istifadə etməzdən əvvəl əsas verilənlər bazasını və regional verilənlər bazasını endirin.</string>
+    <string name="music_recognition_data_install">Məlumatları quraşdır</string>
+    <string name="music_recognition_data_region">Tanıma üçün istifadə olunan regionlar</string>
+    <string name="music_recognition_data_core">Əsas verilənlər bazası</string>
+    <string name="music_recognition_data_region_download">Seçilmiş regional verilənlər bazası</string>
+    <string name="music_recognition_data_mx">Meksika</string>
+    <string name="music_recognition_data_us_xa">ABŞ və digər regionlar</string>
+    <string name="music_recognition_data_installed">Quraşdırılıb</string>
+    <string name="music_recognition_data_not_installed">Endirmək üçün toxunun</string>
+    <string name="music_recognition_data_selected">Tanıma üçün seçilib</string>
+    <string name="music_recognition_data_not_selected">Seçilməyib</string>
+    <string name="music_recognition_data_no_region_selected">Heç bir region seçilməyib</string>
+    <string name="music_recognition_data_error">Tanıma məlumatlarını endirmək mümkün olmadı.</string>
+    <string name="music_recognition_data_delete">Tanıma məlumatlarını sil</string>
+    <string name="music_recognition_data_delete_region_confirm">%1$s üçün endirilmiş məlumatlar silinsin?</string>
+    <string name="music_recognition_data_delete_error">Tanıma məlumatlarını silmək mümkün olmadı.</string>
+    <string name="music_recognition_data_with_size">%1$s (~%2$s)</string>
 </resources>

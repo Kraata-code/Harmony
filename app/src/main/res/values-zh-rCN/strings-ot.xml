@@ -267,4 +267,22 @@
     <string name="oobe_welcome_tip">为了获得最佳体验，我们建议您立即完成快速设置，以便对主题、YouTube 帐户、本地媒体和下载等关键功能进行个性化配置。</string>
     <string name="oobe_cache_title">歌曲缓存</string>
     <string name="oobe_cache_subtitle">设置歌曲缓存容量。此操作有助于解决网络或 YouTube API 播放时出现的问题</string>
+    <string name="music_recognition_data_required_title">需要识别数据</string>
+    <string name="music_recognition_data_required_message">使用音乐识别前，请下载核心数据库和区域数据库。</string>
+    <string name="music_recognition_data_install">安装数据</string>
+    <string name="music_recognition_data_region">用于识别的地区</string>
+    <string name="music_recognition_data_core">核心数据库</string>
+    <string name="music_recognition_data_region_download">已选区域数据库</string>
+    <string name="music_recognition_data_mx">墨西哥</string>
+    <string name="music_recognition_data_us_xa">美国及其他地区</string>
+    <string name="music_recognition_data_installed">已安装</string>
+    <string name="music_recognition_data_not_installed">点按即可下载</string>
+    <string name="music_recognition_data_selected">已选择用于识别</string>
+    <string name="music_recognition_data_not_selected">未选择</string>
+    <string name="music_recognition_data_no_region_selected">未选择地区</string>
+    <string name="music_recognition_data_error">无法下载识别数据。</string>
+    <string name="music_recognition_data_delete">删除识别数据</string>
+    <string name="music_recognition_data_delete_region_confirm">要删除 %1$s 的已下载数据吗？</string>
+    <string name="music_recognition_data_delete_error">无法删除识别数据。</string>
+    <string name="music_recognition_data_with_size">%1$s（约 %2$s）</string>
 </resources>

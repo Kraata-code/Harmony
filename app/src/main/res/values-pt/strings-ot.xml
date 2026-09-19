@@ -273,4 +273,22 @@
     <string name="scanner_strict_file_paths_title">Corresponder aos caminhos dos arquivos em vez dos metadados</string>
     <string name="scanner_strict_file_paths_description">Desativa toda a correspondência inteligente de metadados. Isso pode causar problemas se os arquivos forem movidos no seu armazenamento local, mas permite que a mesma música esteja em pastas diferentes</string>
     <string name="scanner_type_tooltip">O scanner do sistema é mais rápido, mas pode extrair metadados incorretamente em comparação com outros extratores. Observe que a troca de scanners não recarrega automaticamente os metadados das músicas existentes.</string>
+    <string name="music_recognition_data_required_title">Dados de reconhecimento necessários</string>
+    <string name="music_recognition_data_required_message">Transfira a base de dados principal e uma base de dados regional antes de usar o reconhecimento de música.</string>
+    <string name="music_recognition_data_install">Instalar dados</string>
+    <string name="music_recognition_data_region">Regiões usadas para o reconhecimento</string>
+    <string name="music_recognition_data_core">Base de dados principal</string>
+    <string name="music_recognition_data_region_download">Base de dados regional selecionada</string>
+    <string name="music_recognition_data_mx">México</string>
+    <string name="music_recognition_data_us_xa">Estados Unidos e outras regiões</string>
+    <string name="music_recognition_data_installed">Instalado</string>
+    <string name="music_recognition_data_not_installed">Toque para transferir</string>
+    <string name="music_recognition_data_selected">Selecionado para reconhecimento</string>
+    <string name="music_recognition_data_not_selected">Não selecionado</string>
+    <string name="music_recognition_data_no_region_selected">Nenhuma região selecionada</string>
+    <string name="music_recognition_data_error">Não foi possível transferir os dados de reconhecimento.</string>
+    <string name="music_recognition_data_delete">Eliminar dados de reconhecimento</string>
+    <string name="music_recognition_data_delete_region_confirm">Eliminar os dados transferidos para %1$s?</string>
+    <string name="music_recognition_data_delete_error">Não foi possível eliminar os dados de reconhecimento.</string>
+    <string name="music_recognition_data_with_size">%1$s (~%2$s)</string>
 </resources>

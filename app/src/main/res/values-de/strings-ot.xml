@@ -262,4 +262,22 @@
     <string name="toggle_lyrics">Liedtext -ein/ausschalten</string>
     <string name="oobe_welcome_tip">Für ein optimales Erlebnis empfehlen wir Ihnen, eine schnelle Einrichtung durchzuführen, um wichtige Einstellungen wie Design, YouTube-Konto, lokale Medien und Downloads anzupassen.</string>
     <string name="oobe_cache_subtitle">Wählen Sie eine Song-Cache-Größe. Dies kann dazu beitragen, Probleme bei der Wiedergabe über das Internet oder die YouTube-API zu reduzieren.</string>
+    <string name="music_recognition_data_required_title">Erkennungsdaten erforderlich</string>
+    <string name="music_recognition_data_required_message">Lade die Kerndatenbank und eine regionale Datenbank herunter, bevor du die Musikerkennung verwendest.</string>
+    <string name="music_recognition_data_install">Daten installieren</string>
+    <string name="music_recognition_data_region">Für die Erkennung verwendete Regionen</string>
+    <string name="music_recognition_data_core">Kerndatenbank</string>
+    <string name="music_recognition_data_region_download">Ausgewählte regionale Datenbank</string>
+    <string name="music_recognition_data_mx">Mexiko</string>
+    <string name="music_recognition_data_us_xa">Vereinigte Staaten und andere Regionen</string>
+    <string name="music_recognition_data_installed">Installiert</string>
+    <string name="music_recognition_data_not_installed">Zum Herunterladen tippen</string>
+    <string name="music_recognition_data_selected">Für die Erkennung ausgewählt</string>
+    <string name="music_recognition_data_not_selected">Nicht ausgewählt</string>
+    <string name="music_recognition_data_no_region_selected">Keine Region ausgewählt</string>
+    <string name="music_recognition_data_error">Erkennungsdaten konnten nicht heruntergeladen werden.</string>
+    <string name="music_recognition_data_delete">Erkennungsdaten löschen</string>
+    <string name="music_recognition_data_delete_region_confirm">Heruntergeladene Daten für %1$s löschen?</string>
+    <string name="music_recognition_data_delete_error">Erkennungsdaten konnten nicht gelöscht werden.</string>
+    <string name="music_recognition_data_with_size">%1$s (~%2$s)</string>
 </resources>

@@ -274,4 +274,22 @@
     <string name="scanner_strict_file_paths_description">Désactive toute correspondance intelligente des métadonnées. Cela peut poser problème si des fichiers sont déplacés de votre stockage local, mais autorise le même titre dans différents dossiers</string>
     <string name="scanner_type_tooltip">L\'analyseur système est plus rapide, mais il peut extraire certaines métadonnées de manière incorrecte par rapport à d\'autres extracteurs. Veuillez noter que le changement d\'analyseur ne recharge pas automatiquement les métadonnées des titres existants.</string>
     <string name="restore_lm_tooltip">Lors d\'une nouvelle installation de l\'application, il se peut que les chemins de téléchargement personnalisés et d\'analyse des médias locaux ne fonctionnent pas. Pour résoudre ce problème, supprimez-les puis ajoutez-les à nouveau.</string>
+    <string name="music_recognition_data_required_title">Données de reconnaissance requises</string>
+    <string name="music_recognition_data_required_message">Téléchargez la base de données principale et une base de données régionale avant d’utiliser la reconnaissance musicale.</string>
+    <string name="music_recognition_data_install">Installer les données</string>
+    <string name="music_recognition_data_region">Régions utilisées pour la reconnaissance</string>
+    <string name="music_recognition_data_core">Base de données principale</string>
+    <string name="music_recognition_data_region_download">Base de données régionale sélectionnée</string>
+    <string name="music_recognition_data_mx">Mexique</string>
+    <string name="music_recognition_data_us_xa">États-Unis et autres régions</string>
+    <string name="music_recognition_data_installed">Installée</string>
+    <string name="music_recognition_data_not_installed">Appuyez pour télécharger</string>
+    <string name="music_recognition_data_selected">Sélectionnée pour la reconnaissance</string>
+    <string name="music_recognition_data_not_selected">Non sélectionnée</string>
+    <string name="music_recognition_data_no_region_selected">Aucune région sélectionnée</string>
+    <string name="music_recognition_data_error">Impossible de télécharger les données de reconnaissance.</string>
+    <string name="music_recognition_data_delete">Supprimer les données de reconnaissance</string>
+    <string name="music_recognition_data_delete_region_confirm">Supprimer les données téléchargées pour %1$s ?</string>
+    <string name="music_recognition_data_delete_error">Impossible de supprimer les données de reconnaissance.</string>
+    <string name="music_recognition_data_with_size">%1$s (~%2$s)</string>
 </resources>

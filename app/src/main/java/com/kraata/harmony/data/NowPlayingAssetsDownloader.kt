@@ -26,12 +26,42 @@ class NowPlayingAssetsDownloader(
         val approximateSizeMb: Int,
     ) {
         CORE(NativeNowPlayingMatcher.CORE_COMPONENT, "harmony-now-playing-core.zip", 52),
+        AR(NativeNowPlayingMatcher.AR_SHARD_GROUP, "harmony-now-playing-ar.zip", 224),
+        AU(NativeNowPlayingMatcher.AU_SHARD_GROUP, "harmony-now-playing-au.zip", 226),
+        BR(NativeNowPlayingMatcher.BR_SHARD_GROUP, "harmony-now-playing-br.zip", 226),
+        CA(NativeNowPlayingMatcher.CA_SHARD_GROUP, "harmony-now-playing-ca.zip", 227),
+        CH(NativeNowPlayingMatcher.CH_SHARD_GROUP, "harmony-now-playing-ch.zip", 204),
+        DE(NativeNowPlayingMatcher.DE_SHARD_GROUP, "harmony-now-playing-de.zip", 211),
+        ES(NativeNowPlayingMatcher.ES_SHARD_GROUP, "harmony-now-playing-es.zip", 226),
+        FR(NativeNowPlayingMatcher.FR_SHARD_GROUP, "harmony-now-playing-fr.zip", 218),
+        GB(NativeNowPlayingMatcher.GB_SHARD_GROUP, "harmony-now-playing-gb.zip", 225),
+        IE(NativeNowPlayingMatcher.IE_SHARD_GROUP, "harmony-now-playing-ie.zip", 228),
+        IN(NativeNowPlayingMatcher.IN_SHARD_GROUP, "harmony-now-playing-in.zip", 268),
+        IT(NativeNowPlayingMatcher.IT_SHARD_GROUP, "harmony-now-playing-it.zip", 224),
+        JP(NativeNowPlayingMatcher.JP_SHARD_GROUP, "harmony-now-playing-jp.zip", 258),
         MX(NativeNowPlayingMatcher.MX_SHARD_GROUP, "harmony-now-playing-mx.zip", 211),
+        NL(NativeNowPlayingMatcher.NL_SHARD_GROUP, "harmony-now-playing-nl.zip", 216),
+        RU(NativeNowPlayingMatcher.RU_SHARD_GROUP, "harmony-now-playing-ru.zip", 198),
         US_XA(NativeNowPlayingMatcher.US_XA_SHARD_GROUP, "harmony-now-playing-us-xa.zip", 213),
     }
 
     fun isInstalled(context: android.content.Context, component: Component): Boolean =
         NativeNowPlayingMatcher.isComponentInstalled(context, component.directory)
+
+    suspend fun delete(
+        context: android.content.Context,
+        component: Component,
+    ) = withContext(Dispatchers.IO) {
+        if (component == Component.CORE) {
+            check(Component.values().filterNot { it == Component.CORE }.none { isInstalled(context, it) }) {
+                "Cannot delete Now Playing core while a region is installed"
+            }
+        }
+        val deleted = NativeNowPlayingMatcher
+            .componentDirectory(context, component.directory)
+            .deleteRecursively()
+        check(deleted) { "Could not delete Now Playing component: ${component.directory}" }
+    }
 
     fun download(context: android.content.Context, component: Component): Flow<Int> = channelFlow {
         withContext(Dispatchers.IO) {

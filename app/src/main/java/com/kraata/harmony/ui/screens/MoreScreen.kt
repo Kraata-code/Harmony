@@ -80,6 +80,7 @@ import com.kraata.harmony.constants.NowPlayingShardGroupKey
 import com.kraata.harmony.data.NowPlayingAssetsDownloader
 import com.kraata.harmony.models.toMediaMetadata
 import com.kraata.harmony.playback.queues.ListQueue
+import com.kraata.harmony.ui.dialog.DefaultDialog
 import com.kraata.harmony.utils.getThumbnailModel
 import com.kraata.harmony.utils.rememberPreference
 import com.zionhuang.innertube.YouTube
@@ -110,6 +111,7 @@ fun MusicRecognitionScreen(
     var match by remember { mutableStateOf<NativeNowPlayingMatch?>(null) }
     var matchedSong by remember { mutableStateOf<SongItem?>(null) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
+    var showMissingDataDialog by remember { mutableStateOf(false) }
     var recognitionJob by remember { mutableStateOf<Job?>(null) }
     val (storedShardGroups) = rememberPreference(
         NowPlayingShardGroupKey,
@@ -217,6 +219,15 @@ fun MusicRecognitionScreen(
             recognitionJob?.cancel()
             isProcessing = false
             isLookingUp = false
+        } else if (
+            !NativeNowPlayingMatcher.isComponentInstalled(
+                context,
+                NativeNowPlayingMatcher.CORE_COMPONENT,
+            ) || shardGroups.none {
+                NativeNowPlayingMatcher.isComponentInstalled(context, it)
+            }
+        ) {
+            showMissingDataDialog = true
         } else if (ContextCompat.checkSelfPermission(
                 context,
                 Manifest.permission.RECORD_AUDIO,
@@ -459,5 +470,30 @@ fun MusicRecognitionScreen(
                 }
             }
         }
+    }
+
+    if (showMissingDataDialog) {
+        DefaultDialog(
+            onDismiss = { showMissingDataDialog = false },
+            title = {
+                Text(stringResource(R.string.music_recognition_data_required_title))
+            },
+            content = {
+                Text(stringResource(R.string.music_recognition_data_required_message))
+            },
+            buttons = {
+                TextButton(onClick = { showMissingDataDialog = false }) {
+                    Text(stringResource(android.R.string.cancel))
+                }
+                TextButton(
+                    onClick = {
+                        showMissingDataDialog = false
+                        navController.navigate("settings/storage")
+                    },
+                ) {
+                    Text(stringResource(R.string.music_recognition_data_install))
+                }
+            },
+        )
     }
 }

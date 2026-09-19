@@ -24,6 +24,11 @@ tasks.register<Delete>("Clean") {
 
 val nowPlayingOutput = layout.buildDirectory.dir("now-playing")
 
+val nowPlayingShardGroups = listOf(
+    "ar", "au", "br", "ca", "ch", "de", "es", "fr", "gb",
+    "ie", "in", "it", "jp", "mx", "nl", "ru", "us-xa",
+)
+
 tasks.register<Zip>("packageNowPlayingCore") {
     from(layout.projectDirectory.dir("now-playing-native-assets")) {
         include("matcher_tah.leveldb", "v3_config_tah.pb")
@@ -32,20 +37,21 @@ tasks.register<Zip>("packageNowPlayingCore") {
     destinationDirectory.set(nowPlayingOutput)
 }
 
-tasks.register<Zip>("packageNowPlayingMx") {
-    from(layout.projectDirectory.dir("now-playing-databases/mx"))
-    archiveFileName.set("harmony-now-playing-mx.zip")
-    destinationDirectory.set(nowPlayingOutput)
-}
-
-tasks.register<Zip>("packageNowPlayingUsXa") {
-    from(layout.projectDirectory.dir("now-playing-databases/us-xa"))
-    archiveFileName.set("harmony-now-playing-us-xa.zip")
-    destinationDirectory.set(nowPlayingOutput)
+nowPlayingShardGroups.forEach { group ->
+    val taskSuffix = group.split('-').joinToString("") { it.replaceFirstChar(Char::uppercaseChar) }
+    tasks.register<Zip>("packageNowPlaying$taskSuffix") {
+        from(layout.projectDirectory.dir("now-playing-databases/$group"))
+        archiveFileName.set("harmony-now-playing-$group.zip")
+        destinationDirectory.set(nowPlayingOutput)
+    }
 }
 
 tasks.register("packageNowPlayingAssets") {
-    dependsOn("packageNowPlayingCore", "packageNowPlayingMx", "packageNowPlayingUsXa")
+    dependsOn("packageNowPlayingCore")
+    dependsOn(nowPlayingShardGroups.map { group ->
+        val taskSuffix = group.split('-').joinToString("") { it.replaceFirstChar(Char::uppercaseChar) }
+        "packageNowPlaying$taskSuffix"
+    })
 }
 
 subprojects {

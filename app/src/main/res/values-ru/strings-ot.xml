@@ -277,4 +277,22 @@
     <string name="scanner_strict_file_paths_description">Отключает интеллектуальное сопоставление метаданных. Это может вызвать проблемы, если файлы будут перемещены в локальном хранилище, но позволяет распознавать одну и ту же песню в разных папках</string>
     <string name="scanner_type_tooltip">Системный сканер работает быстрее, но может некорректно извлекать некоторые метаданные по сравнению с другими методами. Обратите внимание, что смена сканера не приведёт к автоматическому обновлению метаданных уже существующих песен.</string>
     <string name="restore_lm_tooltip">При чистой установке приложения пользовательские пути загрузки и сканирования локальных медиафайлов могут не работать. Чтобы решить эту проблему, удалите их и добавьте заново.</string>
+    <string name="music_recognition_data_required_title">Требуются данные распознавания</string>
+    <string name="music_recognition_data_required_message">Загрузите основную базу данных и региональную базу данных перед использованием распознавания музыки.</string>
+    <string name="music_recognition_data_install">Установить данные</string>
+    <string name="music_recognition_data_region">Регионы, используемые для распознавания</string>
+    <string name="music_recognition_data_core">Основная база данных</string>
+    <string name="music_recognition_data_region_download">Выбранная региональная база данных</string>
+    <string name="music_recognition_data_mx">Мексика</string>
+    <string name="music_recognition_data_us_xa">США и другие регионы</string>
+    <string name="music_recognition_data_installed">Установлено</string>
+    <string name="music_recognition_data_not_installed">Нажмите, чтобы скачать</string>
+    <string name="music_recognition_data_selected">Выбрано для распознавания</string>
+    <string name="music_recognition_data_not_selected">Не выбрано</string>
+    <string name="music_recognition_data_no_region_selected">Регион не выбран</string>
+    <string name="music_recognition_data_error">Не удалось скачать данные распознавания.</string>
+    <string name="music_recognition_data_delete">Удалить данные распознавания</string>
+    <string name="music_recognition_data_delete_region_confirm">Удалить скачанные данные для региона %1$s?</string>
+    <string name="music_recognition_data_delete_error">Не удалось удалить данные распознавания.</string>
+    <string name="music_recognition_data_with_size">%1$s (~%2$s)</string>
 </resources>

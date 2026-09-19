@@ -253,4 +253,22 @@
         <item quantity="other"/>
     </plurals>
     <string name="library_filter">מסנן ספרייה</string>
+    <string name="music_recognition_data_required_title">נדרשים נתוני זיהוי</string>
+    <string name="music_recognition_data_required_message">הורד את מסד הנתונים הראשי ומסד נתונים אזורי לפני השימוש בזיהוי מוזיקה.</string>
+    <string name="music_recognition_data_install">התקנת נתונים</string>
+    <string name="music_recognition_data_region">אזורים המשמשים לזיהוי</string>
+    <string name="music_recognition_data_core">מסד נתונים ראשי</string>
+    <string name="music_recognition_data_region_download">מסד נתונים אזורי שנבחר</string>
+    <string name="music_recognition_data_mx">מקסיקו</string>
+    <string name="music_recognition_data_us_xa">ארצות הברית ואזורים נוספים</string>
+    <string name="music_recognition_data_installed">מותקן</string>
+    <string name="music_recognition_data_not_installed">הקש כדי להוריד</string>
+    <string name="music_recognition_data_selected">נבחר לזיהוי</string>
+    <string name="music_recognition_data_not_selected">לא נבחר</string>
+    <string name="music_recognition_data_no_region_selected">לא נבחר אזור</string>
+    <string name="music_recognition_data_error">לא ניתן להוריד את נתוני הזיהוי.</string>
+    <string name="music_recognition_data_delete">מחיקת נתוני זיהוי</string>
+    <string name="music_recognition_data_delete_region_confirm">למחוק את הנתונים שהורדו עבור %1$s?</string>
+    <string name="music_recognition_data_delete_error">לא ניתן למחוק את נתוני הזיהוי.</string>
+    <string name="music_recognition_data_with_size">%1$s (~%2$s)</string>
 </resources>

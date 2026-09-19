@@ -272,4 +272,22 @@
     <string name="grp_more_settings">Więcej ustawień</string>
     <string name="auto_scanner_tooltip">Dla utworów w pamięci, skanowanie automatyczne nie wczytuje ponownie metadanych. Użyj skanowania manualnego z włączoną funkcją skanowania jeśli chcesz odświeżyć metadane.</string>
     <string name="scanner_auto_end">Media lokalne i pobrane piosenki wczytanie pomyślnie!</string>
+    <string name="music_recognition_data_required_title">Wymagane są dane rozpoznawania</string>
+    <string name="music_recognition_data_required_message">Przed użyciem rozpoznawania muzyki pobierz główną bazę danych i regionalną bazę danych.</string>
+    <string name="music_recognition_data_install">Zainstaluj dane</string>
+    <string name="music_recognition_data_region">Regiony używane do rozpoznawania</string>
+    <string name="music_recognition_data_core">Główna baza danych</string>
+    <string name="music_recognition_data_region_download">Wybrana regionalna baza danych</string>
+    <string name="music_recognition_data_mx">Meksyk</string>
+    <string name="music_recognition_data_us_xa">Stany Zjednoczone i inne regiony</string>
+    <string name="music_recognition_data_installed">Zainstalowano</string>
+    <string name="music_recognition_data_not_installed">Dotknij, aby pobrać</string>
+    <string name="music_recognition_data_selected">Wybrano do rozpoznawania</string>
+    <string name="music_recognition_data_not_selected">Nie wybrano</string>
+    <string name="music_recognition_data_no_region_selected">Nie wybrano regionu</string>
+    <string name="music_recognition_data_error">Nie można pobrać danych rozpoznawania.</string>
+    <string name="music_recognition_data_delete">Usuń dane rozpoznawania</string>
+    <string name="music_recognition_data_delete_region_confirm">Usunąć pobrane dane dla %1$s?</string>
+    <string name="music_recognition_data_delete_error">Nie można usunąć danych rozpoznawania.</string>
+    <string name="music_recognition_data_with_size">%1$s (~%2$s)</string>
 </resources>

@@ -61,4 +61,22 @@
     <string name="err_play_next_on_error">S\'ha produït un error. Reproduïnt la següent cançó</string>
     <string name="err_stop_on_error">S\'ha produït un error i s\'ha aturat la reproducció.</string>
     <string name="err_stop_on_too_many_errors">S\'han produït massa errors i s\'ha aturat la reproducció</string>
+    <string name="music_recognition_data_required_title">Calen dades de reconeixement</string>
+    <string name="music_recognition_data_required_message">Baixa la base de dades principal i una base de dades regional abans d’utilitzar el reconeixement de música.</string>
+    <string name="music_recognition_data_install">Instal·la les dades</string>
+    <string name="music_recognition_data_region">Regions utilitzades per al reconeixement</string>
+    <string name="music_recognition_data_core">Base de dades principal</string>
+    <string name="music_recognition_data_region_download">Base de dades regional seleccionada</string>
+    <string name="music_recognition_data_mx">Mèxic</string>
+    <string name="music_recognition_data_us_xa">Estats Units i altres regions</string>
+    <string name="music_recognition_data_installed">Instal·lat</string>
+    <string name="music_recognition_data_not_installed">Toca per baixar</string>
+    <string name="music_recognition_data_selected">Seleccionat per al reconeixement</string>
+    <string name="music_recognition_data_not_selected">No seleccionat</string>
+    <string name="music_recognition_data_no_region_selected">Cap regió seleccionada</string>
+    <string name="music_recognition_data_error">No s’han pogut baixar les dades de reconeixement.</string>
+    <string name="music_recognition_data_delete">Suprimeix les dades de reconeixement</string>
+    <string name="music_recognition_data_delete_region_confirm">Vols suprimir les dades baixades de %1$s?</string>
+    <string name="music_recognition_data_delete_error">No s’han pogut suprimir les dades de reconeixement.</string>
+    <string name="music_recognition_data_with_size">%1$s (~%2$s)</string>
 </resources>

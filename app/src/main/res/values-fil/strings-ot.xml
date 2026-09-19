@@ -6,4 +6,22 @@
     <string name="music_recognition_start">Simulan ang pagkilala sa musika</string>
     <string name="music_recognition_stop">Ihinto ang pagkilala sa musika</string>
     <string name="music_recognition_listening">Nakikinig...</string>
+    <string name="music_recognition_data_required_title">Kailangan ang datos para sa pagkilala</string>
+    <string name="music_recognition_data_required_message">I-download ang pangunahing database at isang database ng rehiyon bago gamitin ang pagkilala sa musika.</string>
+    <string name="music_recognition_data_install">I-install ang datos</string>
+    <string name="music_recognition_data_region">Mga rehiyong ginagamit sa pagkilala</string>
+    <string name="music_recognition_data_core">Pangunahing database</string>
+    <string name="music_recognition_data_region_download">Napiling database ng rehiyon</string>
+    <string name="music_recognition_data_mx">Mexico</string>
+    <string name="music_recognition_data_us_xa">Estados Unidos at iba pang rehiyon</string>
+    <string name="music_recognition_data_installed">Naka-install</string>
+    <string name="music_recognition_data_not_installed">I-tap para i-download</string>
+    <string name="music_recognition_data_selected">Napili para sa pagkilala</string>
+    <string name="music_recognition_data_not_selected">Hindi napili</string>
+    <string name="music_recognition_data_no_region_selected">Walang napiling rehiyon</string>
+    <string name="music_recognition_data_error">Hindi ma-download ang datos ng pagkilala.</string>
+    <string name="music_recognition_data_delete">Tanggalin ang datos ng pagkilala</string>
+    <string name="music_recognition_data_delete_region_confirm">Tanggalin ang na-download na datos para sa %1$s?</string>
+    <string name="music_recognition_data_delete_error">Hindi matanggal ang datos ng pagkilala.</string>
+    <string name="music_recognition_data_with_size">%1$s (~%2$s)</string>
 </resources>

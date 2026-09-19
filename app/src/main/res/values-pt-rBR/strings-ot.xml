@@ -274,4 +274,22 @@
     <string name="scanner_strict_file_paths_description">Desativa toda a correspondência inteligente de metadados. Isso pode causar problemas se os arquivos forem movidos no seu armazenamento local, mas permite a mesma música em pastas diferentes</string>
     <string name="scanner_type_tooltip">O busca do sistema é mais rápida, mas pode extrair alguns metadados incorretamente comparado a outros extratores. Observe que ao alterar buscadores, os metadados de músicas existentes não serão recarregados.</string>
     <string name="restore_lm_tooltip">Em instalações limpas do app, caminhos de busca de mídia local e download podem não funcionar. Para resolver isso, remova-os e adicione-os novamente.</string>
+    <string name="music_recognition_data_required_title">Dados de reconhecimento necessários</string>
+    <string name="music_recognition_data_required_message">Baixe o banco de dados principal e um banco de dados regional antes de usar o reconhecimento de música.</string>
+    <string name="music_recognition_data_install">Instalar dados</string>
+    <string name="music_recognition_data_region">Regiões usadas para reconhecimento</string>
+    <string name="music_recognition_data_core">Banco de dados principal</string>
+    <string name="music_recognition_data_region_download">Banco de dados regional selecionado</string>
+    <string name="music_recognition_data_mx">México</string>
+    <string name="music_recognition_data_us_xa">Estados Unidos e outras regiões</string>
+    <string name="music_recognition_data_installed">Instalado</string>
+    <string name="music_recognition_data_not_installed">Toque para baixar</string>
+    <string name="music_recognition_data_selected">Selecionado para reconhecimento</string>
+    <string name="music_recognition_data_not_selected">Não selecionado</string>
+    <string name="music_recognition_data_no_region_selected">Nenhuma região selecionada</string>
+    <string name="music_recognition_data_error">Não foi possível baixar os dados de reconhecimento.</string>
+    <string name="music_recognition_data_delete">Excluir dados de reconhecimento</string>
+    <string name="music_recognition_data_delete_region_confirm">Excluir os dados baixados para %1$s?</string>
+    <string name="music_recognition_data_delete_error">Não foi possível excluir os dados de reconhecimento.</string>
+    <string name="music_recognition_data_with_size">%1$s (~%2$s)</string>
 </resources>

@@ -225,4 +225,22 @@
     <string name="dl_size_used_cache">داخليًا: %s مستخدم</string>
     <string name="dl_size_used_main">خارجيًا: %s مستخدم</string>
     <string name="dl_size_used_extra">الواردات الإضافية: %s المستخدمة</string>
+    <string name="music_recognition_data_required_title">بيانات التعرّف مطلوبة</string>
+    <string name="music_recognition_data_required_message">نزّل قاعدة البيانات الأساسية وقاعدة بيانات إقليمية قبل استخدام التعرّف على الموسيقى.</string>
+    <string name="music_recognition_data_install">تثبيت البيانات</string>
+    <string name="music_recognition_data_region">المناطق المستخدمة للتعرّف</string>
+    <string name="music_recognition_data_core">قاعدة البيانات الأساسية</string>
+    <string name="music_recognition_data_region_download">قاعدة البيانات الإقليمية المحددة</string>
+    <string name="music_recognition_data_mx">المكسيك</string>
+    <string name="music_recognition_data_us_xa">الولايات المتحدة ومناطق أخرى</string>
+    <string name="music_recognition_data_installed">مثبّت</string>
+    <string name="music_recognition_data_not_installed">انقر للتنزيل</string>
+    <string name="music_recognition_data_selected">محدد للتعرّف</string>
+    <string name="music_recognition_data_not_selected">غير محدد</string>
+    <string name="music_recognition_data_no_region_selected">لم يتم تحديد منطقة</string>
+    <string name="music_recognition_data_error">تعذّر تنزيل بيانات التعرّف.</string>
+    <string name="music_recognition_data_delete">حذف بيانات التعرّف</string>
+    <string name="music_recognition_data_delete_region_confirm">هل تريد حذف البيانات التي تم تنزيلها لـ %1$s؟</string>
+    <string name="music_recognition_data_delete_error">تعذّر حذف بيانات التعرّف.</string>
+    <string name="music_recognition_data_with_size">%1$s (~%2$s)</string>
 </resources>

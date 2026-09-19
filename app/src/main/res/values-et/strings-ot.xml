@@ -152,4 +152,22 @@
     <string name="scanner_progress_discovering">Tuvastan…</string>
     <string name="scanner_progress_processing">Töötlen…</string>
     <string name="oobe_ytm_logon_title">Kasutajakonto</string>
+    <string name="music_recognition_data_required_title">Tuvastusandmed on vajalikud</string>
+    <string name="music_recognition_data_required_message">Enne muusika tuvastamise kasutamist laadi alla põhiandmebaas ja piirkondlik andmebaas.</string>
+    <string name="music_recognition_data_install">Paigalda andmed</string>
+    <string name="music_recognition_data_region">Tuvastuseks kasutatavad piirkonnad</string>
+    <string name="music_recognition_data_core">Põhiandmebaas</string>
+    <string name="music_recognition_data_region_download">Valitud piirkondlik andmebaas</string>
+    <string name="music_recognition_data_mx">Mehhiko</string>
+    <string name="music_recognition_data_us_xa">Ameerika Ühendriigid ja muud piirkonnad</string>
+    <string name="music_recognition_data_installed">Paigaldatud</string>
+    <string name="music_recognition_data_not_installed">Allalaadimiseks puuduta</string>
+    <string name="music_recognition_data_selected">Tuvastuseks valitud</string>
+    <string name="music_recognition_data_not_selected">Valimata</string>
+    <string name="music_recognition_data_no_region_selected">Piirkonda pole valitud</string>
+    <string name="music_recognition_data_error">Tuvastusandmete allalaadimine ebaõnnestus.</string>
+    <string name="music_recognition_data_delete">Kustuta tuvastusandmed</string>
+    <string name="music_recognition_data_delete_region_confirm">Kas kustutada piirkonna %1$s allalaaditud andmed?</string>
+    <string name="music_recognition_data_delete_error">Tuvastusandmete kustutamine ebaõnnestus.</string>
+    <string name="music_recognition_data_with_size">%1$s (~%2$s)</string>
 </resources>

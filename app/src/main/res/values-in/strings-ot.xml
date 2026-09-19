@@ -268,4 +268,22 @@
     <string name="oobe_welcome_tip">Untuk pengalaman terbaik, Kami merekomendasikan menyelesaikan pengaturan cepat untuk pengaturan lebih lanjut seperti tema, akun YouTube, media lokal, Dan unduhan.</string>
     <string name="oobe_cache_title">Cache lagu</string>
     <string name="oobe_cache_subtitle">Pilih ukuran cache untuk lagu anda, ini bisa membantu mengurangi penggunaan internet atau masalah playback API YouTube</string>
+    <string name="music_recognition_data_required_title">Data pengenalan diperlukan</string>
+    <string name="music_recognition_data_required_message">Unduh database inti dan database wilayah sebelum menggunakan pengenalan musik.</string>
+    <string name="music_recognition_data_install">Instal data</string>
+    <string name="music_recognition_data_region">Wilayah yang digunakan untuk pengenalan</string>
+    <string name="music_recognition_data_core">Database inti</string>
+    <string name="music_recognition_data_region_download">Database wilayah yang dipilih</string>
+    <string name="music_recognition_data_mx">Meksiko</string>
+    <string name="music_recognition_data_us_xa">Amerika Serikat dan wilayah lain</string>
+    <string name="music_recognition_data_installed">Terpasang</string>
+    <string name="music_recognition_data_not_installed">Ketuk untuk mengunduh</string>
+    <string name="music_recognition_data_selected">Dipilih untuk pengenalan</string>
+    <string name="music_recognition_data_not_selected">Tidak dipilih</string>
+    <string name="music_recognition_data_no_region_selected">Belum ada wilayah yang dipilih</string>
+    <string name="music_recognition_data_error">Tidak dapat mengunduh data pengenalan.</string>
+    <string name="music_recognition_data_delete">Hapus data pengenalan</string>
+    <string name="music_recognition_data_delete_region_confirm">Hapus data yang diunduh untuk %1$s?</string>
+    <string name="music_recognition_data_delete_error">Tidak dapat menghapus data pengenalan.</string>
+    <string name="music_recognition_data_with_size">%1$s (~%2$s)</string>
 </resources>

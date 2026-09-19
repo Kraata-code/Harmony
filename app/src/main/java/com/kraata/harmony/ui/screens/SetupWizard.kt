@@ -853,7 +853,7 @@ fun SetupWizard(
                         ElevatedCard(
                             modifier = Modifier.fillMaxWidth()
                         ) {
-                            NowPlayingAssetsFrag(wizardMode = true)
+                            NowPlayingAssetsFrag()
                         }
                     }
 

@@ -188,4 +188,22 @@
     <string name="scanner_type_title">मेटाडाटा निकालना</string>
     <string name="scanner_type_taglib">एकीकृत TagLib से मेटाडाटा निकालना</string>
     <string name="scanner_variant_rescan">पूरा संग्रह फ़िरसे स्कैन करें और सभी गानों के मेटाडाटा को फिर से लोड करें</string>
+    <string name="music_recognition_data_required_title">पहचान डेटा आवश्यक है</string>
+    <string name="music_recognition_data_required_message">संगीत पहचान का उपयोग करने से पहले मुख्य डेटाबेस और क्षेत्रीय डेटाबेस डाउनलोड करें।</string>
+    <string name="music_recognition_data_install">डेटा इंस्टॉल करें</string>
+    <string name="music_recognition_data_region">पहचान के लिए उपयोग किए जाने वाले क्षेत्र</string>
+    <string name="music_recognition_data_core">मुख्य डेटाबेस</string>
+    <string name="music_recognition_data_region_download">चयनित क्षेत्रीय डेटाबेस</string>
+    <string name="music_recognition_data_mx">मेक्सिको</string>
+    <string name="music_recognition_data_us_xa">संयुक्त राज्य और अन्य क्षेत्र</string>
+    <string name="music_recognition_data_installed">इंस्टॉल किया गया</string>
+    <string name="music_recognition_data_not_installed">डाउनलोड करने के लिए टैप करें</string>
+    <string name="music_recognition_data_selected">पहचान के लिए चयनित</string>
+    <string name="music_recognition_data_not_selected">चयनित नहीं</string>
+    <string name="music_recognition_data_no_region_selected">कोई क्षेत्र चयनित नहीं</string>
+    <string name="music_recognition_data_error">पहचान डेटा डाउनलोड नहीं किया जा सका।</string>
+    <string name="music_recognition_data_delete">पहचान डेटा मिटाएँ</string>
+    <string name="music_recognition_data_delete_region_confirm">%1$s के लिए डाउनलोड किया गया डेटा मिटाएँ?</string>
+    <string name="music_recognition_data_delete_error">पहचान डेटा मिटाया नहीं जा सका।</string>
+    <string name="music_recognition_data_with_size">%1$s (~%2$s)</string>
 </resources>

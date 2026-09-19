@@ -99,4 +99,22 @@
     <string name="att_maintainer">Συντηρητής</string>
     <string name="att_translator">Μεταφραστής (%s)</string>
     <string name="action_logout_tooltip">Για πλήρη έξοδο, παρακαλώ εξέλθετε απο τον λογαριασμό σας στο YouTube στη διαδικτυακή πύλη του YouTube πρωτού εξέλθετε απο εδώ</string>
+    <string name="music_recognition_data_required_title">Απαιτούνται δεδομένα αναγνώρισης</string>
+    <string name="music_recognition_data_required_message">Κατεβάστε την κύρια βάση δεδομένων και μια περιφερειακή βάση δεδομένων πριν χρησιμοποιήσετε την αναγνώριση μουσικής.</string>
+    <string name="music_recognition_data_install">Εγκατάσταση δεδομένων</string>
+    <string name="music_recognition_data_region">Περιοχές που χρησιμοποιούνται για την αναγνώριση</string>
+    <string name="music_recognition_data_core">Κύρια βάση δεδομένων</string>
+    <string name="music_recognition_data_region_download">Επιλεγμένη περιφερειακή βάση δεδομένων</string>
+    <string name="music_recognition_data_mx">Μεξικό</string>
+    <string name="music_recognition_data_us_xa">Ηνωμένες Πολιτείες και άλλες περιοχές</string>
+    <string name="music_recognition_data_installed">Εγκαταστάθηκε</string>
+    <string name="music_recognition_data_not_installed">Πατήστε για λήψη</string>
+    <string name="music_recognition_data_selected">Επιλεγμένο για αναγνώριση</string>
+    <string name="music_recognition_data_not_selected">Δεν επιλέχθηκε</string>
+    <string name="music_recognition_data_no_region_selected">Δεν επιλέχθηκε περιοχή</string>
+    <string name="music_recognition_data_error">Δεν ήταν δυνατή η λήψη των δεδομένων αναγνώρισης.</string>
+    <string name="music_recognition_data_delete">Διαγραφή δεδομένων αναγνώρισης</string>
+    <string name="music_recognition_data_delete_region_confirm">Να διαγραφούν τα ληφθέντα δεδομένα για %1$s;</string>
+    <string name="music_recognition_data_delete_error">Δεν ήταν δυνατή η διαγραφή των δεδομένων αναγνώρισης.</string>
+    <string name="music_recognition_data_with_size">%1$s (~%2$s)</string>
 </resources>

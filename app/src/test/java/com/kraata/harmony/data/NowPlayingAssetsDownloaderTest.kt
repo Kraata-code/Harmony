@@ -74,6 +74,60 @@ class NowPlayingAssetsDownloaderTest {
     }
 
     @Test
+    fun deletesOnlyTheRequestedRecognitionComponent() = runBlocking {
+        val mxDirectory = NativeNowPlayingMatcher.componentDirectory(
+            context,
+            NativeNowPlayingMatcher.MX_SHARD_GROUP,
+        )
+        val usXaDirectory = NativeNowPlayingMatcher.componentDirectory(
+            context,
+            NativeNowPlayingMatcher.US_XA_SHARD_GROUP,
+        )
+        listOf(mxDirectory, usXaDirectory).forEach { directory ->
+            directory.mkdirs()
+            directory.resolve("data").writeText("data")
+        }
+
+        NowPlayingAssetsDownloader().delete(context, NowPlayingAssetsDownloader.Component.MX)
+
+        assertFalse(mxDirectory.exists())
+        assertTrue(usXaDirectory.exists())
+    }
+
+    @Test
+    fun coreCanBeDeletedOnlyAfterRegionsAreGone() = runBlocking {
+        val coreDirectory = NativeNowPlayingMatcher.componentDirectory(
+            context,
+            NativeNowPlayingMatcher.CORE_COMPONENT,
+        )
+        val mxDirectory = NativeNowPlayingMatcher.componentDirectory(
+            context,
+            NativeNowPlayingMatcher.MX_SHARD_GROUP,
+        )
+        coreDirectory.mkdirs()
+        coreDirectory.resolve(NativeNowPlayingMatcher.CORE_DATABASE).writeText("database")
+        coreDirectory.resolve(NativeNowPlayingMatcher.CONFIG_FILE).writeText("config")
+        coreDirectory.resolve(NativeNowPlayingMatcher.COMPLETE_MARKER).writeText("1")
+        mxDirectory.mkdirs()
+        mxDirectory.resolve(NativeNowPlayingMatcher.COMPLETE_MARKER).writeText("1")
+        mxDirectory.resolve("data").writeText("data")
+
+        var failed = false
+        try {
+            NowPlayingAssetsDownloader().delete(context, NowPlayingAssetsDownloader.Component.CORE)
+        } catch (_: IllegalStateException) {
+            failed = true
+        }
+        assertTrue(failed)
+        assertTrue(coreDirectory.exists())
+
+        val downloader = NowPlayingAssetsDownloader()
+        downloader.delete(context, NowPlayingAssetsDownloader.Component.MX)
+        downloader.delete(context, NowPlayingAssetsDownloader.Component.CORE)
+        assertFalse(coreDirectory.exists())
+    }
+
+    @Test
     fun rejectsArchivePathTraversal() = runBlocking {
         server.enqueue(MockResponse().setBody(zip("../outside" to "bad")))
         val downloader = NowPlayingAssetsDownloader(

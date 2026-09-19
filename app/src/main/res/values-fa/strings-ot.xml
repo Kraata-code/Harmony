@@ -252,4 +252,22 @@
         <item quantity="one">%d ثانی</item>
         <item quantity="other">%d ثانیه</item>
     </plurals>
+    <string name="music_recognition_data_required_title">داده‌های شناسایی لازم است</string>
+    <string name="music_recognition_data_required_message">پیش از استفاده از شناسایی موسیقی، پایگاه‌داده اصلی و یک پایگاه‌داده منطقه‌ای را دانلود کنید.</string>
+    <string name="music_recognition_data_install">نصب داده‌ها</string>
+    <string name="music_recognition_data_region">منطقه‌های استفاده‌شده برای شناسایی</string>
+    <string name="music_recognition_data_core">پایگاه‌داده اصلی</string>
+    <string name="music_recognition_data_region_download">پایگاه‌داده منطقه‌ای انتخاب‌شده</string>
+    <string name="music_recognition_data_mx">مکزیک</string>
+    <string name="music_recognition_data_us_xa">ایالات متحده و دیگر منطقه‌ها</string>
+    <string name="music_recognition_data_installed">نصب‌شده</string>
+    <string name="music_recognition_data_not_installed">برای دانلود ضربه بزنید</string>
+    <string name="music_recognition_data_selected">انتخاب‌شده برای شناسایی</string>
+    <string name="music_recognition_data_not_selected">انتخاب‌نشده</string>
+    <string name="music_recognition_data_no_region_selected">هیچ منطقه‌ای انتخاب نشده است</string>
+    <string name="music_recognition_data_error">دانلود داده‌های شناسایی ممکن نیست.</string>
+    <string name="music_recognition_data_delete">حذف داده‌های شناسایی</string>
+    <string name="music_recognition_data_delete_region_confirm">داده‌های دانلودشده برای %1$s حذف شود؟</string>
+    <string name="music_recognition_data_delete_error">حذف داده‌های شناسایی ممکن نیست.</string>
+    <string name="music_recognition_data_with_size">%1$s (~%2$s)</string>
 </resources>
