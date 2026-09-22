@@ -65,7 +65,11 @@ internal class AcoustIdClient(
                         message.takeIf { it.isNotBlank() }?.let { ": $it" }.orEmpty(),
                 )
             }
-            parseAcoustIdResponse(body, durationMs, fileNameHint)
+            parseAcoustIdResponse(
+                body = body,
+                durationMs = durationMs,
+                fileNameHint = fileNameHint,
+            )
         }
     }
 
@@ -86,8 +90,7 @@ internal fun parseAcoustIdResponse(
     }
 
     val results = root.optJSONArray("results") ?: return null
-    val durationCompatibleCandidates = ArrayList<AcoustIdMatch>()
-    val unknownDurationCandidates = ArrayList<AcoustIdMatch>()
+    val candidates = ArrayList<AcoustIdMatch>()
     val expectedDurationMs = durationMs?.takeIf { it > 0L } ?: -1L
     val maxDurationDriftMs = expectedDurationMs.takeIf { it > 0L }?.let { maxOf(10_000L, it / 20L) }
     if (BuildConfig.DEBUG) {
@@ -123,14 +126,12 @@ internal fun parseAcoustIdResponse(
             val durationDeltaMs = recordingLengthMs
                 .takeIf { it > 0L && expectedDurationMs > 0L }
                 ?.let { kotlin.math.abs(it - expectedDurationMs) }
-            val durationMissing = maxDurationDriftMs != null && recordingLengthMs <= 0L
             val durationRejected = maxDurationDriftMs != null &&
                 recordingLengthMs > 0L && durationDeltaMs != null && durationDeltaMs > maxDurationDriftMs
             val fieldsValid = title.isNotEmpty() && artistNames.isNotEmpty() &&
                 acoustId.isNotEmpty() && recordingId.isNotEmpty()
             if (BuildConfig.DEBUG) {
                 val status = when {
-                    durationMissing -> "DEFERRED(duration-missing)"
                     durationRejected -> "REJECTED(duration-mismatch)"
                     title.isEmpty() -> "REJECTED(missing-title)"
                     artistNames.isEmpty() -> "REJECTED(missing-artist)"
@@ -154,17 +155,13 @@ internal fun parseAcoustIdResponse(
                     acoustId = acoustId,
                     recordingId = recordingId,
                 )
-                if (durationMissing) {
-                    unknownDurationCandidates += match
-                } else {
-                    durationCompatibleCandidates += match
-                }
+                candidates += match
             }
         }
     }
 
-    val bestMatch = durationCompatibleCandidates.maxByOrNull(AcoustIdMatch::score)
-        ?: repeatedFilenameMatch(unknownDurationCandidates, fileNameHint)
+    val bestMatch = repeatedFilenameMatch(candidates, fileNameHint)
+        ?: candidates.maxByOrNull(AcoustIdMatch::score)
     if (BuildConfig.DEBUG) {
         Log.d(
             TAG,

@@ -171,6 +171,75 @@ class MusicMetadataClientTest {
     }
 
     @Test
+    fun resolvesRecordingByTitleAndArtist() = runBlocking {
+        val requestedPaths = mutableListOf<String>()
+        val client = OkHttpClient.Builder()
+            .addInterceptor { chain ->
+                val path = chain.request().url.encodedPath
+                requestedPaths += path
+                val body = when (path) {
+                    "/ws/2/recording" -> """
+                        {
+                          "recordings": [
+                            {"id": "lower-score", "score": 80},
+                            {"id": "recording-id", "score": 100}
+                          ]
+                        }
+                    """.trimIndent()
+
+                    "/ws/2/recording/recording-id" -> """
+                        {
+                          "id": "recording-id",
+                          "title": "Song title",
+                          "artist-credit": [{"name": "Artist"}]
+                        }
+                    """.trimIndent()
+
+                    else -> error("Unexpected MusicBrainz path: $path")
+                }
+                Response.Builder()
+                    .request(chain.request())
+                    .protocol(Protocol.HTTP_1_1)
+                    .code(200)
+                    .message("OK")
+                    .body(body.toResponseBody("application/json".toMediaType()))
+                    .build()
+            }
+            .build()
+
+        val metadata = MusicMetadataClient(client).lookupByTitleAndArtist("Song title", "Artist")
+
+        assertEquals("recording-id", metadata?.recordingId)
+        assertEquals(listOf("/ws/2/recording", "/ws/2/recording/recording-id"), requestedPaths)
+    }
+
+    @Test
+    fun ignoresLowScoreRecordingSearchResult() = runBlocking {
+        val requestedPaths = mutableListOf<String>()
+        val client = OkHttpClient.Builder()
+            .addInterceptor { chain ->
+                requestedPaths += chain.request().url.encodedPath
+                Response.Builder()
+                    .request(chain.request())
+                    .protocol(Protocol.HTTP_1_1)
+                    .code(200)
+                    .message("OK")
+                    .body(
+                        """
+                        {"recordings":[{"id":"low-score","score":79}]}
+                        """.trimIndent().toResponseBody("application/json".toMediaType()),
+                    )
+                    .build()
+            }
+            .build()
+
+        val metadata = MusicMetadataClient(client).lookupByTitleAndArtist("Song title", "Artist")
+
+        assertNull(metadata)
+        assertEquals(listOf("/ws/2/recording"), requestedPaths)
+    }
+
+    @Test
     fun keepsMissingOptionalReleaseDataEmpty() {
         val metadata = parseMusicBrainzMetadata(
             recording = JSONObject(

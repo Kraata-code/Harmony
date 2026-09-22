@@ -9,8 +9,11 @@ import android.util.Log
 import androidx.core.graphics.scale
 import androidx.documentfile.provider.DocumentFile
 import com.harmony.music.identifier.AudioFingerprint
+import com.harmony.music.identifier.AudioSample
 import com.harmony.music.identifier.MusicIdentificationResult
 import com.harmony.music.identifier.MusicIdentifierService
+import com.harmony.music.identifier.NativeNowPlayingMatch
+import com.harmony.music.identifier.NativeNowPlayingMatcher
 import com.kraata.harmony.BuildConfig
 import com.kraata.harmony.db.MusicDatabase
 import com.kraata.harmony.db.entities.AlbumArtistMap
@@ -65,30 +68,40 @@ internal class LocalSongMetadataUpdater(
         require(file.isFile && file.canRead()) { "Local audio file cannot be read" }
         debug("start file=${file.name}")
 
-        val fingerprint = fingerprint(file)
+        val identification = identify(file)
+        val fingerprint = identification.fingerprint
         debug("fingerprint bytes=${fingerprint.byteCount} duration=${fingerprint.durationMs}ms")
-        val match = acoustIdClient.lookup(
-            fingerprint = fingerprint.encoded,
-            durationMs = fingerprint.durationMs,
-            fileNameHint = file.name,
-        ) ?: run {
-            debug("no AcoustID match")
-            return@withContext LocalSongMetadataUpdateResult.NoMatch
-        }
-        debug("match score=${match.score} recording=${match.recordingId}")
+        val nativeNowPlayingMatch = findNativeNowPlayingMatch(identification.sample)
+        val nativeMetadata = nativeNowPlayingMatch?.let { nativeMetadata(it) }
+        val resolution: Pair<AcoustIdMatch?, MusicBrainzMetadata> = if (nativeMetadata != null) {
+            null to nativeMetadata
+        } else {
+            val match = acoustIdClient.lookup(
+                fingerprint = fingerprint.encoded,
+                durationMs = fingerprint.durationMs,
+                fileNameHint = file.name,
+            ) ?: run {
+                debug("no AcoustID match")
+                return@withContext LocalSongMetadataUpdateResult.NoMatch
+            }
+            debug("match score=${match.score} recording=${match.recordingId}")
 
-        if (match.score < MIN_CONFIDENCE) {
-            return@withContext LocalSongMetadataUpdateResult.LowConfidence(match.score)
-        }
+            if (match.score < MIN_CONFIDENCE) {
+                return@withContext LocalSongMetadataUpdateResult.LowConfidence(match.score)
+            }
 
-        val metadata = try {
-            metadataClient.lookup(match.recordingId)
-        } catch (exception: CancellationException) {
-            throw exception
-        } catch (exception: Exception) {
-            debug("MusicBrainz unavailable; using AcoustID metadata: ${exception.message}")
-            match.toFallbackMetadata()
+            val metadata = try {
+                metadataClient.lookup(match.recordingId)
+            } catch (exception: CancellationException) {
+                throw exception
+            } catch (exception: Exception) {
+                debug("MusicBrainz unavailable; using AcoustID metadata: ${exception.message}")
+                match.toFallbackMetadata()
+            }
+            match to metadata
         }
+        val match = resolution.first
+        val metadata = resolution.second
         debug("musicbrainz title=${metadata.title} release=${metadata.releaseId}")
         val artwork = metadataClient.downloadCover(metadata)
         debug("cover downloaded=${artwork != null}")
@@ -145,9 +158,64 @@ internal class LocalSongMetadataUpdater(
             ?: error("Could not open the local audio file for writing")
     }
 
-    private suspend fun fingerprint(file: File): AudioFingerprint {
+    private suspend fun findNativeNowPlayingMatch(sample: AudioSample): NativeNowPlayingMatch? {
+        if (!NativeNowPlayingMatcher.isComponentInstalled(context, NativeNowPlayingMatcher.CORE_COMPONENT)) {
+            debug("nativeNowPlaying unavailable: core is not installed; falling back to AcoustID")
+            return null
+        }
+
+        val shards = NativeNowPlayingMatcher.SUPPORTED_SHARD_GROUPS.filter {
+            NativeNowPlayingMatcher.isComponentInstalled(context, it)
+        }
+        if (shards.isEmpty()) {
+            debug("nativeNowPlaying unavailable: no fingerprint shard is installed; falling back to AcoustID")
+            return null
+        }
+
+        debug("nativeNowPlaying lookup started shards=${shards.joinToString()}")
+        val nativeMatch = try {
+            withContext(Dispatchers.Default) {
+                NativeNowPlayingMatcher.recognize(context, sample, shards)
+            }
+        } catch (exception: CancellationException) {
+            throw exception
+        } catch (exception: Exception) {
+            debug("nativeNowPlaying failed: ${exception.message}; falling back to AcoustID")
+            null
+        }
+
+        if (nativeMatch == null) {
+            debug("nativeNowPlaying returned no match; falling back to AcoustID")
+            return null
+        }
+        debug(
+            "nativeNowPlaying matched title=${nativeMatch.title} " +
+                "artist=${nativeMatch.artist} googleId=${nativeMatch.googleId}",
+        )
+        return nativeMatch
+    }
+
+    private suspend fun nativeMetadata(nativeMatch: NativeNowPlayingMatch): MusicBrainzMetadata? {
+        return try {
+            metadataClient.lookupByTitleAndArtist(nativeMatch.title, nativeMatch.artist)
+                ?.also { metadata ->
+                    debug("nativeNowPlaying using MusicBrainz recording=${metadata.recordingId}")
+                }
+                ?: run {
+                    debug("nativeNowPlaying MusicBrainz returned no match; falling back to AcoustID")
+                    null
+                }
+        } catch (exception: CancellationException) {
+            throw exception
+        } catch (exception: Exception) {
+            debug("nativeNowPlaying MusicBrainz failed: ${exception.message}; falling back to AcoustID")
+            null
+        }
+    }
+
+    private suspend fun identify(file: File): MusicIdentificationResult.Success {
         return when (val result = identifier.identifyFromFile(file)) {
-            is MusicIdentificationResult.Success -> result.fingerprint
+            is MusicIdentificationResult.Success -> result
             MusicIdentificationResult.NoAudio -> error("The file contains no audio")
             is MusicIdentificationResult.PermissionMissing -> error("${result.permission} is required")
             is MusicIdentificationResult.ProcessingError -> error(result.message)
@@ -159,7 +227,7 @@ internal class LocalSongMetadataUpdater(
     private fun saveMetadata(
         descriptor: ParcelFileDescriptor,
         file: File,
-        match: AcoustIdMatch,
+        match: AcoustIdMatch?,
         fingerprint: AudioFingerprint,
         metadata: MusicBrainzMetadata,
         artworkBytes: ByteArray?,
@@ -193,7 +261,9 @@ internal class LocalSongMetadataUpdater(
         setProperty(properties, "RELEASESTATUS", listOfNotNull(metadata.releaseStatus))
         setProperty(properties, "RELEASETYPE", listOfNotNull(metadata.releaseType))
         setProperty(properties, "MEDIA", listOfNotNull(metadata.media))
-        setProperty(properties, "ACOUSTID_ID", listOf(match.acoustId))
+        match?.let { acoustIdMatch ->
+            setProperty(properties, "ACOUSTID_ID", listOf(acoustIdMatch.acoustId))
+        }
         setProperty(properties, "ACOUSTID_FINGERPRINT", listOf(fingerprint.encoded))
 
         if (!TagLib.savePropertyMap(descriptor.dup().detachFd(), properties)) {

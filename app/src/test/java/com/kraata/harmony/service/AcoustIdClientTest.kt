@@ -51,7 +51,7 @@ class AcoustIdClientTest {
     }
 
     @Test
-    fun ignoresRecordingWithoutDurationWhenDurationIsKnown() {
+    fun acceptsHigherScoreWhenRecordingDurationIsMissing() {
         val match = parseAcoustIdResponse(
             """
             {
@@ -65,7 +65,26 @@ class AcoustIdClientTest {
             durationMs = 242996L,
         )
 
-        assertEquals("recording-known", match?.recordingId)
+        assertEquals("recording-unknown", match?.recordingId)
+    }
+
+    @Test
+    fun acceptsSingleHighConfidenceRecordingWithoutDuration() {
+        val match = parseAcoustIdResponse(
+            """
+            {
+              "status": "ok",
+              "results": [
+                {"id": "acoust-one", "score": 0.956, "recordings": [
+                  {"id": "recording-one", "title": "Song", "artists": [{"name": "Artist"}]}
+                ]}
+              ]
+            }
+            """.trimIndent(),
+            durationMs = 222_888L,
+        )
+
+        assertEquals("recording-one", match?.recordingId)
     }
 
     @Test
@@ -142,6 +161,25 @@ class AcoustIdClientTest {
 
         assertEquals("A Hard Day's Night", match?.title)
         assertEquals("The Beatles", match?.artist)
+    }
+
+    @Test
+    fun acceptsAcoustIdMetadataWithoutNativeIdentityFilter() {
+        val match = parseAcoustIdResponse(
+            """
+            {
+              "status": "ok",
+              "results": [{"id": "acoust-one", "score": 0.9858, "recordings": [
+                {"id": "recording-one", "title": "ばかみたい【Taxi Driver Edition】", "artists": [{"name": "桐生一馬"}, {"name": "黒田崇矢"}]}
+              ]}]
+            }
+            """.trimIndent(),
+        )
+
+        assertEquals("ばかみたい【Taxi Driver Edition】", match?.title)
+        assertEquals("桐生一馬, 黒田崇矢", match?.artist)
+        assertEquals(0.9858, match?.score)
+        assertEquals("acoust-one", match?.acoustId)
     }
 
     @Test

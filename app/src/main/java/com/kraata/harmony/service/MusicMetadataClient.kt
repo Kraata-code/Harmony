@@ -2,6 +2,7 @@ package com.kraata.harmony.service
 
 import android.os.SystemClock
 import com.kraata.harmony.BuildConfig
+import java.net.URLEncoder
 import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
@@ -71,6 +72,29 @@ internal class MusicMetadataClient(
 
         parseMusicBrainzMetadata(recording, releaseDetails ?: release, recordingId)
     }
+
+    suspend fun lookupByTitleAndArtist(title: String, artist: String): MusicBrainzMetadata? =
+        withContext(Dispatchers.IO) {
+            if (title.isBlank() || artist.isBlank()) return@withContext null
+
+            val query = "recording:\"${escapeQueryValue(title)}\" " +
+                "AND artist:\"${escapeQueryValue(artist)}\""
+            val search = getJson(
+                "https://musicbrainz.org/ws/2/recording?query=" +
+                    "${URLEncoder.encode(query, Charsets.UTF_8.name())}&limit=5&fmt=json",
+            )
+            val recordingId = search.optJSONArray("recordings")
+                ?.let { recordings ->
+                    (0 until recordings.length())
+                        .mapNotNull { recordings.optJSONObject(it) }
+                        .filter { it.optInt("score", 0) >= MIN_RECORDING_SEARCH_SCORE }
+                        .maxByOrNull { it.optInt("score", 0) }
+                        ?.optString("id")
+                        ?.trim()
+                        ?.takeIf { it.isNotEmpty() }
+                }
+            recordingId?.let { lookup(it) }
+        }
 
     suspend fun downloadCover(metadata: MusicBrainzMetadata): ByteArray? = withContext(Dispatchers.IO) {
         val urls = buildList {
@@ -161,9 +185,14 @@ internal class MusicMetadataClient(
         const val MIN_REQUEST_INTERVAL_MS = 1_000L
         const val RELEASE_DETAILS_TIMEOUT_MS = 10_000L
         const val MAX_ALTERNATIVE_COVER_RELEASES = 3
+        const val MIN_RECORDING_SEARCH_SCORE = 80
         const val USER_AGENT = "Harmony/${BuildConfig.VERSION_NAME} (local metadata updater)"
     }
 }
+
+private fun escapeQueryValue(value: String): String = value
+    .replace("\\", "\\\\")
+    .replace("\"", "\\\"")
 
 internal fun parseMusicBrainzMetadata(
     recording: JSONObject,
