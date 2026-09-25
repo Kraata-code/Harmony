@@ -21,6 +21,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
+import androidx.datastore.preferences.core.edit
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -138,6 +139,11 @@ import com.kraata.harmony.constants.NavigationBarAnimationSpec
 import com.kraata.harmony.constants.NavigationBarHeight
 import com.kraata.harmony.constants.OOBE_VERSION
 import com.kraata.harmony.constants.OobeStatusKey
+import com.kraata.harmony.constants.LocalMetadataUpdatePendingErrorsKey
+import com.kraata.harmony.constants.LocalMetadataUpdatePendingFolderKey
+import com.kraata.harmony.constants.LocalMetadataUpdatePendingLowConfidenceKey
+import com.kraata.harmony.constants.LocalMetadataUpdatePendingNoMatchKey
+import com.kraata.harmony.constants.LocalMetadataUpdatePendingUpdatedKey
 import com.kraata.harmony.constants.PureBlackKey
 import com.kraata.harmony.constants.SlimNavBarKey
 import com.kraata.harmony.db.MusicDatabase
@@ -145,6 +151,7 @@ import com.kraata.harmony.playback.DownloadUtil
 import com.kraata.harmony.playback.MediaControllerViewModel
 import com.kraata.harmony.playback.MusicService
 import com.kraata.harmony.playback.PlayerConnection
+import com.kraata.harmony.service.LocalMetadataUpdateWorker
 import com.kraata.harmony.ui.component.rememberBottomSheetState
 import com.kraata.harmony.ui.component.shimmer.ShimmerTheme
 import com.kraata.harmony.ui.menu.BottomSheetMenu
@@ -203,6 +210,7 @@ import com.kraata.harmony.utils.ActivityLauncherHelper
 import com.kraata.harmony.utils.NetworkConnectivityObserver
 import com.kraata.harmony.utils.SyncUtils
 import com.kraata.harmony.utils.coilCoroutine
+import com.kraata.harmony.utils.dataStore
 import com.kraata.harmony.utils.getThumbnailModel
 import com.kraata.harmony.utils.lmScannerCoroutine
 import com.kraata.harmony.utils.rememberEnumPreference
@@ -212,6 +220,8 @@ import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -233,6 +243,7 @@ class MainActivity : ComponentActivity() {
     lateinit var connectivityObserver: NetworkConnectivityObserver
 
     private var playerConnection by mutableStateOf<PlayerConnection?>(null)
+    private var metadataUpdateSummary by mutableStateOf<LocalMetadataUpdateWorker.Summary?>(null)
 
     val controllerViewModel: MediaControllerViewModel by viewModels()
 
@@ -272,6 +283,7 @@ class MainActivity : ComponentActivity() {
     @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        metadataUpdateSummary = readMetadataUpdateSummary(intent)
         // Perform an initial update check on startup and publish state to UpdateRepository
         lifecycleScope.launch(Dispatchers.IO) {
             try {
@@ -298,6 +310,25 @@ class MainActivity : ComponentActivity() {
             val coroutineScope = rememberCoroutineScope()
             val haptic = LocalHapticFeedback.current
             val snackbarHostState = remember { SnackbarHostState() }
+            val pendingMetadataUpdateSummary by remember {
+                applicationContext.dataStore.data
+                    .map { preferences ->
+                        preferences[LocalMetadataUpdatePendingFolderKey]?.let { folderPath ->
+                            LocalMetadataUpdateWorker.Summary(
+                                folderPath = folderPath,
+                                updated = preferences[LocalMetadataUpdatePendingUpdatedKey] ?: 0,
+                                noMatch = preferences[LocalMetadataUpdatePendingNoMatchKey] ?: 0,
+                                lowConfidence = preferences[LocalMetadataUpdatePendingLowConfidenceKey] ?: 0,
+                                errors = preferences[LocalMetadataUpdatePendingErrorsKey] ?: 0,
+                            )
+                        }
+                    }
+                    .distinctUntilChanged()
+            }.collectAsState(null)
+
+            LaunchedEffect(pendingMetadataUpdateSummary) {
+                pendingMetadataUpdateSummary?.let { metadataUpdateSummary = it }
+            }
 
             val enableDynamicTheme by rememberPreference(DynamicThemeKey, defaultValue = true)
             val darkTheme by rememberEnumPreference(DarkModeKey, defaultValue = DarkMode.AUTO)
@@ -421,6 +452,13 @@ class MainActivity : ComponentActivity() {
 
                 val navController = rememberNavController()
                 val navBackStackEntry by navController.currentBackStackEntryAsState()
+
+                LaunchedEffect(metadataUpdateSummary) {
+                    val summary = metadataUpdateSummary ?: return@LaunchedEffect
+                    navController.navigate(
+                        "${Screens.Folders.route}/${summary.folderPath.replace('/', ';')}"
+                    )
+                }
 
                 val tabOpenedFromShortcut = remember {
                     // reroute to library page for new layout is handled in NavHost section
@@ -673,7 +711,23 @@ class MainActivity : ComponentActivity() {
                                             }
                                         )
                                     ) {
-                                        FolderScreen(navController, scrollBehavior)
+                                        FolderScreen(
+                                            navController = navController,
+                                            scrollBehavior = scrollBehavior,
+                                            metadataUpdateSummary = metadataUpdateSummary,
+                                            onMetadataUpdateSummaryDismissed = {
+                                                metadataUpdateSummary = null
+                                                lifecycleScope.launch(Dispatchers.IO) {
+                                                    applicationContext.dataStore.edit { preferences ->
+                                                        preferences.remove(LocalMetadataUpdatePendingFolderKey)
+                                                        preferences.remove(LocalMetadataUpdatePendingUpdatedKey)
+                                                        preferences.remove(LocalMetadataUpdatePendingNoMatchKey)
+                                                        preferences.remove(LocalMetadataUpdatePendingLowConfidenceKey)
+                                                        preferences.remove(LocalMetadataUpdatePendingErrorsKey)
+                                                    }
+                                                }
+                                            },
+                                        )
                                     }
                                     composable(Screens.Artists.route) {
                                         LibraryArtistsScreen(navController)
@@ -1354,6 +1408,26 @@ class MainActivity : ComponentActivity() {
             window.navigationBarColor =
                 (if (isDark) Color.Transparent else Color.Black.copy(alpha = 0.2f)).toArgb()
         }
+    }
+
+    private fun readMetadataUpdateSummary(intent: Intent): LocalMetadataUpdateWorker.Summary? {
+        if (intent.action != LocalMetadataUpdateWorker.ACTION_COMPLETE) return null
+        val folderPath = intent.getStringExtra(LocalMetadataUpdateWorker.INPUT_FOLDER_PATH)
+            ?.takeIf(String::isNotBlank)
+            ?: return null
+        return LocalMetadataUpdateWorker.Summary(
+            folderPath = folderPath,
+            updated = intent.getIntExtra(LocalMetadataUpdateWorker.UPDATED_COUNT, 0),
+            noMatch = intent.getIntExtra(LocalMetadataUpdateWorker.NO_MATCH_COUNT, 0),
+            lowConfidence = intent.getIntExtra(LocalMetadataUpdateWorker.LOW_CONFIDENCE_COUNT, 0),
+            errors = intent.getIntExtra(LocalMetadataUpdateWorker.ERROR_COUNT, 0),
+        )
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        metadataUpdateSummary = readMetadataUpdateSummary(intent)
     }
 
     companion object {

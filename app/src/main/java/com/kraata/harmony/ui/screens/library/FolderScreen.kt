@@ -10,9 +10,13 @@
 
 package com.kraata.harmony.ui.screens.library
 
+import android.Manifest
 import android.content.pm.PackageManager
+import android.os.Build
 import android.util.Log
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
@@ -21,9 +25,11 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
@@ -38,11 +44,14 @@ import androidx.compose.material.icons.rounded.AccountTree
 import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material.icons.rounded.SdCard
 import androidx.compose.material.icons.rounded.Search
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DividerDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -51,6 +60,7 @@ import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -72,6 +82,7 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
@@ -80,7 +91,16 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastSumBy
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.Observer
 import androidx.navigation.NavController
+import androidx.work.Constraints
+import androidx.work.ExistingWorkPolicy
+import androidx.work.NetworkType
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkInfo
+import androidx.work.WorkManager
+import androidx.work.workDataOf
 import com.kraata.harmony.LocalMenuState
 import com.kraata.harmony.LocalPlayerAwareWindowInsets
 import com.kraata.harmony.LocalPlayerConnection
@@ -105,6 +125,8 @@ import com.kraata.harmony.db.entities.Song
 import com.kraata.harmony.models.DirectoryTree
 import com.kraata.harmony.models.toMediaMetadata
 import com.kraata.harmony.playback.queues.ListQueue
+import com.kraata.harmony.service.LocalMetadataUpdateWorker
+import com.kraata.harmony.service.LocalMetadataUpdateWorker.Companion.INPUT_FOLDER_PATH
 import com.kraata.harmony.ui.component.FloatingFooter
 import com.kraata.harmony.ui.component.LazyColumnScrollbar
 import com.kraata.harmony.ui.component.ScrollToTopManager
@@ -143,7 +165,9 @@ fun FolderScreen(
     scrollBehavior: TopAppBarScrollBehavior,
     viewModel: LibraryFoldersViewModel = hiltViewModel(),
     isRoot: Boolean = false,
-    libraryFilterContent: @Composable (() -> Unit)? = null
+    libraryFilterContent: @Composable (() -> Unit)? = null,
+    metadataUpdateSummary: LocalMetadataUpdateWorker.Summary? = null,
+    onMetadataUpdateSummaryDismissed: () -> Unit = {},
 ) {
     Log.v("FolderScreen", "F_RC-1")
     val context = LocalContext.current
@@ -153,6 +177,78 @@ fun FolderScreen(
     val menuState = LocalMenuState.current
     val playerConnection = LocalPlayerConnection.current ?: return
     val snackbarHostState = LocalSnackbarHostState.current
+    val metadataUpdateTitle = stringResource(R.string.local_metadata_update_title)
+    val metadataUpdateAlreadyRunning = stringResource(R.string.local_metadata_update_in_progress)
+    var showMetadataUpdateConfirm by rememberSaveable { mutableStateOf(false) }
+    val workManager = remember(context) { WorkManager.getInstance(context) }
+    val lifecycleOwner = context as LifecycleOwner
+    var metadataUpdateInProgress by remember { mutableStateOf(false) }
+
+    DisposableEffect(workManager, lifecycleOwner) {
+        val workInfos = workManager.getWorkInfosForUniqueWorkLiveData(
+            LocalMetadataUpdateWorker.UNIQUE_WORK_NAME,
+        )
+        val observer = Observer<List<WorkInfo>> { infos ->
+            metadataUpdateInProgress = infos.orEmpty().any { !it.state.isFinished }
+        }
+        workInfos.observe(lifecycleOwner, observer)
+        onDispose { workInfos.removeObserver(observer) }
+    }
+
+    val showMetadataUpdateAlreadyRunning = {
+        coroutineScope.launch {
+            snackbarHostState.showSnackbar(
+                message = metadataUpdateAlreadyRunning,
+                withDismissAction = true,
+                duration = SnackbarDuration.Short,
+            )
+        }
+    }
+    val enqueueMetadataUpdate = {
+        coroutineScope.launch {
+            if (metadataUpdateInProgress) {
+                showMetadataUpdateAlreadyRunning()
+                return@launch
+            }
+
+            val folderPath = viewModel.path
+            val workRequest = OneTimeWorkRequestBuilder<LocalMetadataUpdateWorker>()
+                .setInputData(workDataOf(INPUT_FOLDER_PATH to folderPath))
+                .setConstraints(
+                    Constraints.Builder()
+                        .setRequiredNetworkType(NetworkType.CONNECTED)
+                        .build()
+                )
+                .build()
+
+            // ponytail: one global job keeps the existing single checkpoint safe; per-folder concurrency needs per-work checkpoints.
+            workManager.enqueueUniqueWork(
+                LocalMetadataUpdateWorker.UNIQUE_WORK_NAME,
+                ExistingWorkPolicy.KEEP,
+                workRequest,
+            )
+            snackbarHostState.showSnackbar(
+                message = metadataUpdateTitle,
+                withDismissAction = true,
+                duration = SnackbarDuration.Short,
+            )
+        }
+    }
+    val notificationPermissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) {
+        enqueueMetadataUpdate()
+    }
+    val requestMetadataUpdate = {
+        if (
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            context.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
+        ) {
+            notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+        } else {
+            enqueueMetadataUpdate()
+        }
+    }
 
     val (flatSubfolders, onFlatSubfoldersChange) = rememberPreference(FlatSubfoldersKey, defaultValue = true)
     val lastLocalScan by rememberPreference(LastLocalScanKey, 0L)
@@ -560,6 +656,76 @@ fun FolderScreen(
         LazyColumnScrollbar(
             state = lazyListState,
         )
+
+        if (libraryFilterContent == null) {
+            FloatingActionButton(
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .windowInsetsPadding(
+                        LocalPlayerAwareWindowInsets.current
+                            .only(WindowInsetsSides.Bottom + WindowInsetsSides.Horizontal)
+                    )
+                    .padding(16.dp),
+                onClick = {
+                    if (metadataUpdateInProgress) {
+                        showMetadataUpdateAlreadyRunning()
+                    } else {
+                        showMetadataUpdateConfirm = true
+                    }
+                }
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.download_metadata),
+                    contentDescription = metadataUpdateTitle
+                )
+            }
+        }
+
+        if (showMetadataUpdateConfirm) {
+            AlertDialog(
+                onDismissRequest = { showMetadataUpdateConfirm = false },
+                title = { Text(stringResource(R.string.local_metadata_update_title)) },
+                text = { Text(stringResource(R.string.local_metadata_update_confirm)) },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            showMetadataUpdateConfirm = false
+                            requestMetadataUpdate()
+                        }
+                    ) {
+                        Text(stringResource(android.R.string.ok))
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showMetadataUpdateConfirm = false }) {
+                        Text(stringResource(android.R.string.cancel))
+                    }
+                },
+            )
+        }
+
+        if (metadataUpdateSummary != null) {
+            AlertDialog(
+                onDismissRequest = onMetadataUpdateSummaryDismissed,
+                title = { Text(stringResource(R.string.local_metadata_update_complete)) },
+                text = {
+                    Text(
+                        stringResource(
+                            R.string.local_metadata_update_summary,
+                            metadataUpdateSummary.updated,
+                            metadataUpdateSummary.noMatch,
+                            metadataUpdateSummary.lowConfidence,
+                            metadataUpdateSummary.errors,
+                        )
+                    )
+                },
+                confirmButton = {
+                    TextButton(onClick = onMetadataUpdateSummaryDismissed) {
+                        Text(stringResource(android.R.string.ok))
+                    }
+                },
+            )
+        }
 
         if (!isRoot) {
             TopAppBar(title = {
