@@ -283,6 +283,7 @@ dependencies {
     implementation(libs.activity)
     implementation(libs.hilt.navigation)
     implementation(libs.datastore)
+    implementation(libs.work.runtime.ktx)
 
     // Machine Learning
     implementation(libs.onnxruntime.android)
