@@ -123,7 +123,6 @@ import java.io.ByteArrayOutputStream
 import kotlin.math.roundToInt
 
 private const val TAG = "SongMenu"
-// ponytail: cap compressed cover input at 16 MiB; stream/decode incrementally if larger artwork is needed.
 private const val MAX_ARTWORK_BYTES = 16 * 1024 * 1024
 
 @Composable
