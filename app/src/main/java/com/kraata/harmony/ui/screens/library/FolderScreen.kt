@@ -102,6 +102,7 @@ import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import androidx.work.workDataOf
 import com.kraata.harmony.LocalMenuState
+import com.kraata.harmony.LocalNetworkConnected
 import com.kraata.harmony.LocalPlayerAwareWindowInsets
 import com.kraata.harmony.LocalPlayerConnection
 import com.kraata.harmony.LocalSnackbarHostState
@@ -177,9 +178,11 @@ fun FolderScreen(
     val menuState = LocalMenuState.current
     val playerConnection = LocalPlayerConnection.current ?: return
     val snackbarHostState = LocalSnackbarHostState.current
+    val isNetworkConnected = LocalNetworkConnected.current
     val metadataUpdateTitle = stringResource(R.string.local_metadata_update_title)
     val metadataUpdateAlreadyRunning = stringResource(R.string.local_metadata_update_in_progress)
     var showMetadataUpdateConfirm by rememberSaveable { mutableStateOf(false) }
+    var showNoNetworkAlert by rememberSaveable { mutableStateOf(false) }
     val workManager = remember(context) { WorkManager.getInstance(context) }
     val lifecycleOwner = context as LifecycleOwner
     var metadataUpdateInProgress by remember { mutableStateOf(false) }
@@ -206,6 +209,11 @@ fun FolderScreen(
     }
     val enqueueMetadataUpdate = {
         coroutineScope.launch {
+            if (!isNetworkConnected) {
+                showNoNetworkAlert = true
+                return@launch
+            }
+
             if (metadataUpdateInProgress) {
                 showMetadataUpdateAlreadyRunning()
                 return@launch
@@ -667,7 +675,9 @@ fun FolderScreen(
                     )
                     .padding(16.dp),
                 onClick = {
-                    if (metadataUpdateInProgress) {
+                    if (!isNetworkConnected) {
+                        showNoNetworkAlert = true
+                    } else if (metadataUpdateInProgress) {
                         showMetadataUpdateAlreadyRunning()
                     } else {
                         showMetadataUpdateConfirm = true
@@ -721,6 +731,18 @@ fun FolderScreen(
                 },
                 confirmButton = {
                     TextButton(onClick = onMetadataUpdateSummaryDismissed) {
+                        Text(stringResource(android.R.string.ok))
+                    }
+                },
+            )
+        }
+
+        if (showNoNetworkAlert) {
+            AlertDialog(
+                onDismissRequest = { showNoNetworkAlert = false },
+                title = { Text(stringResource(R.string.error_no_internet)) },
+                confirmButton = {
+                    TextButton(onClick = { showNoNetworkAlert = false }) {
                         Text(stringResource(android.R.string.ok))
                     }
                 },
