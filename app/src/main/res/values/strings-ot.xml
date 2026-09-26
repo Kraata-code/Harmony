@@ -54,6 +54,13 @@ while also allowing users to translate our app as well. New, specific strings to
     <string name="acoustid_test_low_confidence">Match skipped because confidence was only %d%%.</string>
     <string name="acoustid_test_no_audio">The file contains no audio.</string>
     <string name="acoustid_test_error">Metadata update failed: %1$s</string>
+    <string name="edit_local_metadata">Edit local metadata</string>
+    <string name="local_metadata_cover">Local cover art</string>
+    <string name="local_metadata_select_cover">Select cover</string>
+    <string name="local_metadata_remove_cover">Remove cover</string>
+    <string name="local_metadata_no_cover">No cover selected</string>
+    <string name="local_metadata_cover_error">Could not read cover art: %1$s</string>
+    <string name="local_metadata_edit_error">Could not save metadata: %1$s</string>
     <string name="local_metadata_update_channel">Metadata updates</string>
     <string name="local_metadata_update_title">Updating local metadata</string>
     <string name="local_metadata_update_in_progress">A local metadata update is already in progress.</string>

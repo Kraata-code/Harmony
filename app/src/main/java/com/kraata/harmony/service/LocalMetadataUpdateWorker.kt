@@ -165,7 +165,6 @@ class LocalMetadataUpdateWorker(
         lowConfidence: Int,
         errors: Int,
     ) {
-        // ponytail: one pending result is enough while unique work is serialized.
         applicationContext.dataStore.edit { preferences ->
             preferences[LocalMetadataUpdatePendingFolderKey] = folderPath
             preferences[LocalMetadataUpdatePendingUpdatedKey] = updated

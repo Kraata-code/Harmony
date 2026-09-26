@@ -11,13 +11,24 @@
 package com.kraata.harmony.ui.menu
 
 import android.content.Intent
+import android.util.Log
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.PlaylistAdd
 import androidx.compose.material.icons.automirrored.rounded.PlaylistPlay
@@ -39,6 +50,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -52,6 +64,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
@@ -90,6 +103,7 @@ import com.kraata.harmony.ui.component.items.ListItem
 import com.kraata.harmony.ui.dialog.AddToPlaylistDialog
 import com.kraata.harmony.ui.dialog.AddToQueueDialog
 import com.kraata.harmony.ui.dialog.ArtistDialog
+import com.kraata.harmony.ui.dialog.DefaultDialog
 import com.kraata.harmony.ui.dialog.DetailsDialog
 import com.kraata.harmony.ui.dialog.TextFieldDialog
 import com.kraata.harmony.utils.joinByBullet
@@ -101,9 +115,16 @@ import com.kraata.harmony.service.LocalSongMetadataUpdater
 import com.zionhuang.innertube.YouTube
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.io.ByteArrayOutputStream
 import kotlin.math.roundToInt
+
+private const val TAG = "SongMenu"
+// ponytail: cap compressed cover input at 16 MiB; stream/decode incrementally if larger artwork is needed.
+private const val MAX_ARTWORK_BYTES = 16 * 1024 * 1024
 
 @Composable
 fun SongMenu(
@@ -145,6 +166,14 @@ fun SongMenu(
     var showEditDialog by rememberSaveable {
         mutableStateOf(false)
     }
+    var showManualMetadataDialog by rememberSaveable {
+        mutableStateOf(false)
+    }
+    var manualArtwork by remember { mutableStateOf<ByteArray?>(null) }
+    var manualArtworkChanged by remember { mutableStateOf(false) }
+    var manualArtworkLoading by remember { mutableStateOf(false) }
+    var manualEditRunning by remember { mutableStateOf(false) }
+    var manualEditError by remember { mutableStateOf<String?>(null) }
     var showChooseQueueDialog by rememberSaveable {
         mutableStateOf(false)
     }
@@ -156,6 +185,56 @@ fun SongMenu(
     }
     var showDetailsDialog by rememberSaveable {
         mutableStateOf(false)
+    }
+
+    val artworkPickerLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.OpenDocument()
+    ) { uri ->
+        if (uri == null) return@rememberLauncherForActivityResult
+        manualArtworkLoading = true
+        fileRecognitionScope.launch {
+            try {
+                Log.d(
+                    TAG,
+                    "cover_select scheme=${uri.scheme ?: "unknown"} " +
+                        "resolverMime=${context.contentResolver.getType(uri) ?: "unknown"}",
+                )
+                val bytes = withContext(Dispatchers.IO) {
+                    context.contentResolver.openInputStream(uri)?.use { input ->
+                        Log.d(TAG, "cover_stream_open result=opened")
+                        val output = ByteArrayOutputStream()
+                        val buffer = ByteArray(8192)
+                        while (true) {
+                            val count = input.read(buffer)
+                            if (count < 0) break
+                            require(output.size() + count <= MAX_ARTWORK_BYTES) {
+                                "Cover art exceeds 16 MiB"
+                            }
+                            output.write(buffer, 0, count)
+                        }
+                        output.toByteArray()
+                    } ?: run {
+                        Log.d(TAG, "cover_stream_open result=null")
+                        null
+                    }
+                }
+                require(bytes != null && bytes.isNotEmpty()) { "Selected cover art is empty" }
+                Log.d(TAG, "cover_stream_read bytes=${bytes.size}")
+                manualArtwork = bytes
+                manualArtworkChanged = true
+                manualEditError = null
+            } catch (error: CancellationException) {
+                throw error
+            } catch (error: Throwable) {
+                Log.e(TAG, "cover_stream_error exceptionClass=${error::class.java.name}")
+                manualEditError = resources.getString(
+                    R.string.local_metadata_cover_error,
+                    error.message ?: "Unknown error",
+                )
+            } finally {
+                manualArtworkLoading = false
+            }
+        }
     }
 
     ListItem(
@@ -237,9 +316,20 @@ fun SongMenu(
         }
         GridMenuItem(
             icon = Icons.Rounded.Edit,
-            title = R.string.edit
+            title = if (song.song.isLocal && !localPath.isNullOrBlank()) {
+                R.string.edit_local_metadata
+            } else {
+                R.string.edit
+            },
         ) {
-            showEditDialog = true
+            if (song.song.isLocal && !localPath.isNullOrBlank()) {
+                manualArtwork = null
+                manualArtworkChanged = false
+                manualEditError = null
+                showManualMetadataDialog = true
+            } else {
+                showEditDialog = true
+            }
         }
         GridMenuItem(
             icon = Icons.AutoMirrored.Rounded.QueueMusic,
@@ -470,6 +560,54 @@ fun SongMenu(
         )
     }
 
+    if (showManualMetadataDialog) {
+        EditLocalMetadataDialog(
+            initialTitle = song.song.title,
+            initialArtist = song.artists.joinToString(", ") { it.name },
+            currentArtwork = song.song.getThumbnailModel(),
+            artwork = manualArtwork,
+            artworkChanged = manualArtworkChanged,
+            artworkLoading = manualArtworkLoading,
+            saving = manualEditRunning,
+            errorMessage = manualEditError,
+            onPickArtwork = { artworkPickerLauncher.launch(arrayOf("image/*")) },
+            onRemoveArtwork = {
+                manualArtwork = null
+                manualArtworkChanged = true
+                manualEditError = null
+            },
+            onDismiss = { if (!manualEditRunning && !manualArtworkLoading) showManualMetadataDialog = false },
+            onSave = { title, artist ->
+                manualEditRunning = true
+                manualEditError = null
+                fileRecognitionScope.launch {
+                    try {
+                        localSongMetadataUpdater.updateManually(
+                            song = song,
+                            title = title,
+                            artist = artist,
+                            artworkBytes = manualArtwork.takeIf { manualArtworkChanged },
+                            removeArtwork = manualArtworkChanged && manualArtwork == null,
+                        )
+                        context.imageLoader.memoryCache?.clear()
+                        onLocalMetadataUpdated()
+                        showManualMetadataDialog = false
+                        onDismiss()
+                    } catch (error: CancellationException) {
+                        throw error
+                    } catch (error: Throwable) {
+                        manualEditError = resources.getString(
+                            R.string.local_metadata_edit_error,
+                            error.message ?: "Unknown error",
+                        )
+                    } finally {
+                        manualEditRunning = false
+                    }
+                }
+            },
+        )
+    }
+
     if (showChooseQueueDialog) {
         AddToQueueDialog(
             onAdd = { queueName ->
@@ -517,5 +655,137 @@ fun SongMenu(
             clipboardManager = clipboardManager,
             setVisibility = { showDetailsDialog = it }
         )
+    }
+}
+
+@Composable
+private fun EditLocalMetadataDialog(
+    initialTitle: String,
+    initialArtist: String,
+    currentArtwork: Any?,
+    artwork: ByteArray?,
+    artworkChanged: Boolean,
+    artworkLoading: Boolean,
+    saving: Boolean,
+    errorMessage: String?,
+    onPickArtwork: () -> Unit,
+    onRemoveArtwork: () -> Unit,
+    onDismiss: () -> Unit,
+    onSave: (title: String, artist: String) -> Unit,
+) {
+    var title by rememberSaveable(initialTitle) { mutableStateOf(initialTitle) }
+    var artist by rememberSaveable(initialArtist) { mutableStateOf(initialArtist) }
+    val canSave = !saving && !artworkLoading && title.isNotBlank() && artist.isNotBlank()
+
+    DefaultDialog(
+        onDismiss = onDismiss,
+        modifier = Modifier.fillMaxWidth(),
+        icon = { Icon(Icons.Rounded.Edit, contentDescription = null) },
+        title = { Text(stringResource(R.string.edit_local_metadata)) },
+        buttons = {
+            TextButton(
+                enabled = !saving && !artworkLoading,
+                onClick = onDismiss,
+            ) {
+                Text(stringResource(android.R.string.cancel))
+            }
+            TextButton(
+                enabled = canSave,
+                onClick = { onSave(title.trim(), artist.trim()) },
+            ) {
+                if (saving) {
+                    CircularProgressIndicator(modifier = Modifier.size(18.dp))
+                } else {
+                    Text(stringResource(R.string.save))
+                }
+            }
+        },
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .verticalScroll(rememberScrollState()),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            OutlinedTextField(
+                value = title,
+                onValueChange = { title = it },
+                label = { Text(stringResource(R.string.song_title)) },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth(),
+            )
+            OutlinedTextField(
+                value = artist,
+                onValueChange = { artist = it },
+                label = { Text(stringResource(R.string.song_artists)) },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth(),
+            )
+
+            if (artworkChanged && artwork == null) {
+                Text(
+                    text = stringResource(R.string.local_metadata_no_cover),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            } else if (artwork != null || currentArtwork != null) {
+                AsyncImage(
+                    model = if (artworkChanged) artwork else currentArtwork,
+                    contentDescription = stringResource(R.string.local_metadata_cover),
+                    contentScale = ContentScale.Crop,
+                    onLoading = {
+                        Log.d(
+                            TAG,
+                            "cover_image state=loading surface=manual_preview " +
+                                "source=${if (artworkChanged) "selected_bytes" else "local_file"} " +
+                                "bytes=${artwork?.size ?: 0}",
+                        )
+                    },
+                    onSuccess = {
+                        Log.d(TAG, "cover_image state=success surface=manual_preview")
+                    },
+                    onError = {
+                        Log.e(TAG, "cover_image state=error surface=manual_preview")
+                    },
+                    modifier = Modifier
+                        .size(160.dp)
+                        .clip(RoundedCornerShape(ThumbnailCornerRadius))
+                        .align(Alignment.CenterHorizontally),
+                )
+            }
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Center,
+            ) {
+                TextButton(
+                    enabled = !saving && !artworkLoading,
+                    onClick = onPickArtwork,
+                ) {
+                    Text(stringResource(R.string.local_metadata_select_cover))
+                }
+                TextButton(
+                    enabled = !saving && !artworkLoading,
+                    onClick = onRemoveArtwork,
+                ) {
+                    Text(stringResource(R.string.local_metadata_remove_cover))
+                }
+            }
+
+            if (artworkLoading) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Center,
+                ) {
+                    CircularProgressIndicator(modifier = Modifier.size(20.dp))
+                }
+            }
+            if (errorMessage != null) {
+                Text(
+                    text = errorMessage,
+                    color = MaterialTheme.colorScheme.error,
+                )
+            }
+            Spacer(Modifier.height(4.dp))
+        }
     }
 }

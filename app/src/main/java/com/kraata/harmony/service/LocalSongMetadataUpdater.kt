@@ -119,6 +119,35 @@ internal class LocalSongMetadataUpdater(
         )
     }
 
+    suspend fun updateManually(
+        song: Song,
+        title: String,
+        artist: String,
+        artworkBytes: ByteArray?,
+        removeArtwork: Boolean,
+    ) = withContext(Dispatchers.IO) {
+        require(song.song.isLocal) { "Only local songs can be edited" }
+        val normalizedTitle = title.trim()
+        val normalizedArtist = artist.trim()
+        require(normalizedTitle.isNotEmpty()) { "Song title cannot be empty" }
+        require(normalizedArtist.isNotEmpty()) { "Song artist cannot be empty" }
+
+        val file = File(song.song.localPath ?: error("Local audio path is missing"))
+        require(file.isFile && file.canRead()) { "Local audio file cannot be read" }
+
+        openWritableDescriptor(file).use { descriptor ->
+            saveManualMetadata(
+                descriptor = descriptor,
+                file = file,
+                title = normalizedTitle,
+                artist = normalizedArtist,
+                artworkBytes = artworkBytes,
+                removeArtwork = removeArtwork,
+            )
+        }
+        updateManualDatabase(song, file, normalizedTitle, normalizedArtist)
+    }
+
     private fun openWritableDescriptor(file: File): ParcelFileDescriptor {
         runCatching {
             ParcelFileDescriptor.open(file, ParcelFileDescriptor.MODE_READ_WRITE)
@@ -298,8 +327,93 @@ internal class LocalSongMetadataUpdater(
         return savedArtwork?.mimeType
     }
 
+    @Suppress("DEPRECATION")
+    private fun saveManualMetadata(
+        descriptor: ParcelFileDescriptor,
+        file: File,
+        title: String,
+        artist: String,
+        artworkBytes: ByteArray?,
+        removeArtwork: Boolean,
+    ) {
+        debug("taglib begin op=getMetadata flow=manual readPictures=true")
+        val current = TagLib.getMetadata(
+            fd = descriptor.dup().detachFd(),
+            readPictures = true,
+        ) ?: error("Could not read local metadata")
+        debug("taglib end op=getMetadata flow=manual pictureCount=${current.pictures.size}")
+
+        val properties = HashMap(current.propertyMap)
+        properties.keys.removeAll { key ->
+            key.equals("TITLE", ignoreCase = true) ||
+                key.equals("ARTIST", ignoreCase = true) ||
+                key.equals("ARTISTS", ignoreCase = true)
+        }
+        properties["TITLE"] = arrayOf(title)
+        properties["ARTIST"] = arrayOf(artist)
+
+        debug("taglib begin op=savePropertyMap flow=manual")
+        val propertiesSaved = TagLib.savePropertyMap(descriptor.dup().detachFd(), properties)
+        debug("taglib end op=savePropertyMap flow=manual result=$propertiesSaved")
+        if (!propertiesSaved) {
+            error("Could not save local metadata")
+        }
+
+        if (artworkBytes == null && !removeArtwork) return
+
+        val artworkPicture = artworkBytes?.let {
+            compressArtwork(it, file, forceJpeg = false)
+                ?: error("Could not decode cover art")
+        }
+        val pictures = current.pictures
+            .filterNot { it.pictureType.equals("Front Cover", ignoreCase = true) }
+            .toMutableList()
+            .apply { artworkPicture?.let { add(0, it) } }
+
+        debug(
+            "taglib begin op=savePictures flow=manual variant=primary " +
+                "pictureCount=${pictures.size} newMime=${artworkPicture?.mimeType ?: "none"} " +
+                "newBytes=${artworkPicture?.data?.size ?: 0}",
+        )
+        val picturesSaved = TagLib.savePictures(descriptor.dup().detachFd(), pictures.toTypedArray())
+        debug("taglib end op=savePictures flow=manual variant=primary result=$picturesSaved")
+        if (picturesSaved) return
+
+        if (artworkBytes != null && artworkPicture?.mimeType == MIME_WEBP) {
+            val jpegArtwork = compressArtwork(artworkBytes, file, forceJpeg = true)
+            if (jpegArtwork != null) {
+                val jpegPictures = current.pictures
+                    .filterNot { it.pictureType.equals("Front Cover", ignoreCase = true) }
+                    .toMutableList()
+                    .apply { add(0, jpegArtwork) }
+
+                debug(
+                    "taglib begin op=savePictures flow=manual variant=jpeg_fallback " +
+                        "pictureCount=${jpegPictures.size} newMime=${jpegArtwork.mimeType} " +
+                        "newBytes=${jpegArtwork.data.size}",
+                )
+                val jpegPicturesSaved = TagLib.savePictures(
+                    descriptor.dup().detachFd(),
+                    jpegPictures.toTypedArray(),
+                )
+                debug(
+                    "taglib end op=savePictures flow=manual " +
+                        "variant=jpeg_fallback result=$jpegPicturesSaved",
+                )
+                if (jpegPicturesSaved) return
+            }
+        }
+
+        error("Could not save local cover art")
+    }
+
     private fun compressArtwork(data: ByteArray, file: File, forceJpeg: Boolean): Picture? {
-        val bitmap = BitmapFactory.decodeByteArray(data, 0, data.size) ?: return null
+        debug("artwork_decode begin bytes=${data.size} forceJpeg=$forceJpeg")
+        val bitmap = BitmapFactory.decodeByteArray(data, 0, data.size) ?: run {
+            debug("artwork_decode end result=null")
+            return null
+        }
+        debug("artwork_decode end dimensions=${bitmap.width}x${bitmap.height}")
         val scaled = if (bitmap.width > MAX_ARTWORK_SIZE || bitmap.height > MAX_ARTWORK_SIZE) {
             val scale = minOf(
                 MAX_ARTWORK_SIZE.toFloat() / bitmap.width,
@@ -312,6 +426,9 @@ internal class LocalSongMetadataUpdater(
         } else {
             bitmap
         }
+        if (scaled !== bitmap) {
+            debug("artwork_scale from=${bitmap.width}x${bitmap.height} to=${scaled.width}x${scaled.height}")
+        }
 
         val useJpeg = forceJpeg || file.extension.lowercase(Locale.ROOT) in JPEG_CONTAINERS
         val format = when {
@@ -320,8 +437,14 @@ internal class LocalSongMetadataUpdater(
             else -> Bitmap.CompressFormat.WEBP
         }
         val output = ByteArrayOutputStream()
+        debug(
+            "artwork_compress begin format=${if (useJpeg) "jpeg" else "webp"} " +
+                "quality=${if (useJpeg) JPEG_QUALITY else WEBP_QUALITY}",
+        )
         return try {
-            if (!scaled.compress(format, if (useJpeg) JPEG_QUALITY else WEBP_QUALITY, output)) {
+            val compressed = scaled.compress(format, if (useJpeg) JPEG_QUALITY else WEBP_QUALITY, output)
+            debug("artwork_compress end ok=$compressed outputBytes=${output.size()}")
+            if (!compressed) {
                 null
             } else {
                 Picture(
@@ -440,6 +563,43 @@ internal class LocalSongMetadataUpdater(
             oldArtistIds.forEach(::safeDeleteArtist)
             oldGenreIds.forEach(::safeDeleteGenre)
             oldAlbumId?.let(::safeDeleteAlbum)
+        }
+    }
+
+    private suspend fun updateManualDatabase(
+        song: Song,
+        file: File,
+        title: String,
+        artist: String,
+    ) {
+        val oldArtistIds = song.artists.map(ArtistEntity::id)
+        database.awaitTransaction {
+            val artistEntity = song.artists.firstOrNull {
+                it.name.equals(artist, ignoreCase = true)
+            } ?: artistsByNameFuzzy(artist).firstOrNull {
+                it.isLocal && it.name.equals(artist, ignoreCase = true)
+            } ?: ArtistEntity(
+                id = ArtistEntity.generateArtistId(),
+                name = artist,
+                isLocal = true,
+            )
+
+            update(
+                song.song.copy(
+                    title = title,
+                    thumbnailUrl = file.absolutePath,
+                    localPath = file.absolutePath,
+                    dateModified = LocalDateTime.ofInstant(
+                        Instant.ofEpochMilli(file.lastModified()),
+                        ZoneOffset.UTC,
+                    ),
+                    isLocal = true,
+                ),
+            )
+            unlinkSongArtists(song.id)
+            insert(artistEntity)
+            insert(SongArtistMap(song.id, artistEntity.id, 0))
+            oldArtistIds.forEach(::safeDeleteArtist)
         }
     }
 

@@ -33,6 +33,13 @@
     <string name="acoustid_test_low_confidence">Coincidencia omitida porque la confianza era solo del %d%%.</string>
     <string name="acoustid_test_no_audio">El archivo no contiene audio.</string>
     <string name="acoustid_test_error">La actualización de metadatos falló: %1$s</string>
+    <string name="edit_local_metadata">Editar metadatos locales</string>
+    <string name="local_metadata_cover">Carátula local</string>
+    <string name="local_metadata_select_cover">Seleccionar carátula</string>
+    <string name="local_metadata_remove_cover">Eliminar carátula</string>
+    <string name="local_metadata_no_cover">Sin carátula seleccionada</string>
+    <string name="local_metadata_cover_error">No se pudo leer la carátula: %1$s</string>
+    <string name="local_metadata_edit_error">No se pudieron guardar los metadatos: %1$s</string>
     <string name="player_background_style">Estilo del fondo del reproductor</string>
     <string name="err_play_next_on_error">Ha ocurrido un error. Reproduciendo siguiente</string>
     <string name="player_background_default">Seguir tema</string>

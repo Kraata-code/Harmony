@@ -575,10 +575,15 @@ class MainActivity : ComponentActivity() {
                         onDispose { removeOnNewIntentListener(listener) }
                     }
 
+                    val menuSheetState = rememberModalBottomSheetState()
+                    val menuState = remember(menuSheetState) {
+                        MenuState(menuSheetState)
+                    }
+
                     CompositionLocalProvider(
                         LocalDatabase provides database,
                         LocalContentColor provides contentColorFor(MaterialTheme.colorScheme.surface),
-                        LocalMenuState provides MenuState(rememberModalBottomSheetState()),
+                        LocalMenuState provides menuState,
                         LocalPlayerConnection provides playerConnection,
                         LocalPlayerAwareWindowInsets provides playerAwareWindowInsets,
                         LocalDownloadUtil provides downloadUtil,

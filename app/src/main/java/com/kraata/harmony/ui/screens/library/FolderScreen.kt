@@ -229,7 +229,6 @@ fun FolderScreen(
                 )
                 .build()
 
-            // ponytail: one global job keeps the existing single checkpoint safe; per-folder concurrency needs per-work checkpoints.
             workManager.enqueueUniqueWork(
                 LocalMetadataUpdateWorker.UNIQUE_WORK_NAME,
                 ExistingWorkPolicy.KEEP,
