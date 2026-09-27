@@ -85,9 +85,20 @@ sealed class Screens(
         fun getAllScreens() = screenPairs.map { it.first }
 
         fun getScreens(screens: String): List<Screens> {
-            val charToScreenMap = screenPairs.associate { (screen, char) -> char to screen }
-
-            return screens.toCharArray().map { char -> charToScreenMap[char] ?: Home }
+            return screens.toList().mapNotNull { char ->
+                when (char) {
+                    // AI and recognition were merged into More in the current layout.
+                    'I', 'N', 'O' -> More
+                    'H' -> Home
+                    'S' -> Songs
+                    'F' -> Folders
+                    'A' -> Artists
+                    'B' -> Albums
+                    'L' -> Playlists
+                    'M' -> Library
+                    else -> null
+                }
+            }.distinctBy { it.route }
         }
 
         fun encodeScreens(list: List<Screens>): String {
