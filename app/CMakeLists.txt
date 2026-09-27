@@ -75,7 +75,7 @@ if(NOT EXISTS "${LLAMA_CPP_DIR}/CMakeLists.txt")
 endif()
 
 # Requerido por Play para dispositivos con page size de 16 KB.
-if(ANDROID_ABI STREQUAL "arm64-v8a")
+if(ANDROID)
     add_link_options(
         "-Wl,-z,max-page-size=16384"
         "-Wl,-z,common-page-size=16384"

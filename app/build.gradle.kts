@@ -155,6 +155,13 @@ android {
         }
     }
 
+    // Comprime las JNI cerradas para no exigirles segmentos ELF de 16 KB.
+    packaging {
+        jniLibs {
+            useLegacyPackaging = true
+        }
+    }
+
     // Dimensiones de flavor
     flavorDimensions.add("abi")
 
