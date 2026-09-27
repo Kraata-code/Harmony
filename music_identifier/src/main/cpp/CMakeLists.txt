@@ -19,5 +19,8 @@ add_subdirectory(chromaprint EXCLUDE_FROM_ALL)
 
 add_library(chromaprint-jni SHARED chromaprint_jni.cpp)
 target_include_directories(chromaprint-jni PRIVATE chromaprint/src/include)
-target_link_options(chromaprint-jni PRIVATE "-Wl,-z,max-page-size=16384")
+target_link_options(chromaprint-jni PRIVATE
+    "-Wl,-z,max-page-size=16384"
+    "-Wl,-z,common-page-size=16384"
+)
 target_link_libraries(chromaprint-jni PRIVATE chromaprint log)
