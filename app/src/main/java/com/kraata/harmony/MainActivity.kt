@@ -44,6 +44,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
@@ -59,6 +60,7 @@ import androidx.compose.material.icons.rounded.Contactless
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
@@ -69,6 +71,7 @@ import androidx.compose.material3.NavigationRailItem
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
 import androidx.compose.material3.contentColorFor
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -147,6 +150,11 @@ import com.kraata.harmony.constants.LocalMetadataUpdatePendingUpdatedKey
 import com.kraata.harmony.constants.PureBlackKey
 import com.kraata.harmony.constants.SlimNavBarKey
 import com.kraata.harmony.db.MusicDatabase
+import com.kraata.harmony.data.DownloadState
+import com.kraata.harmony.data.UpdateChecker
+import com.kraata.harmony.data.UpdateCheckState
+import com.kraata.harmony.data.UpdateInfo
+import com.kraata.harmony.data.UpdateRepository
 import com.kraata.harmony.playback.DownloadUtil
 import com.kraata.harmony.playback.MediaControllerViewModel
 import com.kraata.harmony.playback.MusicService
@@ -352,7 +360,58 @@ class MainActivity : ComponentActivity() {
             }
 
 
-            val (oobeStatus) = rememberPreference(OobeStatusKey, defaultValue = 0)
+             val (oobeStatus) = rememberPreference(OobeStatusKey, defaultValue = 0)
+
+             val updateState by UpdateRepository.state.collectAsState()
+             val availableUpdate = (updateState as? UpdateCheckState.UpdateAvailable)?.info
+             var shownUpdateVersion by rememberSaveable { mutableStateOf<String?>(null) }
+             var updateProgress by remember { mutableStateOf<Int?>(null) }
+             var updateError by remember { mutableStateOf<String?>(null) }
+             var updateInProgress by remember { mutableStateOf(false) }
+             var updateInstalling by remember { mutableStateOf(false) }
+             val updateChecker = remember { UpdateChecker() }
+
+             LaunchedEffect(availableUpdate?.latestVersionName, oobeStatus) {
+                 if (
+                     oobeStatus >= OOBE_VERSION &&
+                     availableUpdate != null &&
+                     shownUpdateVersion != availableUpdate.latestVersionName
+                 ) {
+                     shownUpdateVersion = availableUpdate.latestVersionName
+                 }
+             }
+
+             fun startUpdate(info: UpdateInfo) {
+                 if (updateInProgress) return
+                 updateInProgress = true
+                 updateInstalling = false
+                 updateProgress = 0
+                 updateError = null
+                 coroutineScope.launch {
+                     updateChecker.downloadUpdate(this@MainActivity, info.downloadUrl).collect { state ->
+                         when (state) {
+                             is DownloadState.Downloading -> updateProgress = state.progress
+                             is DownloadState.Downloaded -> {
+                                 updateInstalling = true
+                                 try {
+                                     updateChecker.installUpdate(this@MainActivity, state.file)
+                                     shownUpdateVersion = null
+                                     updateInProgress = false
+                                     updateInstalling = false
+                                 } catch (e: Exception) {
+                                     updateError = e.message
+                                     updateInProgress = false
+                                     updateInstalling = false
+                                 }
+                             }
+                             is DownloadState.Error -> {
+                                 updateError = state.exception.message
+                                 updateInProgress = false
+                             }
+                         }
+                     }
+                 }
+             }
 
             var filter by rememberEnumPreference(LibraryFilterKey, Screens.LibraryFilter.ALL)
             val (slimNav) = rememberPreference(SlimNavBarKey, defaultValue = false)
@@ -1360,6 +1419,89 @@ class MainActivity : ComponentActivity() {
                                     .windowInsetsPadding(LocalPlayerAwareWindowInsets.current)
                                     .align(Alignment.BottomCenter)
                             )
+
+                            val updateInfo = availableUpdate?.takeIf {
+                                it.latestVersionName == shownUpdateVersion
+                            }
+                            if (updateInfo != null) {
+                                AlertDialog(
+                                    onDismissRequest = {
+                                        if (!updateInProgress) shownUpdateVersion = null
+                                    },
+                                    title = {
+                                        Text(stringResource(R.string.update_available_title))
+                                    },
+                                    text = {
+                                        Column(
+                                            modifier = Modifier
+                                                .heightIn(max = 360.dp)
+                                                .verticalScroll(rememberScrollState())
+                                        ) {
+                                            Text(
+                                                text = stringResource(
+                                                    R.string.update_available_version,
+                                                    updateInfo.latestVersionName
+                                                ),
+                                                style = MaterialTheme.typography.titleMedium
+                                            )
+                                            Spacer(modifier = Modifier.height(16.dp))
+                                            Text(
+                                                text = stringResource(R.string.update_release_notes),
+                                                style = MaterialTheme.typography.titleSmall
+                                            )
+                                            Spacer(modifier = Modifier.height(4.dp))
+                                            Text(
+                                                updateInfo.releaseNotes?.trim().takeUnless { it.isNullOrEmpty() }
+                                                    ?: stringResource(R.string.update_release_notes_empty)
+                                            )
+                                            if (updateInProgress) {
+                                                Spacer(modifier = Modifier.height(16.dp))
+                                                Text(
+                                                    when {
+                                                        updateInstalling -> stringResource(R.string.update_installing)
+                                                        updateProgress != null -> stringResource(
+                                                            R.string.update_downloading,
+                                                            updateProgress!!
+                                                        )
+                                                        else -> stringResource(R.string.update_downloading_unknown)
+                                                    }
+                                                )
+                                            }
+                                            updateError?.let {
+                                                Spacer(modifier = Modifier.height(8.dp))
+                                                Text(
+                                                    text = it,
+                                                    color = MaterialTheme.colorScheme.error
+                                                )
+                                            }
+                                        }
+                                    },
+                                    dismissButton = {
+                                        TextButton(
+                                            enabled = !updateInProgress,
+                                            onClick = { shownUpdateVersion = null }
+                                        ) {
+                                            Text(stringResource(android.R.string.cancel))
+                                        }
+                                    },
+                                    confirmButton = {
+                                        TextButton(
+                                            enabled = !updateInProgress,
+                                            onClick = { startUpdate(updateInfo) }
+                                        ) {
+                                            Text(
+                                                stringResource(
+                                                    if (updateError == null) {
+                                                        R.string.update_download
+                                                    } else {
+                                                        R.string.update_retry
+                                                    }
+                                                )
+                                            )
+                                        }
+                                    }
+                                )
+                            }
 
                             // Setup wizard
                             LaunchedEffect(Unit) {

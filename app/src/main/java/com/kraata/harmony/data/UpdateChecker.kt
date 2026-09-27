@@ -32,7 +32,6 @@ import java.util.concurrent.TimeUnit
 
 private const val TAG = "UpdateChecker"
 private const val DEFAULT_UPDATE_URL = "https://github.com/Kraata-code/Harmony/releases/latest/download/app-release.apk"
-private const val DEFAULT_GITHUB_API_BASE_URL = "https://api.github.com"
 
 /**
  * Gestiona la verificación y descarga de actualizaciones de la aplicación.
@@ -42,7 +41,7 @@ private const val DEFAULT_GITHUB_API_BASE_URL = "https://api.github.com"
 class UpdateChecker(
     private val apkUrl: String = DEFAULT_UPDATE_URL,
     private val client: OkHttpClient = createDefaultClient(),
-    private val githubApiBaseUrl: String = DEFAULT_GITHUB_API_BASE_URL
+    private val githubApiBaseUrl: String = BuildConfig.UPDATE_API_BASE_URL
 ) {
 
     companion object {

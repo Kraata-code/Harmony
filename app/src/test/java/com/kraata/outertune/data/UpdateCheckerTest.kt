@@ -53,6 +53,7 @@ class UpdateCheckerTest {
         assertTrue(state is UpdateCheckState.UpdateAvailable)
         val info = (state as UpdateCheckState.UpdateAvailable).info
         assertEquals("1.1.0", info.latestVersionName)
+        assertEquals("Bug fixes", info.releaseNotes)
         assertEquals(
             "https://example.com/Harmony-1.1.0-core-release-2.apk",
             info.downloadUrl

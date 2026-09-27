@@ -18,6 +18,16 @@ val acoustIdClientKey = providers.gradleProperty("acoustidClientKey").orNull.orE
 val nowPlayingBaseUrl = providers.gradleProperty("nowPlayingBaseUrl")
     .orElse("https://github.com/Kraata-code/Harmony/releases/latest/download")
     .get()
+val updateApiBaseUrl = providers.gradleProperty("updateApiBaseUrl")
+    .orElse("https://api.github.com")
+    .get()
+val updateTestVersionCode = providers.gradleProperty("updateTestVersionCode")
+    .orNull
+    ?.toInt()
+    ?: 2
+val updateTestVersionName = providers.gradleProperty("updateTestVersionName")
+    .orElse("1.0.1")
+    .get()
 
 // Configuración de keystore con manejo seguro
 val keystorePropertiesFile = rootProject.file("keystore.properties")
@@ -33,9 +43,14 @@ android {
         applicationId = "com.kraata.harmony"
         minSdk = 24
         targetSdk = 36
-        versionCode = 2
-        versionName = "1.0.1"
+        versionCode = updateTestVersionCode
+        versionName = updateTestVersionName
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        buildConfigField(
+            "String",
+            "UPDATE_API_BASE_URL",
+            "\"${updateApiBaseUrl.replace("\\", "\\\\").replace("\"", "\\\"")}\""
+        )
         buildConfigField("String", "ACOUSTID_CLIENT_KEY", "\"$acoustIdClientKey\"")
         buildConfigField(
             "String",
