@@ -24,9 +24,9 @@ val updateApiBaseUrl = providers.gradleProperty("updateApiBaseUrl")
 val updateTestVersionCode = providers.gradleProperty("updateTestVersionCode")
     .orNull
     ?.toInt()
-    ?: 2
+    ?: 3
 val updateTestVersionName = providers.gradleProperty("updateTestVersionName")
-    .orElse("1.1.0")
+    .orElse("1.1.1")
     .get()
 
 // Configuración de keystore con manejo seguro
