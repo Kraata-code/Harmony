@@ -236,4 +236,16 @@
     <string name="remove_from_playlist">حذف از لیست پخش</string>
     <string name="remove_from_queue">حذف از صف</string>
     <string name="tempo_and_pitch">تمپو و زیر و بمی صدا</string>
+    <string name="version">نسخه</string>
+    <string name="checking_for_updates">در حال بررسی به‌روزرسانی‌ها…</string>
+    <string name="update_check_failed">بررسی به‌روزرسانی‌ها ممکن نیست (برای تلاش دوباره ضربه بزنید)</string>
+    <string name="update_available_title">به‌روزرسانی Harmony موجود است</string>
+    <string name="update_available_version">نسخه %1$s</string>
+    <string name="update_release_notes">چه چیزهایی جدید است</string>
+    <string name="update_release_notes_empty">یادداشت انتشار موجود نیست.</string>
+    <string name="update_download">به‌روزرسانی</string>
+    <string name="update_retry">تلاش دوباره</string>
+    <string name="update_downloading">در حال دانلود: %1$d%%</string>
+    <string name="update_downloading_unknown">در حال دانلود…</string>
+    <string name="update_installing">در حال نصب…</string>
 </resources>

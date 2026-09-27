@@ -286,4 +286,36 @@
     <string name="music_recognition_data_delete_region_confirm">Hapus data yang diunduh untuk %1$s?</string>
     <string name="music_recognition_data_delete_error">Tidak dapat menghapus data pengenalan.</string>
     <string name="music_recognition_data_with_size">%1$s (~%2$s)</string>
+    <string name="music_recognition_history">Riwayat pengenalan</string>
+    <string name="music_recognition_recognizing">Memeriksa rekaman...</string>
+    <string name="music_recognition_result">%1$s - %2$s</string>
+    <string name="music_recognition_no_match">Tidak ada kecocokan.</string>
+    <string name="music_recognition_no_audio">Tidak ada audio yang ditangkap.</string>
+    <string name="music_recognition_permission_required">Izin mikrofon diperlukan.</string>
+    <string name="music_recognition_error">Pengenalan musik gagal.</string>
+    <string name="music_recognition_test_file">Uji file lokal saat ini</string>
+    <string name="music_recognition_data">Data pengenalan musik</string>
+    <string name="acoustid_test">Perbarui metadata lokal</string>
+    <string name="acoustid_test_title">Perbarui metadata lokal</string>
+    <string name="acoustid_test_processing">Mengidentifikasi file lokal lengkap dan memperbarui metadatanya...</string>
+    <string name="acoustid_test_match">Metadata diperbarui:
+%1$s - %2$s</string>
+    <string name="acoustid_test_no_match">AcoustID tidak mengembalikan kecocokan.</string>
+    <string name="acoustid_test_low_confidence">Kecocokan dilewati karena tingkat keyakinan hanya %d%%.</string>
+    <string name="acoustid_test_no_audio">File tidak berisi audio.</string>
+    <string name="acoustid_test_error">Gagal memperbarui metadata: %1$s</string>
+    <string name="edit_local_metadata">Edit metadata lokal</string>
+    <string name="local_metadata_cover">Sampul lokal</string>
+    <string name="local_metadata_select_cover">Pilih sampul</string>
+    <string name="local_metadata_remove_cover">Hapus sampul</string>
+    <string name="local_metadata_no_cover">Tidak ada sampul yang dipilih</string>
+    <string name="local_metadata_cover_error">Tidak dapat membaca sampul: %1$s</string>
+    <string name="local_metadata_edit_error">Tidak dapat menyimpan metadata: %1$s</string>
+    <string name="local_metadata_update_channel">Pembaruan metadata</string>
+    <string name="local_metadata_update_title">Memperbarui metadata lokal</string>
+    <string name="local_metadata_update_in_progress">Pembaruan metadata lokal sedang berlangsung.</string>
+    <string name="local_metadata_update_confirm">Metadata dan sampul semua lagu di folder ini dan subfoldernya mungkin ditimpa. Lanjutkan?</string>
+    <string name="local_metadata_update_progress">Memproses %1$d dari %2$d</string>
+    <string name="local_metadata_update_complete">Pembaruan metadata lokal selesai</string>
+    <string name="local_metadata_update_summary">Diperbarui: %1$d, tidak cocok: %2$d, keyakinan rendah: %3$d, kesalahan: %4$d</string>
 </resources>

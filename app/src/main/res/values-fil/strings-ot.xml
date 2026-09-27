@@ -24,4 +24,36 @@
     <string name="music_recognition_data_delete_region_confirm">Tanggalin ang na-download na datos para sa %1$s?</string>
     <string name="music_recognition_data_delete_error">Hindi matanggal ang datos ng pagkilala.</string>
     <string name="music_recognition_data_with_size">%1$s (~%2$s)</string>
+    <string name="music_recognition_history">Kasaysayan ng pagkilala</string>
+    <string name="music_recognition_recognizing">Sinusuri ang recording...</string>
+    <string name="music_recognition_result">%1$s - %2$s</string>
+    <string name="music_recognition_no_match">Walang nakitang tugma.</string>
+    <string name="music_recognition_no_audio">Walang nakuhang audio.</string>
+    <string name="music_recognition_permission_required">Kinakailangan ang pahintulot sa mikropono.</string>
+    <string name="music_recognition_error">Nabigo ang pagkilala sa musika.</string>
+    <string name="music_recognition_test_file">Subukan ang kasalukuyang lokal na file</string>
+    <string name="music_recognition_data">Data ng pagkilala sa musika</string>
+    <string name="acoustid_test">I-update ang lokal na metadata</string>
+    <string name="acoustid_test_title">I-update ang lokal na metadata</string>
+    <string name="acoustid_test_processing">Tinutukoy ang buong lokal na file at ina-update ang metadata nito...</string>
+    <string name="acoustid_test_match">Na-update ang metadata:
+%1$s - %2$s</string>
+    <string name="acoustid_test_no_match">Walang ibinalik na tugma ang AcoustID.</string>
+    <string name="acoustid_test_low_confidence">Nilaktawan ang tugma dahil %d%% lang ang kumpiyansa.</string>
+    <string name="acoustid_test_no_audio">Walang audio ang file.</string>
+    <string name="acoustid_test_error">Nabigo ang pag-update ng metadata: %1$s</string>
+    <string name="edit_local_metadata">I-edit ang lokal na metadata</string>
+    <string name="local_metadata_cover">Lokal na cover art</string>
+    <string name="local_metadata_select_cover">Pumili ng cover</string>
+    <string name="local_metadata_remove_cover">Alisin ang cover</string>
+    <string name="local_metadata_no_cover">Walang napiling cover</string>
+    <string name="local_metadata_cover_error">Hindi mabasa ang cover art: %1$s</string>
+    <string name="local_metadata_edit_error">Hindi ma-save ang metadata: %1$s</string>
+    <string name="local_metadata_update_channel">Mga update sa metadata</string>
+    <string name="local_metadata_update_title">Ina-update ang lokal na metadata</string>
+    <string name="local_metadata_update_in_progress">May isinasagawang lokal na pag-update ng metadata.</string>
+    <string name="local_metadata_update_confirm">Maaaring ma-overwrite ang metadata at cover art ng lahat ng kanta sa folder na ito at mga subfolder nito. Magpatuloy?</string>
+    <string name="local_metadata_update_progress">Naproseso ang %1$d sa %2$d</string>
+    <string name="local_metadata_update_complete">Kumpleto na ang pag-update ng lokal na metadata</string>
+    <string name="local_metadata_update_summary">Na-update: %1$d, walang tugma: %2$d, mababang kumpiyansa: %3$d, mga error: %4$d</string>
 </resources>

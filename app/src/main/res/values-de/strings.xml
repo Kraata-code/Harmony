@@ -279,4 +279,16 @@
     <string name="use_login_for_browse">Anmeldung zum Durchsuchen von Inhalten verwenden</string>
     <string name="use_login_for_browse_desc">Dies kann Einfluss darauf haben, welche Inhalte du siehst und zeigt zum Beispiel nur Premium-Alben an, wenn Sie mit einem Premium-Konto angemeldet sind</string>
     <string name="action_login">Anmelden</string>
+    <string name="version">Version</string>
+    <string name="checking_for_updates">Suche nach Updates…</string>
+    <string name="update_check_failed">Updates konnten nicht geprüft werden (zum Wiederholen tippen)</string>
+    <string name="update_available_title">Harmony-Update verfügbar</string>
+    <string name="update_available_version">Version %1$s</string>
+    <string name="update_release_notes">Neuigkeiten</string>
+    <string name="update_release_notes_empty">Keine Versionshinweise verfügbar.</string>
+    <string name="update_download">Aktualisieren</string>
+    <string name="update_retry">Erneut versuchen</string>
+    <string name="update_downloading">Wird heruntergeladen: %1$d%%</string>
+    <string name="update_downloading_unknown">Wird heruntergeladen…</string>
+    <string name="update_installing">Wird installiert…</string>
 </resources>

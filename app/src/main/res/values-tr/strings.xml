@@ -279,4 +279,16 @@
     <string name="use_login_for_browse">İçerikleri görmek için Giriş yap\'ı kullanın</string>
     <string name="use_login_for_browse_desc">Bu gördüğünüz içerikleri etkileyebilir ve örnek olarak Premium\'a özel içerikleri Premium\'a sahip bir hesapla giriş yaptıysanız size sunabilir</string>
     <string name="action_login">Giriş Yap</string>
+    <string name="version">sürüm</string>
+    <string name="checking_for_updates">Güncellemeler kontrol ediliyor…</string>
+    <string name="update_check_failed">Güncellemeler kontrol edilemedi (yeniden denemek için dokunun)</string>
+    <string name="update_available_title">Harmony güncellemesi mevcut</string>
+    <string name="update_available_version">Sürüm %1$s</string>
+    <string name="update_release_notes">Yenilikler</string>
+    <string name="update_release_notes_empty">Sürüm notu yok.</string>
+    <string name="update_download">Güncelle</string>
+    <string name="update_retry">Yeniden dene</string>
+    <string name="update_downloading">İndiriliyor: %1$d%%</string>
+    <string name="update_downloading_unknown">İndiriliyor…</string>
+    <string name="update_installing">Yükleniyor…</string>
 </resources>

@@ -290,4 +290,36 @@
     <string name="music_recognition_data_delete_region_confirm">Usunąć pobrane dane dla %1$s?</string>
     <string name="music_recognition_data_delete_error">Nie można usunąć danych rozpoznawania.</string>
     <string name="music_recognition_data_with_size">%1$s (~%2$s)</string>
+    <string name="music_recognition_history">Historia rozpoznawania</string>
+    <string name="music_recognition_recognizing">Sprawdzanie nagrania...</string>
+    <string name="music_recognition_result">%1$s - %2$s</string>
+    <string name="music_recognition_no_match">Nie znaleziono dopasowania.</string>
+    <string name="music_recognition_no_audio">Nie przechwycono dźwięku.</string>
+    <string name="music_recognition_permission_required">Wymagane jest zezwolenie na mikrofon.</string>
+    <string name="music_recognition_error">Rozpoznawanie muzyki nie powiodło się.</string>
+    <string name="music_recognition_test_file">Przetestuj bieżący plik lokalny</string>
+    <string name="music_recognition_data">Dane rozpoznawania muzyki</string>
+    <string name="acoustid_test">Aktualizuj lokalne metadane</string>
+    <string name="acoustid_test_title">Aktualizuj lokalne metadane</string>
+    <string name="acoustid_test_processing">Identyfikowanie całego pliku lokalnego i aktualizowanie jego metadanych...</string>
+    <string name="acoustid_test_match">Metadane zaktualizowane:
+%1$s - %2$s</string>
+    <string name="acoustid_test_no_match">AcoustID nie zwrócił dopasowania.</string>
+    <string name="acoustid_test_low_confidence">Pominięto dopasowanie, ponieważ pewność wynosiła tylko %d%%.</string>
+    <string name="acoustid_test_no_audio">Plik nie zawiera dźwięku.</string>
+    <string name="acoustid_test_error">Aktualizacja metadanych nie powiodła się: %1$s</string>
+    <string name="edit_local_metadata">Edytuj lokalne metadane</string>
+    <string name="local_metadata_cover">Lokalna okładka</string>
+    <string name="local_metadata_select_cover">Wybierz okładkę</string>
+    <string name="local_metadata_remove_cover">Usuń okładkę</string>
+    <string name="local_metadata_no_cover">Nie wybrano okładki</string>
+    <string name="local_metadata_cover_error">Nie można odczytać okładki: %1$s</string>
+    <string name="local_metadata_edit_error">Nie można zapisać metadanych: %1$s</string>
+    <string name="local_metadata_update_channel">Aktualizacje metadanych</string>
+    <string name="local_metadata_update_title">Aktualizowanie lokalnych metadanych</string>
+    <string name="local_metadata_update_in_progress">Aktualizacja lokalnych metadanych jest już w toku.</string>
+    <string name="local_metadata_update_confirm">Metadane i okładki wszystkich utworów w tym folderze i jego podfolderach mogą zostać nadpisane. Kontynuować?</string>
+    <string name="local_metadata_update_progress">Przetworzono %1$d z %2$d</string>
+    <string name="local_metadata_update_complete">Aktualizacja lokalnych metadanych zakończona</string>
+    <string name="local_metadata_update_summary">Zaktualizowano: %1$d, brak dopasowania: %2$d, niska pewność: %3$d, błędy: %4$d</string>
 </resources>

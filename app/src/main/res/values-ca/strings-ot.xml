@@ -79,4 +79,36 @@
     <string name="music_recognition_data_delete_region_confirm">Vols suprimir les dades baixades de %1$s?</string>
     <string name="music_recognition_data_delete_error">No s’han pogut suprimir les dades de reconeixement.</string>
     <string name="music_recognition_data_with_size">%1$s (~%2$s)</string>
+    <string name="music_recognition_history">Historial de reconeixement</string>
+    <string name="music_recognition_recognizing">Comprovant la gravació...</string>
+    <string name="music_recognition_result">%1$s - %2$s</string>
+    <string name="music_recognition_no_match">No s\'ha trobat cap coincidència.</string>
+    <string name="music_recognition_no_audio">No s\'ha capturat cap àudio.</string>
+    <string name="music_recognition_permission_required">Es requereix permís del micròfon.</string>
+    <string name="music_recognition_error">El reconeixement de música ha fallat.</string>
+    <string name="music_recognition_test_file">Prova el fitxer local actual</string>
+    <string name="music_recognition_data">Dades de reconeixement de música</string>
+    <string name="acoustid_test">Actualitza les metadades locals</string>
+    <string name="acoustid_test_title">Actualitza les metadades locals</string>
+    <string name="acoustid_test_processing">S\'està identificant el fitxer local complet i actualitzant-ne les metadades...</string>
+    <string name="acoustid_test_match">Metadades actualitzades:
+%1$s - %2$s</string>
+    <string name="acoustid_test_no_match">AcoustID no ha retornat cap coincidència.</string>
+    <string name="acoustid_test_low_confidence">S\'ha omès la coincidència perquè la confiança només era del %d%%.</string>
+    <string name="acoustid_test_no_audio">El fitxer no conté àudio.</string>
+    <string name="acoustid_test_error">L\'actualització de metadades ha fallat: %1$s</string>
+    <string name="edit_local_metadata">Edita les metadades locals</string>
+    <string name="local_metadata_cover">Caràtula local</string>
+    <string name="local_metadata_select_cover">Selecciona la caràtula</string>
+    <string name="local_metadata_remove_cover">Elimina la caràtula</string>
+    <string name="local_metadata_no_cover">No s\'ha seleccionat cap caràtula</string>
+    <string name="local_metadata_cover_error">No s\'ha pogut llegir la caràtula: %1$s</string>
+    <string name="local_metadata_edit_error">No s\'han pogut desar les metadades: %1$s</string>
+    <string name="local_metadata_update_channel">Actualitzacions de metadades</string>
+    <string name="local_metadata_update_title">Actualitzant les metadades locals</string>
+    <string name="local_metadata_update_in_progress">Ja hi ha una actualització de metadades locals en curs.</string>
+    <string name="local_metadata_update_confirm">És possible que se sobreescriguin les metadades i les caràtules de totes les cançons d\'aquesta carpeta i les seves subcarpetes. Vols continuar?</string>
+    <string name="local_metadata_update_progress">S\'han processat %1$d de %2$d</string>
+    <string name="local_metadata_update_complete">Actualització de metadades locals completada</string>
+    <string name="local_metadata_update_summary">Actualitzades: %1$d, sense coincidència: %2$d, confiança baixa: %3$d, errors: %4$d</string>
 </resources>

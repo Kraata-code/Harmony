@@ -291,4 +291,36 @@
     <string name="music_recognition_data_delete_region_confirm">Eliminar os dados transferidos para %1$s?</string>
     <string name="music_recognition_data_delete_error">Não foi possível eliminar os dados de reconhecimento.</string>
     <string name="music_recognition_data_with_size">%1$s (~%2$s)</string>
+    <string name="music_recognition_history">Histórico de reconhecimento</string>
+    <string name="music_recognition_recognizing">A verificar a gravação...</string>
+    <string name="music_recognition_result">%1$s - %2$s</string>
+    <string name="music_recognition_no_match">Nenhuma correspondência encontrada.</string>
+    <string name="music_recognition_no_audio">Não foi captado áudio.</string>
+    <string name="music_recognition_permission_required">É necessária a permissão do microfone.</string>
+    <string name="music_recognition_error">Falha no reconhecimento de música.</string>
+    <string name="music_recognition_test_file">Testar o ficheiro local atual</string>
+    <string name="music_recognition_data">Dados de reconhecimento de música</string>
+    <string name="acoustid_test">Atualizar metadados locais</string>
+    <string name="acoustid_test_title">Atualizar metadados locais</string>
+    <string name="acoustid_test_processing">A identificar o ficheiro local completo e a atualizar os respetivos metadados...</string>
+    <string name="acoustid_test_match">Metadados atualizados:
+%1$s - %2$s</string>
+    <string name="acoustid_test_no_match">O AcoustID não devolveu nenhuma correspondência.</string>
+    <string name="acoustid_test_low_confidence">Correspondência ignorada porque a confiança era apenas de %d%%.</string>
+    <string name="acoustid_test_no_audio">O ficheiro não contém áudio.</string>
+    <string name="acoustid_test_error">Falha ao atualizar metadados: %1$s</string>
+    <string name="edit_local_metadata">Editar metadados locais</string>
+    <string name="local_metadata_cover">Capa local</string>
+    <string name="local_metadata_select_cover">Selecionar capa</string>
+    <string name="local_metadata_remove_cover">Remover capa</string>
+    <string name="local_metadata_no_cover">Nenhuma capa selecionada</string>
+    <string name="local_metadata_cover_error">Não foi possível ler a capa: %1$s</string>
+    <string name="local_metadata_edit_error">Não foi possível guardar os metadados: %1$s</string>
+    <string name="local_metadata_update_channel">Atualizações de metadados</string>
+    <string name="local_metadata_update_title">A atualizar metadados locais</string>
+    <string name="local_metadata_update_in_progress">Já está em curso uma atualização de metadados locais.</string>
+    <string name="local_metadata_update_confirm">Os metadados e a capa de todas as músicas nesta pasta e subpastas podem ser substituídos. Continuar?</string>
+    <string name="local_metadata_update_progress">Processadas %1$d de %2$d</string>
+    <string name="local_metadata_update_complete">Atualização de metadados locais concluída</string>
+    <string name="local_metadata_update_summary">Atualizadas: %1$d, sem correspondência: %2$d, baixa confiança: %3$d, erros: %4$d</string>
 </resources>

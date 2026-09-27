@@ -26,7 +26,7 @@ val updateTestVersionCode = providers.gradleProperty("updateTestVersionCode")
     ?.toInt()
     ?: 2
 val updateTestVersionName = providers.gradleProperty("updateTestVersionName")
-    .orElse("1.0.1")
+    .orElse("1.1.0")
     .get()
 
 // Configuración de keystore con manejo seguro

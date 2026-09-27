@@ -243,4 +243,36 @@
     <string name="music_recognition_data_delete_region_confirm">هل تريد حذف البيانات التي تم تنزيلها لـ %1$s؟</string>
     <string name="music_recognition_data_delete_error">تعذّر حذف بيانات التعرّف.</string>
     <string name="music_recognition_data_with_size">%1$s (~%2$s)</string>
+    <string name="music_recognition_history">سجل التعرف</string>
+    <string name="music_recognition_recognizing">جارٍ التحقق من التسجيل...</string>
+    <string name="music_recognition_result">%1$s - %2$s</string>
+    <string name="music_recognition_no_match">لم يتم العثور على تطابق.</string>
+    <string name="music_recognition_no_audio">لم يتم التقاط أي صوت.</string>
+    <string name="music_recognition_permission_required">يلزم السماح باستخدام الميكروفون.</string>
+    <string name="music_recognition_error">تعذر التعرف على الموسيقى.</string>
+    <string name="music_recognition_test_file">اختبار الملف المحلي الحالي</string>
+    <string name="music_recognition_data">بيانات التعرف على الموسيقى</string>
+    <string name="acoustid_test">تحديث البيانات الوصفية المحلية</string>
+    <string name="acoustid_test_title">تحديث البيانات الوصفية المحلية</string>
+    <string name="acoustid_test_processing">جارٍ التعرف على الملف المحلي بالكامل وتحديث بياناته الوصفية...</string>
+    <string name="acoustid_test_match">بيانات التعريف محدثة:
+%1$s - %2$s</string>
+    <string name="acoustid_test_no_match">لم تُرجع AcoustID أي تطابق.</string>
+    <string name="acoustid_test_low_confidence">تم تخطي التطابق لأن مستوى الثقة %d%% فقط.</string>
+    <string name="acoustid_test_no_audio">الملف لا يحتوي على صوت.</string>
+    <string name="acoustid_test_error">فشل تحديث البيانات الوصفية: %1$s</string>
+    <string name="edit_local_metadata">تحرير البيانات الوصفية المحلية</string>
+    <string name="local_metadata_cover">صورة الغلاف المحلية</string>
+    <string name="local_metadata_select_cover">تحديد الغلاف</string>
+    <string name="local_metadata_remove_cover">إزالة الغلاف</string>
+    <string name="local_metadata_no_cover">لم يتم تحديد غلاف</string>
+    <string name="local_metadata_cover_error">تعذر قراءة صورة الغلاف: %1$s</string>
+    <string name="local_metadata_edit_error">تعذر حفظ البيانات الوصفية: %1$s</string>
+    <string name="local_metadata_update_channel">تحديثات البيانات الوصفية</string>
+    <string name="local_metadata_update_title">جارٍ تحديث البيانات الوصفية المحلية</string>
+    <string name="local_metadata_update_in_progress">يوجد تحديث للبيانات الوصفية المحلية قيد التنفيذ.</string>
+    <string name="local_metadata_update_confirm">قد يتم استبدال البيانات الوصفية وصورة الغلاف لجميع الأغاني في هذا المجلد ومجلداته الفرعية. هل تريد المتابعة؟</string>
+    <string name="local_metadata_update_progress">تمت معالجة %1$d من %2$d</string>
+    <string name="local_metadata_update_complete">اكتمل تحديث البيانات الوصفية المحلية</string>
+    <string name="local_metadata_update_summary">تم التحديث: %1$d، بلا تطابق: %2$d، ثقة منخفضة: %3$d، أخطاء: %4$d</string>
 </resources>

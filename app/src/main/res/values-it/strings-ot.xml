@@ -292,4 +292,36 @@
     <string name="music_recognition_data_delete_region_confirm">Eliminare i dati scaricati per %1$s?</string>
     <string name="music_recognition_data_delete_error">Impossibile eliminare i dati di riconoscimento.</string>
     <string name="music_recognition_data_with_size">%1$s (~%2$s)</string>
+    <string name="music_recognition_history">Cronologia riconoscimenti</string>
+    <string name="music_recognition_recognizing">Controllo della registrazione...</string>
+    <string name="music_recognition_result">%1$s - %2$s</string>
+    <string name="music_recognition_no_match">Nessuna corrispondenza trovata.</string>
+    <string name="music_recognition_no_audio">Nessun audio acquisito.</string>
+    <string name="music_recognition_permission_required">È necessaria l\'autorizzazione del microfono.</string>
+    <string name="music_recognition_error">Riconoscimento musicale non riuscito.</string>
+    <string name="music_recognition_test_file">Prova il file locale corrente</string>
+    <string name="music_recognition_data">Dati di riconoscimento musicale</string>
+    <string name="acoustid_test">Aggiorna metadati locali</string>
+    <string name="acoustid_test_title">Aggiorna metadati locali</string>
+    <string name="acoustid_test_processing">Identificazione del file locale completo e aggiornamento dei relativi metadati...</string>
+    <string name="acoustid_test_match">Metadati aggiornati:
+%1$s - %2$s</string>
+    <string name="acoustid_test_no_match">AcoustID non ha restituito alcuna corrispondenza.</string>
+    <string name="acoustid_test_low_confidence">Corrispondenza ignorata perché la confidenza era solo del %d%%.</string>
+    <string name="acoustid_test_no_audio">Il file non contiene audio.</string>
+    <string name="acoustid_test_error">Aggiornamento dei metadati non riuscito: %1$s</string>
+    <string name="edit_local_metadata">Modifica metadati locali</string>
+    <string name="local_metadata_cover">Copertina locale</string>
+    <string name="local_metadata_select_cover">Seleziona copertina</string>
+    <string name="local_metadata_remove_cover">Rimuovi copertina</string>
+    <string name="local_metadata_no_cover">Nessuna copertina selezionata</string>
+    <string name="local_metadata_cover_error">Impossibile leggere la copertina: %1$s</string>
+    <string name="local_metadata_edit_error">Impossibile salvare i metadati: %1$s</string>
+    <string name="local_metadata_update_channel">Aggiornamenti metadati</string>
+    <string name="local_metadata_update_title">Aggiornamento metadati locali</string>
+    <string name="local_metadata_update_in_progress">Un aggiornamento dei metadati locali è già in corso.</string>
+    <string name="local_metadata_update_confirm">I metadati e le copertine di tutti i brani in questa cartella e nelle sottocartelle potrebbero essere sovrascritti. Continuare?</string>
+    <string name="local_metadata_update_progress">Elaborati %1$d di %2$d</string>
+    <string name="local_metadata_update_complete">Aggiornamento metadati locali completato</string>
+    <string name="local_metadata_update_summary">Aggiornati: %1$d, nessuna corrispondenza: %2$d, bassa confidenza: %3$d, errori: %4$d</string>
 </resources>

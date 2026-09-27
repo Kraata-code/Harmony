@@ -288,4 +288,16 @@
     <string name="use_login_for_browse">Utiliser le compte connecté pour parcourir le contenu</string>
     <string name="use_login_for_browse_desc">Ceci peut influencer le contenu que vous voyez et affiche par exemple les albums Premium si vous êtes connecté avec un compte Premium</string>
     <string name="action_login">Se connecter</string>
+    <string name="version">version</string>
+    <string name="checking_for_updates">Vérification des mises à jour…</string>
+    <string name="update_check_failed">Impossible de vérifier les mises à jour (appuyez pour réessayer)</string>
+    <string name="update_available_title">Mise à jour d\'Harmony disponible</string>
+    <string name="update_available_version">Version %1$s</string>
+    <string name="update_release_notes">Nouveautés</string>
+    <string name="update_release_notes_empty">Aucune note de version disponible.</string>
+    <string name="update_download">Mettre à jour</string>
+    <string name="update_retry">Réessayer</string>
+    <string name="update_downloading">Téléchargement : %1$d%%</string>
+    <string name="update_downloading_unknown">Téléchargement…</string>
+    <string name="update_installing">Installation…</string>
 </resources>

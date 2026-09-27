@@ -1,14 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="more">Más</string>
+    <string name="music_recognition_history">Historial de reconocimiento</string>
     <string name="music_recognition">Reconocimiento de música</string>
     <string name="music_recognition_placeholder_title">Identificar una canción</string>
     <string name="music_recognition_placeholder_description">Toca el micrófono para escuchar la música que suena cerca.</string>
     <string name="music_recognition_start">Iniciar reconocimiento de música</string>
     <string name="music_recognition_stop">Detener reconocimiento de música</string>
     <string name="music_recognition_listening">Escuchando...</string>
+    <string name="music_recognition_recognizing">Comprobando la grabación...</string>
     <string name="music_recognition_data_required_title">Se necesitan datos de reconocimiento</string>
     <string name="music_recognition_data_required_message">Descarga la base de datos principal y una base regional antes de usar el reconocimiento de música.</string>
     <string name="music_recognition_data_install">Instalar datos</string>
+    <string name="music_recognition_result">%1$s - %2$s</string>
+    <string name="music_recognition_no_match">No se encontró ninguna coincidencia.</string>
+    <string name="music_recognition_no_audio">No se capturó audio.</string>
+    <string name="music_recognition_permission_required">Se necesita permiso para usar el micrófono.</string>
+    <string name="music_recognition_error">El reconocimiento musical falló.</string>
+    <string name="music_recognition_test_file">Probar archivo local actual</string>
+    <string name="music_recognition_data">Datos de reconocimiento musical</string>
     <string name="music_recognition_data_region">Regiones utilizadas para el reconocimiento</string>
     <string name="music_recognition_data_core">Base de datos principal</string>
     <string name="music_recognition_data_region_download">Base de datos regional seleccionada</string>
@@ -40,6 +50,13 @@
     <string name="local_metadata_no_cover">Sin carátula seleccionada</string>
     <string name="local_metadata_cover_error">No se pudo leer la carátula: %1$s</string>
     <string name="local_metadata_edit_error">No se pudieron guardar los metadatos: %1$s</string>
+    <string name="local_metadata_update_channel">Actualizaciones de metadatos</string>
+    <string name="local_metadata_update_title">Actualizando metadatos locales</string>
+    <string name="local_metadata_update_in_progress">Ya hay una actualización de metadatos locales en curso.</string>
+    <string name="local_metadata_update_confirm">Es posible que se sobrescriban los metadatos y las carátulas de todas las canciones de esta carpeta y sus subcarpetas. ¿Continuar?</string>
+    <string name="local_metadata_update_progress">Procesadas %1$d de %2$d</string>
+    <string name="local_metadata_update_complete">Actualización de metadatos locales completada</string>
+    <string name="local_metadata_update_summary">Actualizadas: %1$d, sin coincidencia: %2$d, baja confianza: %3$d, errores: %4$d</string>
     <string name="player_background_style">Estilo del fondo del reproductor</string>
     <string name="err_play_next_on_error">Ha ocurrido un error. Reproduciendo siguiente</string>
     <string name="player_background_default">Seguir tema</string>

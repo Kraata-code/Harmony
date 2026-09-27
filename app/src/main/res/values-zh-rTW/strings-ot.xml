@@ -136,4 +136,36 @@
     <string name="music_recognition_data_delete_region_confirm">要刪除 %1$s 的已下載資料嗎？</string>
     <string name="music_recognition_data_delete_error">無法刪除辨識資料。</string>
     <string name="music_recognition_data_with_size">%1$s（約 %2$s）</string>
+    <string name="music_recognition_history">辨識記錄</string>
+    <string name="music_recognition_recognizing">正在檢查錄音...</string>
+    <string name="music_recognition_result">%1$s - %2$s</string>
+    <string name="music_recognition_no_match">找不到相符項目。</string>
+    <string name="music_recognition_no_audio">未擷取音訊。</string>
+    <string name="music_recognition_permission_required">需要麥克風權限。</string>
+    <string name="music_recognition_error">音樂辨識失敗。</string>
+    <string name="music_recognition_test_file">測試目前的本機檔案</string>
+    <string name="music_recognition_data">音樂辨識資料</string>
+    <string name="acoustid_test">更新本機中繼資料</string>
+    <string name="acoustid_test_title">更新本機中繼資料</string>
+    <string name="acoustid_test_processing">正在辨識完整的本機檔案並更新其中繼資料...</string>
+    <string name="acoustid_test_match">中繼資料已更新：
+%1$s - %2$s</string>
+    <string name="acoustid_test_no_match">AcoustID 沒有傳回相符項目。</string>
+    <string name="acoustid_test_low_confidence">因信心度只有 %d%%，已略過相符項目。</string>
+    <string name="acoustid_test_no_audio">檔案不包含音訊。</string>
+    <string name="acoustid_test_error">中繼資料更新失敗：%1$s</string>
+    <string name="edit_local_metadata">編輯本機中繼資料</string>
+    <string name="local_metadata_cover">本機封面</string>
+    <string name="local_metadata_select_cover">選取封面</string>
+    <string name="local_metadata_remove_cover">移除封面</string>
+    <string name="local_metadata_no_cover">未選取封面</string>
+    <string name="local_metadata_cover_error">無法讀取封面：%1$s</string>
+    <string name="local_metadata_edit_error">無法儲存中繼資料：%1$s</string>
+    <string name="local_metadata_update_channel">中繼資料更新</string>
+    <string name="local_metadata_update_title">正在更新本機中繼資料</string>
+    <string name="local_metadata_update_in_progress">本機中繼資料更新已在進行中。</string>
+    <string name="local_metadata_update_confirm">此資料夾及其子資料夾中所有歌曲的中繼資料和封面可能會被覆寫。要繼續嗎？</string>
+    <string name="local_metadata_update_progress">已處理 %1$d/%2$d</string>
+    <string name="local_metadata_update_complete">本機中繼資料更新完成</string>
+    <string name="local_metadata_update_summary">已更新：%1$d，無相符項目：%2$d，低信心度：%3$d，錯誤：%4$d</string>
 </resources>

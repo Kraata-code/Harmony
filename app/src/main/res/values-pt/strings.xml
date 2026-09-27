@@ -288,4 +288,16 @@
     <string name="use_login_for_browse">Inicie a sessão para ver o conteúdo de navegação</string>
     <string name="use_login_for_browse_desc">Isto influencia o conteúdo visível, e por exemplo, mostra apenas álbuns Premium, se estiver autenticado com uma conta Premium</string>
     <string name="action_login">Iniciar sessão</string>
+    <string name="version">versão</string>
+    <string name="checking_for_updates">A verificar atualizações…</string>
+    <string name="update_check_failed">Não foi possível verificar atualizações (toque para tentar novamente)</string>
+    <string name="update_available_title">Atualização do Harmony disponível</string>
+    <string name="update_available_version">Versão %1$s</string>
+    <string name="update_release_notes">Novidades</string>
+    <string name="update_release_notes_empty">Não existem notas de lançamento disponíveis.</string>
+    <string name="update_download">Atualizar</string>
+    <string name="update_retry">Tentar novamente</string>
+    <string name="update_downloading">A transferir: %1$d%%</string>
+    <string name="update_downloading_unknown">A transferir…</string>
+    <string name="update_installing">A instalar…</string>
 </resources>

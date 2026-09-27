@@ -260,4 +260,36 @@
     <string name="music_recognition_data_delete_region_confirm">Обрисати преузете податке за %1$s?</string>
     <string name="music_recognition_data_delete_error">Брисање података за препознавање није успело.</string>
     <string name="music_recognition_data_with_size">%1$s (~%2$s)</string>
+    <string name="music_recognition_history">Историја препознавања</string>
+    <string name="music_recognition_recognizing">Провера снимка...</string>
+    <string name="music_recognition_result">%1$s - %2$s</string>
+    <string name="music_recognition_no_match">Подударање није пронађено.</string>
+    <string name="music_recognition_no_audio">Није снимљен звук.</string>
+    <string name="music_recognition_permission_required">Потребна је дозвола за микрофон.</string>
+    <string name="music_recognition_error">Препознавање музике није успело.</string>
+    <string name="music_recognition_test_file">Тестирај тренутну локалну датотеку</string>
+    <string name="music_recognition_data">Подаци за препознавање музике</string>
+    <string name="acoustid_test">Ажурирај локалне метаподатке</string>
+    <string name="acoustid_test_title">Ажурирај локалне метаподатке</string>
+    <string name="acoustid_test_processing">Препознавање целе локалне датотеке и ажурирање њених метаподатака...</string>
+    <string name="acoustid_test_match">Метаподаци су ажурирани:
+%1$s - %2$s</string>
+    <string name="acoustid_test_no_match">AcoustID није вратио подударање.</string>
+    <string name="acoustid_test_low_confidence">Подударање је прескочено јер је поузданост била само %d%%.</string>
+    <string name="acoustid_test_no_audio">Датотека не садржи звук.</string>
+    <string name="acoustid_test_error">Ажурирање метаподатака није успело: %1$s</string>
+    <string name="edit_local_metadata">Уреди локалне метаподатке</string>
+    <string name="local_metadata_cover">Локална омотница</string>
+    <string name="local_metadata_select_cover">Изабери омотницу</string>
+    <string name="local_metadata_remove_cover">Уклони омотницу</string>
+    <string name="local_metadata_no_cover">Омотница није изабрана</string>
+    <string name="local_metadata_cover_error">Читање омотнице није успело: %1$s</string>
+    <string name="local_metadata_edit_error">Чување метаподатака није успело: %1$s</string>
+    <string name="local_metadata_update_channel">Ажурирања метаподатака</string>
+    <string name="local_metadata_update_title">Ажурирање локалних метаподатака</string>
+    <string name="local_metadata_update_in_progress">Ажурирање локалних метаподатака је већ у току.</string>
+    <string name="local_metadata_update_confirm">Метаподаци и омотнице свих песама у овој фасцикли и њеним подфасциклама могу бити замењени. Наставити?</string>
+    <string name="local_metadata_update_progress">Обрађено %1$d од %2$d</string>
+    <string name="local_metadata_update_complete">Ажурирање локалних метаподатака је завршено</string>
+    <string name="local_metadata_update_summary">Ажурирано: %1$d, без подударања: %2$d, ниска поузданост: %3$d, грешке: %4$d</string>
 </resources>

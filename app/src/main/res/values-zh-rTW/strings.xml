@@ -267,4 +267,16 @@
     <string name="new_version_available">發現新版本</string>
     <string name="translation_models">翻譯模型</string>
     <string name="clear_translation_models">清除翻譯模型</string>
+    <string name="version">版本</string>
+    <string name="checking_for_updates">正在檢查更新…</string>
+    <string name="update_check_failed">無法檢查更新（點選以重試）</string>
+    <string name="update_available_title">Harmony 更新可用</string>
+    <string name="update_available_version">版本 %1$s</string>
+    <string name="update_release_notes">更新內容</string>
+    <string name="update_release_notes_empty">沒有可用的版本資訊。</string>
+    <string name="update_download">更新</string>
+    <string name="update_retry">重試</string>
+    <string name="update_downloading">正在下載：%1$d%%</string>
+    <string name="update_downloading_unknown">正在下載…</string>
+    <string name="update_installing">正在安裝…</string>
 </resources>

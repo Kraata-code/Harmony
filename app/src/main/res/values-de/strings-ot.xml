@@ -280,4 +280,36 @@
     <string name="music_recognition_data_delete_region_confirm">Heruntergeladene Daten für %1$s löschen?</string>
     <string name="music_recognition_data_delete_error">Erkennungsdaten konnten nicht gelöscht werden.</string>
     <string name="music_recognition_data_with_size">%1$s (~%2$s)</string>
+    <string name="music_recognition_history">Erkennungsverlauf</string>
+    <string name="music_recognition_recognizing">Aufnahme wird überprüft...</string>
+    <string name="music_recognition_result">%1$s - %2$s</string>
+    <string name="music_recognition_no_match">Kein Treffer gefunden.</string>
+    <string name="music_recognition_no_audio">Kein Audio aufgenommen.</string>
+    <string name="music_recognition_permission_required">Mikrofonberechtigung erforderlich.</string>
+    <string name="music_recognition_error">Musikerkennung fehlgeschlagen.</string>
+    <string name="music_recognition_test_file">Aktuelle lokale Datei testen</string>
+    <string name="music_recognition_data">Daten zur Musikerkennung</string>
+    <string name="acoustid_test">Lokale Metadaten aktualisieren</string>
+    <string name="acoustid_test_title">Lokale Metadaten aktualisieren</string>
+    <string name="acoustid_test_processing">Vollständige lokale Datei wird erkannt und ihre Metadaten werden aktualisiert...</string>
+    <string name="acoustid_test_match">Metadaten aktualisiert:
+%1$s - %2$s</string>
+    <string name="acoustid_test_no_match">AcoustID hat keinen Treffer zurückgegeben.</string>
+    <string name="acoustid_test_low_confidence">Treffer übersprungen, da die Sicherheit nur %d%% betrug.</string>
+    <string name="acoustid_test_no_audio">Die Datei enthält kein Audio.</string>
+    <string name="acoustid_test_error">Aktualisierung der Metadaten fehlgeschlagen: %1$s</string>
+    <string name="edit_local_metadata">Lokale Metadaten bearbeiten</string>
+    <string name="local_metadata_cover">Lokales Cover</string>
+    <string name="local_metadata_select_cover">Cover auswählen</string>
+    <string name="local_metadata_remove_cover">Cover entfernen</string>
+    <string name="local_metadata_no_cover">Kein Cover ausgewählt</string>
+    <string name="local_metadata_cover_error">Cover konnte nicht gelesen werden: %1$s</string>
+    <string name="local_metadata_edit_error">Metadaten konnten nicht gespeichert werden: %1$s</string>
+    <string name="local_metadata_update_channel">Metadatenaktualisierungen</string>
+    <string name="local_metadata_update_title">Lokale Metadaten werden aktualisiert</string>
+    <string name="local_metadata_update_in_progress">Eine Aktualisierung der lokalen Metadaten läuft bereits.</string>
+    <string name="local_metadata_update_confirm">Metadaten und Cover aller Songs in diesem Ordner und seinen Unterordnern können überschrieben werden. Fortfahren?</string>
+    <string name="local_metadata_update_progress">%1$d von %2$d verarbeitet</string>
+    <string name="local_metadata_update_complete">Aktualisierung der lokalen Metadaten abgeschlossen</string>
+    <string name="local_metadata_update_summary">Aktualisiert: %1$d, kein Treffer: %2$d, geringe Sicherheit: %3$d, Fehler: %4$d</string>
 </resources>

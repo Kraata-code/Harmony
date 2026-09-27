@@ -170,4 +170,36 @@
     <string name="music_recognition_data_delete_region_confirm">Kas kustutada piirkonna %1$s allalaaditud andmed?</string>
     <string name="music_recognition_data_delete_error">Tuvastusandmete kustutamine ebaõnnestus.</string>
     <string name="music_recognition_data_with_size">%1$s (~%2$s)</string>
+    <string name="music_recognition_history">Tuvastamise ajalugu</string>
+    <string name="music_recognition_recognizing">Salvestise kontrollimine...</string>
+    <string name="music_recognition_result">%1$s - %2$s</string>
+    <string name="music_recognition_no_match">Sobivust ei leitud.</string>
+    <string name="music_recognition_no_audio">Heli ei jäädvustatud.</string>
+    <string name="music_recognition_permission_required">Mikrofoni luba on vajalik.</string>
+    <string name="music_recognition_error">Muusika tuvastamine nurjus.</string>
+    <string name="music_recognition_test_file">Testi praegust kohalikku faili</string>
+    <string name="music_recognition_data">Muusika tuvastamise andmed</string>
+    <string name="acoustid_test">Värskenda kohalikke metaandmeid</string>
+    <string name="acoustid_test_title">Värskenda kohalikke metaandmeid</string>
+    <string name="acoustid_test_processing">Tuvastatakse kogu kohalik fail ja värskendatakse selle metaandmeid...</string>
+    <string name="acoustid_test_match">Metaandmed värskendatud:
+%1$s - %2$s</string>
+    <string name="acoustid_test_no_match">AcoustID ei tagastanud sobivust.</string>
+    <string name="acoustid_test_low_confidence">Sobivus jäeti vahele, sest kindlus oli vaid %d%%.</string>
+    <string name="acoustid_test_no_audio">Fail ei sisalda heli.</string>
+    <string name="acoustid_test_error">Metaandmete värskendamine nurjus: %1$s</string>
+    <string name="edit_local_metadata">Muuda kohalikke metaandmeid</string>
+    <string name="local_metadata_cover">Kohalik kaanepilt</string>
+    <string name="local_metadata_select_cover">Vali kaanepilt</string>
+    <string name="local_metadata_remove_cover">Eemalda kaanepilt</string>
+    <string name="local_metadata_no_cover">Kaanepilti pole valitud</string>
+    <string name="local_metadata_cover_error">Kaanepilti ei õnnestunud lugeda: %1$s</string>
+    <string name="local_metadata_edit_error">Metaandmeid ei õnnestunud salvestada: %1$s</string>
+    <string name="local_metadata_update_channel">Metaandmete värskendused</string>
+    <string name="local_metadata_update_title">Kohalike metaandmete värskendamine</string>
+    <string name="local_metadata_update_in_progress">Kohalike metaandmete värskendus on juba käimas.</string>
+    <string name="local_metadata_update_confirm">Selle kausta ja alamkaustade kõigi lugude metaandmed ja kaanepildid võidakse üle kirjutada. Jätkata?</string>
+    <string name="local_metadata_update_progress">Töödeldud %1$d/%2$d</string>
+    <string name="local_metadata_update_complete">Kohalike metaandmete värskendamine lõpetatud</string>
+    <string name="local_metadata_update_summary">Värskendatud: %1$d, sobivus puudub: %2$d, madal kindlus: %3$d, vead: %4$d</string>
 </resources>

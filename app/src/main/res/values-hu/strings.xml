@@ -279,4 +279,16 @@
     <string name="options">Opciók</string>
     <string name="preview">Előnézet</string>
     <string name="enable_discord_rpc">Rich Presence engedélyezése</string>
+    <string name="version">verzió</string>
+    <string name="checking_for_updates">Frissítések keresése…</string>
+    <string name="update_check_failed">Nem sikerült ellenőrizni a frissítéseket (koppintson az újrapróbáláshoz)</string>
+    <string name="update_available_title">Harmony-frissítés érhető el</string>
+    <string name="update_available_version">Verzió: %1$s</string>
+    <string name="update_release_notes">Újdonságok</string>
+    <string name="update_release_notes_empty">Nincsenek elérhető kiadási megjegyzések.</string>
+    <string name="update_download">Frissítés</string>
+    <string name="update_retry">Újra</string>
+    <string name="update_downloading">Letöltés: %1$d%%</string>
+    <string name="update_downloading_unknown">Letöltés…</string>
+    <string name="update_installing">Telepítés…</string>
 </resources>

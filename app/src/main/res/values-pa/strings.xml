@@ -229,4 +229,16 @@
     <string name="library_album_empty">ਲਾਇਬ੍ਰੇਰੀ ਟੇਪਾਂ ਇੱਥੇ ਦਿਖਣ ਗੀਆਂ</string>
     <string name="library_playlist_empty">ਤੁਹਾਡੀਆਂ ਚਾਲ ਸੂਚੀਆਂ ਇੱਥੇ ਦਿਖਣ ਗਿਆਂ</string>
     <string name="other_versions">ਟੇਪ ਦ੍ਰਿਸ਼</string>
+    <string name="version">ਵਰਜਨ</string>
+    <string name="checking_for_updates">ਅੱਪਡੇਟਾਂ ਦੀ ਜਾਂਚ ਕੀਤੀ ਜਾ ਰਹੀ ਹੈ…</string>
+    <string name="update_check_failed">ਅੱਪਡੇਟਾਂ ਦੀ ਜਾਂਚ ਨਹੀਂ ਹੋ ਸਕੀ (ਮੁੜ ਕੋਸ਼ਿਸ਼ ਕਰਨ ਲਈ ਟੈਪ ਕਰੋ)</string>
+    <string name="update_available_title">Harmony ਅੱਪਡੇਟ ਉਪਲਬਧ</string>
+    <string name="update_available_version">ਵਰਜਨ %1$s</string>
+    <string name="update_release_notes">ਨਵਾਂ ਕੀ ਹੈ</string>
+    <string name="update_release_notes_empty">ਕੋਈ ਰਿਲੀਜ਼ ਨੋਟ ਉਪਲਬਧ ਨਹੀਂ।</string>
+    <string name="update_download">ਅੱਪਡੇਟ</string>
+    <string name="update_retry">ਮੁੜ ਕੋਸ਼ਿਸ਼</string>
+    <string name="update_downloading">ਡਾਊਨਲੋਡ ਹੋ ਰਿਹਾ ਹੈ: %1$d%%</string>
+    <string name="update_downloading_unknown">ਡਾਊਨਲੋਡ ਹੋ ਰਿਹਾ ਹੈ…</string>
+    <string name="update_installing">ਇੰਸਟੌਲ ਹੋ ਰਿਹਾ ਹੈ…</string>
 </resources>

@@ -295,4 +295,36 @@
     <string name="music_recognition_data_delete_region_confirm">Удалить скачанные данные для региона %1$s?</string>
     <string name="music_recognition_data_delete_error">Не удалось удалить данные распознавания.</string>
     <string name="music_recognition_data_with_size">%1$s (~%2$s)</string>
+    <string name="music_recognition_history">История распознавания</string>
+    <string name="music_recognition_recognizing">Проверка записи...</string>
+    <string name="music_recognition_result">%1$s - %2$s</string>
+    <string name="music_recognition_no_match">Совпадений не найдено.</string>
+    <string name="music_recognition_no_audio">Аудио не записано.</string>
+    <string name="music_recognition_permission_required">Требуется разрешение на использование микрофона.</string>
+    <string name="music_recognition_error">Не удалось распознать музыку.</string>
+    <string name="music_recognition_test_file">Проверить текущий локальный файл</string>
+    <string name="music_recognition_data">Данные распознавания музыки</string>
+    <string name="acoustid_test">Обновить локальные метаданные</string>
+    <string name="acoustid_test_title">Обновить локальные метаданные</string>
+    <string name="acoustid_test_processing">Определение полного локального файла и обновление его метаданных...</string>
+    <string name="acoustid_test_match">Метаданные обновлены:
+%1$s - %2$s</string>
+    <string name="acoustid_test_no_match">AcoustID не вернул совпадений.</string>
+    <string name="acoustid_test_low_confidence">Совпадение пропущено, так как вероятность составила всего %d%%.</string>
+    <string name="acoustid_test_no_audio">Файл не содержит аудио.</string>
+    <string name="acoustid_test_error">Не удалось обновить метаданные: %1$s</string>
+    <string name="edit_local_metadata">Изменить локальные метаданные</string>
+    <string name="local_metadata_cover">Локальная обложка</string>
+    <string name="local_metadata_select_cover">Выбрать обложку</string>
+    <string name="local_metadata_remove_cover">Удалить обложку</string>
+    <string name="local_metadata_no_cover">Обложка не выбрана</string>
+    <string name="local_metadata_cover_error">Не удалось прочитать обложку: %1$s</string>
+    <string name="local_metadata_edit_error">Не удалось сохранить метаданные: %1$s</string>
+    <string name="local_metadata_update_channel">Обновления метаданных</string>
+    <string name="local_metadata_update_title">Обновление локальных метаданных</string>
+    <string name="local_metadata_update_in_progress">Обновление локальных метаданных уже выполняется.</string>
+    <string name="local_metadata_update_confirm">Метаданные и обложки всех песен в этой папке и её подпапках могут быть перезаписаны. Продолжить?</string>
+    <string name="local_metadata_update_progress">Обработано %1$d из %2$d</string>
+    <string name="local_metadata_update_complete">Обновление локальных метаданных завершено</string>
+    <string name="local_metadata_update_summary">Обновлено: %1$d, без совпадения: %2$d, низкая вероятность: %3$d, ошибок: %4$d</string>
 </resources>

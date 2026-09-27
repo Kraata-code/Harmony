@@ -29,4 +29,36 @@
     <string name="music_recognition_data_delete_region_confirm">Ta bort den nedladdade datan för %1$s?</string>
     <string name="music_recognition_data_delete_error">Det gick inte att ta bort identifieringsdata.</string>
     <string name="music_recognition_data_with_size">%1$s (~%2$s)</string>
+    <string name="music_recognition_history">Identifieringshistorik</string>
+    <string name="music_recognition_recognizing">Kontrollerar inspelningen...</string>
+    <string name="music_recognition_result">%1$s - %2$s</string>
+    <string name="music_recognition_no_match">Ingen träff hittades.</string>
+    <string name="music_recognition_no_audio">Inget ljud spelades in.</string>
+    <string name="music_recognition_permission_required">Mikrofontillstånd krävs.</string>
+    <string name="music_recognition_error">Musikidentifieringen misslyckades.</string>
+    <string name="music_recognition_test_file">Testa aktuell lokal fil</string>
+    <string name="music_recognition_data">Data för musikidentifiering</string>
+    <string name="acoustid_test">Uppdatera lokala metadata</string>
+    <string name="acoustid_test_title">Uppdatera lokala metadata</string>
+    <string name="acoustid_test_processing">Identifierar hela den lokala filen och uppdaterar dess metadata...</string>
+    <string name="acoustid_test_match">Metadata uppdaterades:
+%1$s - %2$s</string>
+    <string name="acoustid_test_no_match">AcoustID returnerade ingen träff.</string>
+    <string name="acoustid_test_low_confidence">Träffen hoppades över eftersom säkerheten bara var %d%%.</string>
+    <string name="acoustid_test_no_audio">Filen innehåller inget ljud.</string>
+    <string name="acoustid_test_error">Det gick inte att uppdatera metadata: %1$s</string>
+    <string name="edit_local_metadata">Redigera lokala metadata</string>
+    <string name="local_metadata_cover">Lokal omslagsbild</string>
+    <string name="local_metadata_select_cover">Välj omslagsbild</string>
+    <string name="local_metadata_remove_cover">Ta bort omslagsbild</string>
+    <string name="local_metadata_no_cover">Ingen omslagsbild vald</string>
+    <string name="local_metadata_cover_error">Det gick inte att läsa omslagsbilden: %1$s</string>
+    <string name="local_metadata_edit_error">Det gick inte att spara metadata: %1$s</string>
+    <string name="local_metadata_update_channel">Metadatauppdateringar</string>
+    <string name="local_metadata_update_title">Uppdaterar lokala metadata</string>
+    <string name="local_metadata_update_in_progress">En lokal metadatauppdatering pågår redan.</string>
+    <string name="local_metadata_update_confirm">Metadata och omslagsbilder för alla låtar i denna mapp och dess undermappar kan skrivas över. Fortsätta?</string>
+    <string name="local_metadata_update_progress">Bearbetade %1$d av %2$d</string>
+    <string name="local_metadata_update_complete">Lokal metadatauppdatering klar</string>
+    <string name="local_metadata_update_summary">Uppdaterade: %1$d, ingen träff: %2$d, låg säkerhet: %3$d, fel: %4$d</string>
 </resources>

@@ -260,4 +260,36 @@
     <string name="music_recognition_data_delete_region_confirm">%1$s의 다운로드 데이터를 삭제할까요?</string>
     <string name="music_recognition_data_delete_error">인식 데이터를 삭제할 수 없습니다.</string>
     <string name="music_recognition_data_with_size">%1$s(~%2$s)</string>
+    <string name="music_recognition_history">인식 기록</string>
+    <string name="music_recognition_recognizing">녹음 확인 중...</string>
+    <string name="music_recognition_result">%1$s - %2$s</string>
+    <string name="music_recognition_no_match">일치하는 항목을 찾을 수 없습니다.</string>
+    <string name="music_recognition_no_audio">오디오가 캡처되지 않았습니다.</string>
+    <string name="music_recognition_permission_required">마이크 권한이 필요합니다.</string>
+    <string name="music_recognition_error">음악 인식에 실패했습니다.</string>
+    <string name="music_recognition_test_file">현재 로컬 파일 테스트</string>
+    <string name="music_recognition_data">음악 인식 데이터</string>
+    <string name="acoustid_test">로컬 메타데이터 업데이트</string>
+    <string name="acoustid_test_title">로컬 메타데이터 업데이트</string>
+    <string name="acoustid_test_processing">전체 로컬 파일을 식별하고 메타데이터를 업데이트하는 중...</string>
+    <string name="acoustid_test_match">메타데이터 업데이트됨:
+%1$s - %2$s</string>
+    <string name="acoustid_test_no_match">AcoustID에서 일치하는 항목을 반환하지 않았습니다.</string>
+    <string name="acoustid_test_low_confidence">신뢰도가 %d%%에 불과하여 일치 항목을 건너뛰었습니다.</string>
+    <string name="acoustid_test_no_audio">파일에 오디오가 없습니다.</string>
+    <string name="acoustid_test_error">메타데이터 업데이트 실패: %1$s</string>
+    <string name="edit_local_metadata">로컬 메타데이터 편집</string>
+    <string name="local_metadata_cover">로컬 커버 아트</string>
+    <string name="local_metadata_select_cover">커버 선택</string>
+    <string name="local_metadata_remove_cover">커버 삭제</string>
+    <string name="local_metadata_no_cover">선택된 커버 없음</string>
+    <string name="local_metadata_cover_error">커버 아트를 읽을 수 없습니다: %1$s</string>
+    <string name="local_metadata_edit_error">메타데이터를 저장할 수 없습니다: %1$s</string>
+    <string name="local_metadata_update_channel">메타데이터 업데이트</string>
+    <string name="local_metadata_update_title">로컬 메타데이터 업데이트 중</string>
+    <string name="local_metadata_update_in_progress">로컬 메타데이터 업데이트가 이미 진행 중입니다.</string>
+    <string name="local_metadata_update_confirm">이 폴더와 하위 폴더의 모든 곡의 메타데이터와 커버 아트가 덮어써질 수 있습니다. 계속하시겠습니까?</string>
+    <string name="local_metadata_update_progress">%1$d/%2$d 처리됨</string>
+    <string name="local_metadata_update_complete">로컬 메타데이터 업데이트 완료</string>
+    <string name="local_metadata_update_summary">업데이트됨: %1$d, 일치 항목 없음: %2$d, 낮은 신뢰도: %3$d, 오류: %4$d</string>
 </resources>
