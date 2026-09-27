@@ -121,8 +121,8 @@ import com.kraata.harmony.ui.menu.AlbumMenu
 import com.kraata.harmony.ui.menu.YouTubeAlbumMenu
 import com.kraata.harmony.ui.utils.backToMain
 import com.kraata.harmony.ui.utils.getNSongsString
-import com.kraata.harmony.utils.LocalArtworkPath
 import com.kraata.harmony.utils.getDownloadState
+import com.kraata.harmony.utils.getThumbnailModel
 import com.kraata.harmony.utils.joinByBullet
 import com.kraata.harmony.utils.rememberPreference
 import com.kraata.harmony.viewmodels.AlbumViewModel
@@ -203,11 +203,7 @@ fun AlbumScreen(
                         if (thumbnailUrl != null) {
                             val px = (AlbumThumbnailSize.value * density.density).roundToInt()
                             AsyncImage(
-                                model = if (thumbnailUrl.startsWith("/storage")) LocalArtworkPath(
-                                    thumbnailUrl,
-                                    px,
-                                    px
-                                ) else thumbnailUrl,
+                                model = getThumbnailModel(thumbnailUrl, px, px),
                                 contentDescription = null,
                                 modifier = Modifier
                                     .size(AlbumThumbnailSize)

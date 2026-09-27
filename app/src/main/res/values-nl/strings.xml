@@ -279,4 +279,16 @@
     <string name="use_login_for_browse_desc">Dit kan invloed hebben op welke inhoud u ziet en laat bijvoorbeeld alleen premium albums zien als u bent ingelogd met een Premium account</string>
     <string name="use_login_for_browse">Gebruik login om inhoud te bekijken</string>
     <string name="action_login">Inloggen</string>
+    <string name="version">versie</string>
+    <string name="checking_for_updates">Controleren op updates…</string>
+    <string name="update_check_failed">Kan niet controleren op updates (tik om opnieuw te proberen)</string>
+    <string name="update_available_title">Harmony-update beschikbaar</string>
+    <string name="update_available_version">Versie %1$s</string>
+    <string name="update_release_notes">Wat is er nieuw</string>
+    <string name="update_release_notes_empty">Geen releaseopmerkingen beschikbaar.</string>
+    <string name="update_download">Bijwerken</string>
+    <string name="update_retry">Opnieuw proberen</string>
+    <string name="update_downloading">Downloaden: %1$d%%</string>
+    <string name="update_downloading_unknown">Downloaden…</string>
+    <string name="update_installing">Installeren…</string>
 </resources>

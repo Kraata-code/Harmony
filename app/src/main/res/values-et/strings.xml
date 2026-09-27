@@ -279,4 +279,16 @@
     <string name="use_login_for_browse">Sisu sirvimiseks logi sisse</string>
     <string name="use_login_for_browse_desc">See võib mõjutada mis sisu sa näed, sealhulgas kui kasutad YouTube Premium-kontot, siis YouTube Premiumi jaoks mõeldud albumeid</string>
     <string name="action_login">Logi sisse</string>
+    <string name="version">versioon</string>
+    <string name="checking_for_updates">Värskenduste kontrollimine…</string>
+    <string name="update_check_failed">Värskendusi ei õnnestunud kontrollida (puuduta uuesti proovimiseks)</string>
+    <string name="update_available_title">Harmony värskendus on saadaval</string>
+    <string name="update_available_version">Versioon %1$s</string>
+    <string name="update_release_notes">Mis on uut</string>
+    <string name="update_release_notes_empty">Väljalaskemärkmed pole saadaval.</string>
+    <string name="update_download">Värskenda</string>
+    <string name="update_retry">Proovi uuesti</string>
+    <string name="update_downloading">Allalaadimine: %1$d%%</string>
+    <string name="update_downloading_unknown">Allalaadimine…</string>
+    <string name="update_installing">Installimine…</string>
 </resources>

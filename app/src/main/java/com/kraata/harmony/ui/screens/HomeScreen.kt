@@ -112,6 +112,7 @@ import com.kraata.harmony.ui.menu.YouTubeArtistMenu
 import com.kraata.harmony.ui.menu.YouTubePlaylistMenu
 import com.kraata.harmony.ui.menu.YouTubeSongMenu
 import com.kraata.harmony.ui.utils.SnapLayoutInfoProvider
+import com.kraata.harmony.utils.getThumbnailModel
 import com.kraata.harmony.utils.rememberPreference
 import com.kraata.harmony.viewmodels.HomeViewModel
 import com.zionhuang.innertube.models.AlbumItem
@@ -219,6 +220,7 @@ fun HomeScreen(
                                     originalSong = it,
                                     navController = navController,
                                     onDismiss = menuState::dismiss,
+                                    onLocalMetadataUpdated = viewModel::refresh,
                                 )
                             }
                         },
@@ -611,7 +613,7 @@ fun HomeScreen(
                                         ThumbnailCornerRadius
                                     )
                                 AsyncImage(
-                                    model = thumbnailUrl,
+                                    model = getThumbnailModel(thumbnailUrl),
                                     contentDescription = null,
                                     modifier = Modifier
                                         .size(ListThumbnailSize)
@@ -657,7 +659,7 @@ fun HomeScreen(
                                         ThumbnailCornerRadius
                                     )
                                 AsyncImage(
-                                    model = thumbnailUrl,
+                                    model = getThumbnailModel(thumbnailUrl),
                                     contentDescription = null,
                                     modifier = Modifier
                                         .size(ListThumbnailSize)

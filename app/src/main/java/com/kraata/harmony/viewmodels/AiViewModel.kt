@@ -256,6 +256,14 @@ ChatMessage(
         _messages.value = emptyList()
         _errorMessage.value = null
 
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                llamaEngine?.clearConversation()
+            } catch (e: Exception) {
+                Log.e(TAG, "Error clearing native conversation", e)
+            }
+        }
+
         if (_isInitialized.value) {
             _messages.value = listOf(
                 ChatMessage(

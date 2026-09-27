@@ -21,6 +21,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
+import androidx.datastore.preferences.core.edit
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -43,6 +44,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
@@ -50,8 +52,15 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.AutoAwesome
+import androidx.compose.material.icons.rounded.Contactless
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
@@ -62,6 +71,7 @@ import androidx.compose.material3.NavigationRailItem
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
 import androidx.compose.material3.contentColorFor
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -84,6 +94,7 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -97,8 +108,6 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.util.fastForEach
 import androidx.core.net.toUri
 import androidx.core.util.Consumer
@@ -123,7 +132,9 @@ import com.kraata.harmony.constants.DarkModeKey
 import com.kraata.harmony.constants.DefaultOpenTabKey
 import com.kraata.harmony.constants.DynamicThemeKey
 import com.kraata.harmony.constants.EnabledTabsKey
+import com.kraata.harmony.constants.FloatingMiniplayerKey
 import com.kraata.harmony.constants.HighContrastKey
+import com.kraata.harmony.constants.LEGACY_DEFAULT_ENABLED_TABS
 import com.kraata.harmony.constants.LibraryFilterKey
 import com.kraata.harmony.constants.MinMiniPlayerHeight
 import com.kraata.harmony.constants.MiniPlayerHeight
@@ -131,13 +142,24 @@ import com.kraata.harmony.constants.NavigationBarAnimationSpec
 import com.kraata.harmony.constants.NavigationBarHeight
 import com.kraata.harmony.constants.OOBE_VERSION
 import com.kraata.harmony.constants.OobeStatusKey
+import com.kraata.harmony.constants.LocalMetadataUpdatePendingErrorsKey
+import com.kraata.harmony.constants.LocalMetadataUpdatePendingFolderKey
+import com.kraata.harmony.constants.LocalMetadataUpdatePendingLowConfidenceKey
+import com.kraata.harmony.constants.LocalMetadataUpdatePendingNoMatchKey
+import com.kraata.harmony.constants.LocalMetadataUpdatePendingUpdatedKey
 import com.kraata.harmony.constants.PureBlackKey
 import com.kraata.harmony.constants.SlimNavBarKey
 import com.kraata.harmony.db.MusicDatabase
+import com.kraata.harmony.data.DownloadState
+import com.kraata.harmony.data.UpdateChecker
+import com.kraata.harmony.data.UpdateCheckState
+import com.kraata.harmony.data.UpdateInfo
+import com.kraata.harmony.data.UpdateRepository
 import com.kraata.harmony.playback.DownloadUtil
 import com.kraata.harmony.playback.MediaControllerViewModel
 import com.kraata.harmony.playback.MusicService
 import com.kraata.harmony.playback.PlayerConnection
+import com.kraata.harmony.service.LocalMetadataUpdateWorker
 import com.kraata.harmony.ui.component.rememberBottomSheetState
 import com.kraata.harmony.ui.component.shimmer.ShimmerTheme
 import com.kraata.harmony.ui.menu.BottomSheetMenu
@@ -145,13 +167,14 @@ import com.kraata.harmony.ui.menu.MenuState
 import com.kraata.harmony.ui.player.BottomSheetPlayer
 import com.kraata.harmony.ui.player.MiniPlayer
 import com.kraata.harmony.ui.screens.AccountScreen
-import com.kraata.harmony.ui.screens.AiScreen
 import com.kraata.harmony.ui.screens.AlbumScreen
+import com.kraata.harmony.ui.screens.AiScreen
 import com.kraata.harmony.ui.screens.BrowseScreen
 import com.kraata.harmony.ui.screens.HistoryScreen
 import com.kraata.harmony.ui.screens.HomeScreen
 import com.kraata.harmony.ui.screens.LoginScreen
 import com.kraata.harmony.ui.screens.MoodAndGenresScreen
+import com.kraata.harmony.ui.screens.MusicRecognitionScreen
 import com.kraata.harmony.ui.screens.Screens
 import com.kraata.harmony.ui.screens.SetupWizard
 import com.kraata.harmony.ui.screens.StatsScreen
@@ -192,10 +215,11 @@ import com.kraata.harmony.ui.theme.OuterTuneTheme
 import com.kraata.harmony.ui.theme.extractThemeColor
 import com.kraata.harmony.ui.utils.appBarScrollBehavior
 import com.kraata.harmony.utils.ActivityLauncherHelper
-import com.kraata.harmony.utils.LocalArtworkPath
 import com.kraata.harmony.utils.NetworkConnectivityObserver
 import com.kraata.harmony.utils.SyncUtils
 import com.kraata.harmony.utils.coilCoroutine
+import com.kraata.harmony.utils.dataStore
+import com.kraata.harmony.utils.getThumbnailModel
 import com.kraata.harmony.utils.lmScannerCoroutine
 import com.kraata.harmony.utils.rememberEnumPreference
 import com.kraata.harmony.utils.rememberPreference
@@ -204,10 +228,11 @@ import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import javax.inject.Inject
-import com.kraata.harmony.constants.FloatingMiniplayerKey
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -226,6 +251,7 @@ class MainActivity : ComponentActivity() {
     lateinit var connectivityObserver: NetworkConnectivityObserver
 
     private var playerConnection by mutableStateOf<PlayerConnection?>(null)
+    private var metadataUpdateSummary by mutableStateOf<LocalMetadataUpdateWorker.Summary?>(null)
 
     val controllerViewModel: MediaControllerViewModel by viewModels()
 
@@ -265,13 +291,15 @@ class MainActivity : ComponentActivity() {
     @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        metadataUpdateSummary = readMetadataUpdateSummary(intent)
         // Perform an initial update check on startup and publish state to UpdateRepository
         lifecycleScope.launch(Dispatchers.IO) {
             try {
                 val checker = com.kraata.harmony.data.UpdateChecker()
-                checker.checkForUpdates(this@MainActivity).collect { state: com.kraata.harmony.data.UpdateCheckState ->
-                    com.kraata.harmony.data.UpdateRepository.update(state)
-                }
+                checker.checkForUpdates(this@MainActivity)
+                    .collect { state: com.kraata.harmony.data.UpdateCheckState ->
+                        com.kraata.harmony.data.UpdateRepository.update(state)
+                    }
             } catch (e: Exception) {
                 // non-fatal
                 Log.w(MAIN_TAG, "Initial update check failed: ${e.message}")
@@ -290,6 +318,25 @@ class MainActivity : ComponentActivity() {
             val coroutineScope = rememberCoroutineScope()
             val haptic = LocalHapticFeedback.current
             val snackbarHostState = remember { SnackbarHostState() }
+            val pendingMetadataUpdateSummary by remember {
+                applicationContext.dataStore.data
+                    .map { preferences ->
+                        preferences[LocalMetadataUpdatePendingFolderKey]?.let { folderPath ->
+                            LocalMetadataUpdateWorker.Summary(
+                                folderPath = folderPath,
+                                updated = preferences[LocalMetadataUpdatePendingUpdatedKey] ?: 0,
+                                noMatch = preferences[LocalMetadataUpdatePendingNoMatchKey] ?: 0,
+                                lowConfidence = preferences[LocalMetadataUpdatePendingLowConfidenceKey] ?: 0,
+                                errors = preferences[LocalMetadataUpdatePendingErrorsKey] ?: 0,
+                            )
+                        }
+                    }
+                    .distinctUntilChanged()
+            }.collectAsState(null)
+
+            LaunchedEffect(pendingMetadataUpdateSummary) {
+                pendingMetadataUpdateSummary?.let { metadataUpdateSummary = it }
+            }
 
             val enableDynamicTheme by rememberPreference(DynamicThemeKey, defaultValue = true)
             val darkTheme by rememberEnumPreference(DarkModeKey, defaultValue = DarkMode.AUTO)
@@ -313,15 +360,73 @@ class MainActivity : ComponentActivity() {
             }
 
 
-            val (oobeStatus) = rememberPreference(OobeStatusKey, defaultValue = 0)
+             val (oobeStatus) = rememberPreference(OobeStatusKey, defaultValue = 0)
+
+             val updateState by UpdateRepository.state.collectAsState()
+             val availableUpdate = (updateState as? UpdateCheckState.UpdateAvailable)?.info
+             var shownUpdateVersion by rememberSaveable { mutableStateOf<String?>(null) }
+             var updateProgress by remember { mutableStateOf<Int?>(null) }
+             var updateError by remember { mutableStateOf<String?>(null) }
+             var updateInProgress by remember { mutableStateOf(false) }
+             var updateInstalling by remember { mutableStateOf(false) }
+             val updateChecker = remember { UpdateChecker() }
+
+             LaunchedEffect(availableUpdate?.latestVersionName, oobeStatus) {
+                 if (
+                     oobeStatus >= OOBE_VERSION &&
+                     availableUpdate != null &&
+                     shownUpdateVersion != availableUpdate.latestVersionName
+                 ) {
+                     shownUpdateVersion = availableUpdate.latestVersionName
+                 }
+             }
+
+             fun startUpdate(info: UpdateInfo) {
+                 if (updateInProgress) return
+                 updateInProgress = true
+                 updateInstalling = false
+                 updateProgress = 0
+                 updateError = null
+                 coroutineScope.launch {
+                     updateChecker.downloadUpdate(this@MainActivity, info.downloadUrl).collect { state ->
+                         when (state) {
+                             is DownloadState.Downloading -> updateProgress = state.progress
+                             is DownloadState.Downloaded -> {
+                                 updateInstalling = true
+                                 try {
+                                     updateChecker.installUpdate(this@MainActivity, state.file)
+                                     shownUpdateVersion = null
+                                     updateInProgress = false
+                                     updateInstalling = false
+                                 } catch (e: Exception) {
+                                     updateError = e.message
+                                     updateInProgress = false
+                                     updateInstalling = false
+                                 }
+                             }
+                             is DownloadState.Error -> {
+                                 updateError = state.exception.message
+                                 updateInProgress = false
+                             }
+                         }
+                     }
+                 }
+             }
 
             var filter by rememberEnumPreference(LibraryFilterKey, Screens.LibraryFilter.ALL)
             val (slimNav) = rememberPreference(SlimNavBarKey, defaultValue = false)
-            val (enabledTabs) = rememberPreference(
+            val (enabledTabs, onEnabledTabsChange) = rememberPreference(
                 EnabledTabsKey,
                 defaultValue = DEFAULT_ENABLED_TABS
             )
-            val navigationItems = Screens.getScreens(enabledTabs)
+            val effectiveEnabledTabs = remember(enabledTabs) {
+                if (enabledTabs == LEGACY_DEFAULT_ENABLED_TABS) {
+                    DEFAULT_ENABLED_TABS
+                } else {
+                    enabledTabs
+                }
+            }
+            val navigationItems = Screens.getScreens(effectiveEnabledTabs)
             val (defaultOpenTab, onDefaultOpenTabChange) = rememberPreference(
                 DefaultOpenTabKey,
                 defaultValue = Screens.Home.route
@@ -337,6 +442,12 @@ class MainActivity : ComponentActivity() {
                         this@MainActivity, database, downloadUtil, coroutineScope, playerConnection,
                         snackbarHostState
                     )
+                }
+            }
+
+            LaunchedEffect(enabledTabs) {
+                if (enabledTabs == LEGACY_DEFAULT_ENABLED_TABS) {
+                    onEnabledTabsChange(DEFAULT_ENABLED_TABS)
                 }
             }
 
@@ -366,15 +477,9 @@ class MainActivity : ComponentActivity() {
                     coroutineScope.launch(coilCoroutine) {
                         var ret = DefaultThemeColor
                         if (song != null) {
-                            val uri =
-                                (if (song.isLocal) song.localPath else song.thumbnailUrl)?.toUri()
-                            if (uri != null) {
-                                val model = if (uri.toString().startsWith("/storage/")) {
-                                    LocalArtworkPath(uri.toString(), 100, 100)
-                                } else {
-                                    uri
-                                }
-
+                            val thumbnailUrl = if (song.isLocal) song.localPath else song.thumbnailUrl
+                            val model = thumbnailUrl?.let { getThumbnailModel(it, 100, 100) }
+                            if (model != null) {
                                 val result = applicationContext.imageLoader.execute(
                                     ImageRequest.Builder(applicationContext)
                                         .data(model)
@@ -406,6 +511,13 @@ class MainActivity : ComponentActivity() {
 
                 val navController = rememberNavController()
                 val navBackStackEntry by navController.currentBackStackEntryAsState()
+
+                LaunchedEffect(metadataUpdateSummary) {
+                    val summary = metadataUpdateSummary ?: return@LaunchedEffect
+                    navController.navigate(
+                        "${Screens.Folders.route}/${summary.folderPath.replace('/', ';')}"
+                    )
+                }
 
                 val tabOpenedFromShortcut = remember {
                     // reroute to library page for new layout is handled in NavHost section
@@ -522,10 +634,15 @@ class MainActivity : ComponentActivity() {
                         onDispose { removeOnNewIntentListener(listener) }
                     }
 
+                    val menuSheetState = rememberModalBottomSheetState()
+                    val menuState = remember(menuSheetState) {
+                        MenuState(menuSheetState)
+                    }
+
                     CompositionLocalProvider(
                         LocalDatabase provides database,
                         LocalContentColor provides contentColorFor(MaterialTheme.colorScheme.surface),
-                        LocalMenuState provides MenuState(rememberModalBottomSheetState()),
+                        LocalMenuState provides menuState,
                         LocalPlayerConnection provides playerConnection,
                         LocalPlayerAwareWindowInsets provides playerAwareWindowInsets,
                         LocalDownloadUtil provides downloadUtil,
@@ -539,6 +656,45 @@ class MainActivity : ComponentActivity() {
                                 .fillMaxSize()
                         ) {
                             Log.v(MAIN_TAG, "RC-3")
+
+                            fun navigateToTopLevelRoute(route: String) {
+                                navController.navigate(route) {
+                                    popUpTo(navController.graph.startDestinationId) {
+                                        saveState = true
+                                    }
+                                    launchSingleTop = true
+                                    restoreState = true
+                                }
+                            }
+
+                            @Composable
+                            fun MoreNavigationMenu(
+                                expanded: Boolean,
+                                onDismiss: () -> Unit,
+                                onNavigate: (String) -> Unit,
+                            ) {
+                                DropdownMenu(
+                                    expanded = expanded,
+                                    onDismissRequest = onDismiss,
+                                ) {
+                                    DropdownMenuItem(
+                                        text = { Text(stringResource(R.string.AI)) },
+                                        leadingIcon = { Icon(Icons.Rounded.AutoAwesome, contentDescription = null) },
+                                        onClick = {
+                                            onDismiss()
+                                            onNavigate("ai")
+                                        }
+                                    )
+                                    DropdownMenuItem(
+                                        text = { Text(stringResource(R.string.music_recognition)) },
+                                        leadingIcon = {Icon(Icons.Rounded.Contactless, contentDescription = null)},
+                                        onClick = {
+                                            onDismiss()
+                                            onNavigate("identifier")
+                                        }
+                                    )
+                                }
+                            }
 
 
                             val navHost: @Composable() (() -> Unit) = @Composable {
@@ -619,7 +775,23 @@ class MainActivity : ComponentActivity() {
                                             }
                                         )
                                     ) {
-                                        FolderScreen(navController, scrollBehavior)
+                                        FolderScreen(
+                                            navController = navController,
+                                            scrollBehavior = scrollBehavior,
+                                            metadataUpdateSummary = metadataUpdateSummary,
+                                            onMetadataUpdateSummaryDismissed = {
+                                                metadataUpdateSummary = null
+                                                lifecycleScope.launch(Dispatchers.IO) {
+                                                    applicationContext.dataStore.edit { preferences ->
+                                                        preferences.remove(LocalMetadataUpdatePendingFolderKey)
+                                                        preferences.remove(LocalMetadataUpdatePendingUpdatedKey)
+                                                        preferences.remove(LocalMetadataUpdatePendingNoMatchKey)
+                                                        preferences.remove(LocalMetadataUpdatePendingLowConfidenceKey)
+                                                        preferences.remove(LocalMetadataUpdatePendingErrorsKey)
+                                                    }
+                                                }
+                                            },
+                                        )
                                     }
                                     composable(Screens.Artists.route) {
                                         LibraryArtistsScreen(navController)
@@ -633,11 +805,26 @@ class MainActivity : ComponentActivity() {
                                     composable(Screens.Library.route) {
                                         LibraryScreen(navController, scrollBehavior)
                                     }
-                                    composable(Screens.AI.route) {
+
+                                    composable("ai") {
                                         AiScreen(navController, scrollBehavior)
                                     }
+                                    composable("identifier") {
+                                        MusicRecognitionScreen(navController, scrollBehavior)
+                                    }
                                     composable("history") {
-                                        HistoryScreen(navController)
+                                        HistoryScreen(navController, onPlaybackStarted = {
+                                            playerBottomSheetState.collapseSoft()
+                                        })
+                                    }
+                                    composable("recognition-history") {
+                                        HistoryScreen(
+                                            navController = navController,
+                                            recognitionOnly = true,
+                                            onPlaybackStarted = {
+                                                playerBottomSheetState.collapseSoft()
+                                            },
+                                        )
                                     }
                                     composable("stats") {
                                         StatsScreen(navController)
@@ -839,6 +1026,7 @@ class MainActivity : ComponentActivity() {
                                     animationSpec = NavigationBarAnimationSpec,
                                     label = ""
                                 )
+                                var moreMenuExpanded by remember { mutableStateOf(false) }
 
                                 NavigationBar(
                                     modifier = Modifier
@@ -874,12 +1062,33 @@ class MainActivity : ComponentActivity() {
 //                                            it.route?.substringBefore("?")?.substringBefore("/") == screen.route
 //                                        } == true
                                         NavigationBarItem(
-                                            selected = navBackStackEntry?.destination?.hierarchy?.any { it.route == screen.route } == true,
+                                            selected = if (screen == Screens.More) {
+                                                navBackStackEntry?.destination?.hierarchy?.any {
+                                                    it.route == "ai" || it.route == "identifier"
+                                                } == true
+                                            } else {
+                                                navBackStackEntry?.destination?.hierarchy?.any { it.route == screen.route } == true
+                                            },
                                             icon = {
-                                                Icon(
-                                                    screen.icon,
-                                                    contentDescription = null
-                                                )
+                                                Box {
+                                                    Icon(
+                                                        screen.icon,
+                                                        contentDescription = null
+                                                    )
+                                                    if (screen == Screens.More) {
+                                                        MoreNavigationMenu(
+                                                            expanded = moreMenuExpanded,
+                                                            onDismiss = { moreMenuExpanded = false },
+                                                            onNavigate = { route ->
+                                                                if (playerBottomSheetState.isExpanded) {
+                                                                    playerBottomSheetState.collapseSoft()
+                                                                }
+                                                                navigateToTopLevelRoute(route)
+                                                                haptic.performHapticFeedback(HapticFeedbackType.ContextClick)
+                                                            }
+                                                        )
+                                                    }
+                                                }
                                             },
                                             label = {
                                                 if (!slimNav) {
@@ -891,6 +1100,11 @@ class MainActivity : ComponentActivity() {
                                                 }
                                             },
                                             onClick = {
+                                                if (screen == Screens.More) {
+                                                    moreMenuExpanded = true
+                                                    haptic.performHapticFeedback(HapticFeedbackType.ContextClick)
+                                                    return@NavigationBarItem
+                                                }
                                                 if (playerBottomSheetState.isExpanded) {
                                                     playerBottomSheetState.collapseSoft()
                                                 }
@@ -900,18 +1114,8 @@ class MainActivity : ComponentActivity() {
                                                         "scrollToTop",
                                                         true
                                                     )
-                                                } else if (navigationItems.none { scr -> navBackStackEntry?.destination?.hierarchy?.any { it.route == scr.route } == true }) {
-                                                    // this eye bleach allows you to navigate back when you tap on the navbar on a non-root page
-                                                    // TODO: nav3 allows us to access back stack... maybe do indicators properly and remove this hack
-                                                    navController.navigateUp()
                                                 } else {
-                                                    navController.navigate(screen.route) {
-                                                        popUpTo(navController.graph.startDestinationId) {
-                                                            saveState = true
-                                                        }
-                                                        launchSingleTop = true
-                                                        restoreState = true
-                                                    }
+                                                    navigateToTopLevelRoute(screen.route)
                                                 }
 
                                                 haptic.performHapticFeedback(HapticFeedbackType.ContextClick)
@@ -934,6 +1138,7 @@ class MainActivity : ComponentActivity() {
                                         playerAwareWindowInsets.getLeft(density, layoutDirection).dp
                                     }
                                 }
+                                var moreMenuExpanded by remember { mutableStateOf(false) }
                                 NavigationRail(
                                     containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(
                                         6.dp
@@ -980,12 +1185,33 @@ class MainActivity : ComponentActivity() {
 //                                                    it.route?.substringBefore("?")?.substringBefore("/") == screen.route
 //                                                } == true
                                         NavigationRailItem(
-                                            selected = navBackStackEntry?.destination?.hierarchy?.any { it.route == screen.route } == true,
+                                            selected = if (screen == Screens.More) {
+                                                navBackStackEntry?.destination?.hierarchy?.any {
+                                                    it.route == "ai" || it.route == "identifier"
+                                                } == true
+                                            } else {
+                                                navBackStackEntry?.destination?.hierarchy?.any { it.route == screen.route } == true
+                                            },
                                             icon = {
-                                                Icon(
-                                                    screen.icon,
-                                                    contentDescription = null
-                                                )
+                                                Box {
+                                                    Icon(
+                                                        screen.icon,
+                                                        contentDescription = null
+                                                    )
+                                                    if (screen == Screens.More) {
+                                                        MoreNavigationMenu(
+                                                            expanded = moreMenuExpanded,
+                                                            onDismiss = { moreMenuExpanded = false },
+                                                            onNavigate = { route ->
+                                                                if (playerBottomSheetState.isExpanded) {
+                                                                    playerBottomSheetState.collapseSoft()
+                                                                }
+                                                                navigateToTopLevelRoute(route)
+                                                                haptic.performHapticFeedback(HapticFeedbackType.ContextClick)
+                                                            }
+                                                        )
+                                                    }
+                                                }
                                             },
                                             label = {
                                                 if (!slimNav) {
@@ -997,6 +1223,11 @@ class MainActivity : ComponentActivity() {
                                                 }
                                             },
                                             onClick = {
+                                                if (screen == Screens.More) {
+                                                    moreMenuExpanded = true
+                                                    haptic.performHapticFeedback(HapticFeedbackType.ContextClick)
+                                                    return@NavigationRailItem
+                                                }
                                                 if (playerBottomSheetState.isExpanded) {
                                                     playerBottomSheetState.collapseSoft()
                                                 }
@@ -1006,14 +1237,7 @@ class MainActivity : ComponentActivity() {
                                                         true
                                                     )
                                                 } else {
-                                                    navController.navigate(screen.route) {
-                                                        popUpTo(navController.graph.startDestinationId) {
-                                                            saveState = true
-                                                        }
-
-                                                        launchSingleTop = true
-                                                        restoreState = true
-                                                    }
+                                                    navigateToTopLevelRoute(screen.route)
                                                 }
 
                                                 haptic.performHapticFeedback(HapticFeedbackType.ContextClick)
@@ -1050,17 +1274,13 @@ class MainActivity : ComponentActivity() {
                             // REEMPLAZA COMPLETAMENTE EL if (oobeStatus >= OOBE_VERSION) { ... }
 
                             if (oobeStatus >= OOBE_VERSION) {
-                                // 1. BottomSheetPlayer (reproductor expandido)
-                                BottomSheetPlayer(
-                                    state = playerBottomSheetState,
-                                    navController = navController
-                                )
                                 if (isFloatingMiniplayer) {
-                                    val isMiniPlayerVisible by remember {
-                                        derivedStateOf {
-                                            playerBottomSheetState.isCollapsed && !playerBottomSheetState.isDismissed
-                                        }
-                                    }
+                                    BottomSheetPlayer(
+                                        state = playerBottomSheetState,
+                                        navController = navController
+                                    )
+                                    val isMiniPlayerVisible =
+                                        playerBottomSheetState.isCollapsed && !playerBottomSheetState.isDismissed
                                     androidx.compose.animation.AnimatedVisibility(
                                         visible = isMiniPlayerVisible,
                                         enter = androidx.compose.animation.fadeIn(
@@ -1200,6 +1420,89 @@ class MainActivity : ComponentActivity() {
                                     .align(Alignment.BottomCenter)
                             )
 
+                            val updateInfo = availableUpdate?.takeIf {
+                                it.latestVersionName == shownUpdateVersion
+                            }
+                            if (updateInfo != null) {
+                                AlertDialog(
+                                    onDismissRequest = {
+                                        if (!updateInProgress) shownUpdateVersion = null
+                                    },
+                                    title = {
+                                        Text(stringResource(R.string.update_available_title))
+                                    },
+                                    text = {
+                                        Column(
+                                            modifier = Modifier
+                                                .heightIn(max = 360.dp)
+                                                .verticalScroll(rememberScrollState())
+                                        ) {
+                                            Text(
+                                                text = stringResource(
+                                                    R.string.update_available_version,
+                                                    updateInfo.latestVersionName
+                                                ),
+                                                style = MaterialTheme.typography.titleMedium
+                                            )
+                                            Spacer(modifier = Modifier.height(16.dp))
+                                            Text(
+                                                text = stringResource(R.string.update_release_notes),
+                                                style = MaterialTheme.typography.titleSmall
+                                            )
+                                            Spacer(modifier = Modifier.height(4.dp))
+                                            Text(
+                                                updateInfo.releaseNotes?.trim().takeUnless { it.isNullOrEmpty() }
+                                                    ?: stringResource(R.string.update_release_notes_empty)
+                                            )
+                                            if (updateInProgress) {
+                                                Spacer(modifier = Modifier.height(16.dp))
+                                                Text(
+                                                    when {
+                                                        updateInstalling -> stringResource(R.string.update_installing)
+                                                        updateProgress != null -> stringResource(
+                                                            R.string.update_downloading,
+                                                            updateProgress!!
+                                                        )
+                                                        else -> stringResource(R.string.update_downloading_unknown)
+                                                    }
+                                                )
+                                            }
+                                            updateError?.let {
+                                                Spacer(modifier = Modifier.height(8.dp))
+                                                Text(
+                                                    text = it,
+                                                    color = MaterialTheme.colorScheme.error
+                                                )
+                                            }
+                                        }
+                                    },
+                                    dismissButton = {
+                                        TextButton(
+                                            enabled = !updateInProgress,
+                                            onClick = { shownUpdateVersion = null }
+                                        ) {
+                                            Text(stringResource(android.R.string.cancel))
+                                        }
+                                    },
+                                    confirmButton = {
+                                        TextButton(
+                                            enabled = !updateInProgress,
+                                            onClick = { startUpdate(updateInfo) }
+                                        ) {
+                                            Text(
+                                                stringResource(
+                                                    if (updateError == null) {
+                                                        R.string.update_download
+                                                    } else {
+                                                        R.string.update_retry
+                                                    }
+                                                )
+                                            )
+                                        }
+                                    }
+                                )
+                            }
+
                             // Setup wizard
                             LaunchedEffect(Unit) {
                                 if (oobeStatus < OOBE_VERSION) {
@@ -1252,6 +1555,26 @@ class MainActivity : ComponentActivity() {
             window.navigationBarColor =
                 (if (isDark) Color.Transparent else Color.Black.copy(alpha = 0.2f)).toArgb()
         }
+    }
+
+    private fun readMetadataUpdateSummary(intent: Intent): LocalMetadataUpdateWorker.Summary? {
+        if (intent.action != LocalMetadataUpdateWorker.ACTION_COMPLETE) return null
+        val folderPath = intent.getStringExtra(LocalMetadataUpdateWorker.INPUT_FOLDER_PATH)
+            ?.takeIf(String::isNotBlank)
+            ?: return null
+        return LocalMetadataUpdateWorker.Summary(
+            folderPath = folderPath,
+            updated = intent.getIntExtra(LocalMetadataUpdateWorker.UPDATED_COUNT, 0),
+            noMatch = intent.getIntExtra(LocalMetadataUpdateWorker.NO_MATCH_COUNT, 0),
+            lowConfidence = intent.getIntExtra(LocalMetadataUpdateWorker.LOW_CONFIDENCE_COUNT, 0),
+            errors = intent.getIntExtra(LocalMetadataUpdateWorker.ERROR_COUNT, 0),
+        )
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        metadataUpdateSummary = readMetadataUpdateSummary(intent)
     }
 
     companion object {

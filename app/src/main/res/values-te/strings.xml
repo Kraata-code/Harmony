@@ -279,4 +279,16 @@
     <string name="new_version_available">కొత్త వెర్షన్ అందుబాటులో ఉంది</string>
     <string name="translation_models">అనువాద మోడల్స్</string>
     <string name="clear_translation_models">అనువాద నమూనాలను క్లియర్ చెయ్యండి</string>
+    <string name="version">వెర్షన్</string>
+    <string name="checking_for_updates">అప్‌డేట్‌ల కోసం తనిఖీ చేస్తోంది…</string>
+    <string name="update_check_failed">అప్‌డేట్‌ల కోసం తనిఖీ చేయలేకపోయింది (మళ్లీ ప్రయత్నించడానికి నొక్కండి)</string>
+    <string name="update_available_title">Harmony అప్‌డేట్ అందుబాటులో ఉంది</string>
+    <string name="update_available_version">వెర్షన్ %1$s</string>
+    <string name="update_release_notes">కొత్తవి ఏమిటి</string>
+    <string name="update_release_notes_empty">విడుదల గమనికలు అందుబాటులో లేవు.</string>
+    <string name="update_download">అప్‌డేట్</string>
+    <string name="update_retry">మళ్లీ ప్రయత్నించండి</string>
+    <string name="update_downloading">డౌన్‌లోడ్ చేస్తోంది: %1$d%%</string>
+    <string name="update_downloading_unknown">డౌన్‌లోడ్ చేస్తోంది…</string>
+    <string name="update_installing">ఇన్‌స్టాల్ చేస్తోంది…</string>
 </resources>

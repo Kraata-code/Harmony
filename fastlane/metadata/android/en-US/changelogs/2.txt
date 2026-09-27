@@ -1,0 +1,14 @@
+Version 1.1.0
+
+=== New features ===
+• Recognize nearby music with the microphone, regional recognition databases, playback, and recognition history.
+• Identify local files and update their metadata and cover art using acoustic fingerprints, AcoustID, and MusicBrainz.
+• Edit the title, artist, and cover art of local songs manually.
+• Update metadata for complete folders in the background with progress and result summaries.
+• Check for, download, and install updates from GitHub releases inside the app.
+
+=== Improvements ===
+• Improved YouTube playback fallback and thumbnail resolution.
+• Improved local metadata matching, the floating mini player, and local AI performance.
+
+Note: Folder metadata updates can overwrite existing metadata and cover art.

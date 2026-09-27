@@ -1,4 +1,7 @@
 @file:Suppress("UnstableApiUsage")
+
+include(":music_identifier")
+
 dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
 

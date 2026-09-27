@@ -1,5 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="music_recognition">Nhận diện nhạc</string>
+    <string name="music_recognition_placeholder_title">Nhận diện bài hát</string>
+    <string name="music_recognition_placeholder_description">Nhấn vào micrô để nghe nhạc xung quanh.</string>
+    <string name="music_recognition_start">Bắt đầu nhận diện nhạc</string>
+    <string name="music_recognition_stop">Dừng nhận diện nhạc</string>
+    <string name="music_recognition_listening">Đang nghe...</string>
     <string name="select">Chế độ lựa chọn</string>
     <string name="grp_lyrics_format">Định dạng</string>
     <string name="sort_by_date_released">Ngày phát hành</string>
@@ -117,4 +123,54 @@
     <string name="oobe_local_music_support_description">Phát tệp nhạc của bạn (VD. MP3, OGG, FLAC,...)</string>
     <string name="oobe_complete_title">Đã thiết lập thành công!</string>
     <string name="oobe_welcome_message">Chào mừng đến với Harmony</string>
+    <string name="music_recognition_data_required_title">Cần có dữ liệu nhận diện</string>
+    <string name="music_recognition_data_required_message">Hãy tải xuống cơ sở dữ liệu lõi và cơ sở dữ liệu khu vực trước khi sử dụng tính năng nhận diện nhạc.</string>
+    <string name="music_recognition_data_install">Cài đặt dữ liệu</string>
+    <string name="music_recognition_data_region">Khu vực dùng để nhận diện</string>
+    <string name="music_recognition_data_core">Cơ sở dữ liệu lõi</string>
+    <string name="music_recognition_data_region_download">Cơ sở dữ liệu khu vực đã chọn</string>
+    <string name="music_recognition_data_mx">Mexico</string>
+    <string name="music_recognition_data_us_xa">Hoa Kỳ và các khu vực khác</string>
+    <string name="music_recognition_data_installed">Đã cài đặt</string>
+    <string name="music_recognition_data_not_installed">Nhấn để tải xuống</string>
+    <string name="music_recognition_data_selected">Đã chọn để nhận diện</string>
+    <string name="music_recognition_data_not_selected">Chưa chọn</string>
+    <string name="music_recognition_data_no_region_selected">Chưa chọn khu vực</string>
+    <string name="music_recognition_data_error">Không thể tải dữ liệu nhận diện.</string>
+    <string name="music_recognition_data_delete">Xóa dữ liệu nhận diện</string>
+    <string name="music_recognition_data_delete_region_confirm">Xóa dữ liệu đã tải xuống cho %1$s?</string>
+    <string name="music_recognition_data_delete_error">Không thể xóa dữ liệu nhận diện.</string>
+    <string name="music_recognition_data_with_size">%1$s (~%2$s)</string>
+    <string name="music_recognition_history">Lịch sử nhận diện</string>
+    <string name="music_recognition_recognizing">Đang kiểm tra bản ghi...</string>
+    <string name="music_recognition_result">%1$s - %2$s</string>
+    <string name="music_recognition_no_match">Không tìm thấy kết quả khớp.</string>
+    <string name="music_recognition_no_audio">Không có âm thanh được ghi lại.</string>
+    <string name="music_recognition_permission_required">Cần cấp quyền dùng micrô.</string>
+    <string name="music_recognition_error">Nhận diện nhạc không thành công.</string>
+    <string name="music_recognition_test_file">Kiểm tra tệp cục bộ hiện tại</string>
+    <string name="music_recognition_data">Dữ liệu nhận diện nhạc</string>
+    <string name="acoustid_test">Cập nhật siêu dữ liệu cục bộ</string>
+    <string name="acoustid_test_title">Cập nhật siêu dữ liệu cục bộ</string>
+    <string name="acoustid_test_processing">Đang nhận diện toàn bộ tệp cục bộ và cập nhật siêu dữ liệu...</string>
+    <string name="acoustid_test_match">Đã cập nhật siêu dữ liệu:
+%1$s - %2$s</string>
+    <string name="acoustid_test_no_match">AcoustID không trả về kết quả khớp.</string>
+    <string name="acoustid_test_low_confidence">Bỏ qua kết quả vì độ tin cậy chỉ là %d%%.</string>
+    <string name="acoustid_test_no_audio">Tệp không chứa âm thanh.</string>
+    <string name="acoustid_test_error">Cập nhật siêu dữ liệu không thành công: %1$s</string>
+    <string name="edit_local_metadata">Chỉnh sửa siêu dữ liệu cục bộ</string>
+    <string name="local_metadata_cover">Ảnh bìa cục bộ</string>
+    <string name="local_metadata_select_cover">Chọn ảnh bìa</string>
+    <string name="local_metadata_remove_cover">Xóa ảnh bìa</string>
+    <string name="local_metadata_no_cover">Chưa chọn ảnh bìa</string>
+    <string name="local_metadata_cover_error">Không thể đọc ảnh bìa: %1$s</string>
+    <string name="local_metadata_edit_error">Không thể lưu siêu dữ liệu: %1$s</string>
+    <string name="local_metadata_update_channel">Cập nhật siêu dữ liệu</string>
+    <string name="local_metadata_update_title">Đang cập nhật siêu dữ liệu cục bộ</string>
+    <string name="local_metadata_update_in_progress">Một lần cập nhật siêu dữ liệu cục bộ đang được thực hiện.</string>
+    <string name="local_metadata_update_confirm">Siêu dữ liệu và ảnh bìa của tất cả bài hát trong thư mục này và thư mục con có thể bị ghi đè. Tiếp tục?</string>
+    <string name="local_metadata_update_progress">Đã xử lý %1$d trên %2$d</string>
+    <string name="local_metadata_update_complete">Hoàn tất cập nhật siêu dữ liệu cục bộ</string>
+    <string name="local_metadata_update_summary">Đã cập nhật: %1$d, không khớp: %2$d, độ tin cậy thấp: %3$d, lỗi: %4$d</string>
 </resources>

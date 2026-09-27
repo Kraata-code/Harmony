@@ -288,4 +288,16 @@
     <string name="new_version_available">גירסה חדשה זמינה</string>
     <string name="translation_models">מודלים של תרגום</string>
     <string name="clear_translation_models">ניקוי מודלי תרגום</string>
+    <string name="version">גרסה</string>
+    <string name="checking_for_updates">בודק אם יש עדכונים…</string>
+    <string name="update_check_failed">לא ניתן לבדוק אם יש עדכונים (יש להקיש כדי לנסות שוב)</string>
+    <string name="update_available_title">עדכון ל-Harmony זמין</string>
+    <string name="update_available_version">גרסה %1$s</string>
+    <string name="update_release_notes">מה חדש</string>
+    <string name="update_release_notes_empty">אין הערות גרסה זמינות.</string>
+    <string name="update_download">עדכון</string>
+    <string name="update_retry">ניסיון חוזר</string>
+    <string name="update_downloading">מוריד: %1$d%%</string>
+    <string name="update_downloading_unknown">מוריד…</string>
+    <string name="update_installing">מתקין…</string>
 </resources>

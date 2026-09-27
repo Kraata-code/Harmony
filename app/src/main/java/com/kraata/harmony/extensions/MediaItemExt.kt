@@ -16,6 +16,7 @@ import androidx.media3.common.MediaMetadata.MEDIA_TYPE_MUSIC
 import com.kraata.harmony.db.entities.Song
 import com.kraata.harmony.models.MediaMetadata
 import com.kraata.harmony.models.toMediaMetadata
+import com.kraata.harmony.ui.utils.resize
 import com.zionhuang.innertube.models.SongItem
 
 val MediaItem.metadata: MediaMetadata?
@@ -31,7 +32,7 @@ fun Song.toMediaItem() = MediaItem.Builder()
             .setTitle(song.title)
             .setSubtitle(artists.joinToString { it.name })
             .setArtist(artists.joinToString { it.name })
-            .setArtworkUri(song.thumbnailUrl?.toUri())
+            .setArtworkUri(song.thumbnailUrl?.resize(544, 544)?.toUri())
             .setAlbumTitle(song.albumName)
             .setMediaType(MEDIA_TYPE_MUSIC)
             .build()
@@ -48,7 +49,7 @@ fun SongItem.toMediaItem() = MediaItem.Builder()
             .setTitle(title)
             .setSubtitle(artists.joinToString { it.name })
             .setArtist(artists.joinToString { it.name })
-            .setArtworkUri(thumbnail.toUri())
+            .setArtworkUri(thumbnail.resize(544, 544).toUri())
             .setAlbumTitle(album?.name)
             .setMediaType(MEDIA_TYPE_MUSIC)
             .build()
@@ -65,7 +66,7 @@ fun MediaMetadata.toMediaItem() = MediaItem.Builder()
             .setTitle(title)
             .setSubtitle(artists.joinToString { it.name })
             .setArtist(artists.joinToString { it.name })
-            .setArtworkUri(thumbnailUrl?.toUri())
+            .setArtworkUri(thumbnailUrl?.resize(544, 544)?.toUri())
             .setAlbumTitle(album?.title)
             .setMediaType(MEDIA_TYPE_MUSIC)
             .build()

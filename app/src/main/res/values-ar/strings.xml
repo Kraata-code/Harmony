@@ -315,4 +315,16 @@
     <string name="use_login_for_browse">استخدم تسجيل الدخول لتصفح المحتوى</string>
     <string name="use_login_for_browse_desc">يمكن أن يؤثر ذلك على المحتوى الذي تراه، فعلى سبيل المثال، يعرض الألبومات المخصصة للمشتركين المميزين فقط إذا كنت مسجلاً الدخول باستخدام حساب مميز</string>
     <string name="action_login">تسجيل دخول</string>
+    <string name="version">الإصدار</string>
+    <string name="checking_for_updates">جارٍ التحقق من التحديثات…</string>
+    <string name="update_check_failed">تعذر التحقق من التحديثات (اضغط لإعادة المحاولة)</string>
+    <string name="update_available_title">يتوفر تحديث لـ Harmony</string>
+    <string name="update_available_version">الإصدار %1$s</string>
+    <string name="update_release_notes">ما الجديد</string>
+    <string name="update_release_notes_empty">لا تتوفر ملاحظات إصدار.</string>
+    <string name="update_download">تحديث</string>
+    <string name="update_retry">إعادة المحاولة</string>
+    <string name="update_downloading">جارٍ التنزيل: %1$d%%</string>
+    <string name="update_downloading_unknown">جارٍ التنزيل…</string>
+    <string name="update_installing">جارٍ التثبيت…</string>
 </resources>

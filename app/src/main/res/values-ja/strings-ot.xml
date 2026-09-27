@@ -1,5 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="music_recognition">音楽認識</string>
+    <string name="music_recognition_placeholder_title">曲を特定</string>
+    <string name="music_recognition_placeholder_description">マイクをタップして、周囲の音楽を聴き取ります。</string>
+    <string name="music_recognition_start">音楽認識を開始</string>
+    <string name="music_recognition_stop">音楽認識を停止</string>
+    <string name="music_recognition_listening">聴き取り中...</string>
     <string name="grp_interface">インターフェイス</string>
     <string name="playlist_add_local_to_synced_note">注: 同期/リモートの再生リストに端末内の曲の追加はできません。その他の組み合わせは有効です</string>
     <string name="local_history">端末内</string>
@@ -254,4 +260,54 @@
     <string name="oobe_welcome_tip">快適に使用するには、テーマ、YouTubeアカウント、端末内メディア、ダウンロードなど自分向けにするための主な設定を簡単に設定することをお勧めします。</string>
     <string name="oobe_cache_subtitle">曲のキャッシュのサイズを選択。ネット接続やYouTube APIの再生に関する問題を軽減します</string>
     <string name="library_filter">ライブラリを絞り込み</string>
+    <string name="music_recognition_data_required_title">認識データが必要です</string>
+    <string name="music_recognition_data_required_message">音楽認識を使用する前に、コアデータベースと地域データベースをダウンロードしてください。</string>
+    <string name="music_recognition_data_install">データをインストール</string>
+    <string name="music_recognition_data_region">認識に使用する地域</string>
+    <string name="music_recognition_data_core">コアデータベース</string>
+    <string name="music_recognition_data_region_download">選択した地域データベース</string>
+    <string name="music_recognition_data_mx">メキシコ</string>
+    <string name="music_recognition_data_us_xa">米国およびその他の地域</string>
+    <string name="music_recognition_data_installed">インストール済み</string>
+    <string name="music_recognition_data_not_installed">タップしてダウンロード</string>
+    <string name="music_recognition_data_selected">認識用に選択済み</string>
+    <string name="music_recognition_data_not_selected">未選択</string>
+    <string name="music_recognition_data_no_region_selected">地域が選択されていません</string>
+    <string name="music_recognition_data_error">認識データをダウンロードできませんでした。</string>
+    <string name="music_recognition_data_delete">認識データを削除</string>
+    <string name="music_recognition_data_delete_region_confirm">%1$s のダウンロードデータを削除しますか？</string>
+    <string name="music_recognition_data_delete_error">認識データを削除できませんでした。</string>
+    <string name="music_recognition_data_with_size">%1$s（約%2$s）</string>
+    <string name="music_recognition_history">認識履歴</string>
+    <string name="music_recognition_recognizing">録音を確認しています...</string>
+    <string name="music_recognition_result">%1$s - %2$s</string>
+    <string name="music_recognition_no_match">一致するものが見つかりません。</string>
+    <string name="music_recognition_no_audio">音声を取得できませんでした。</string>
+    <string name="music_recognition_permission_required">マイクの権限が必要です。</string>
+    <string name="music_recognition_error">音楽認識に失敗しました。</string>
+    <string name="music_recognition_test_file">現在のローカルファイルをテスト</string>
+    <string name="music_recognition_data">音楽認識データ</string>
+    <string name="acoustid_test">ローカルメタデータを更新</string>
+    <string name="acoustid_test_title">ローカルメタデータを更新</string>
+    <string name="acoustid_test_processing">ローカルファイル全体を識別し、メタデータを更新しています...</string>
+    <string name="acoustid_test_match">メタデータを更新しました:
+%1$s - %2$s</string>
+    <string name="acoustid_test_no_match">AcoustIDから一致する結果が返されませんでした。</string>
+    <string name="acoustid_test_low_confidence">信頼度が%d%%しかないため、一致結果をスキップしました。</string>
+    <string name="acoustid_test_no_audio">ファイルに音声が含まれていません。</string>
+    <string name="acoustid_test_error">メタデータの更新に失敗しました: %1$s</string>
+    <string name="edit_local_metadata">ローカルメタデータを編集</string>
+    <string name="local_metadata_cover">ローカルカバーアート</string>
+    <string name="local_metadata_select_cover">カバーを選択</string>
+    <string name="local_metadata_remove_cover">カバーを削除</string>
+    <string name="local_metadata_no_cover">カバーが選択されていません</string>
+    <string name="local_metadata_cover_error">カバーアートを読み取れませんでした: %1$s</string>
+    <string name="local_metadata_edit_error">メタデータを保存できませんでした: %1$s</string>
+    <string name="local_metadata_update_channel">メタデータの更新</string>
+    <string name="local_metadata_update_title">ローカルメタデータを更新しています</string>
+    <string name="local_metadata_update_in_progress">ローカルメタデータの更新はすでに進行中です。</string>
+    <string name="local_metadata_update_confirm">このフォルダとサブフォルダ内のすべての曲のメタデータとカバーアートが上書きされる可能性があります。続行しますか？</string>
+    <string name="local_metadata_update_progress">%1$d/%2$dを処理しました</string>
+    <string name="local_metadata_update_complete">ローカルメタデータの更新が完了しました</string>
+    <string name="local_metadata_update_summary">更新済み: %1$d、未一致: %2$d、低信頼度: %3$d、エラー: %4$d</string>
 </resources>

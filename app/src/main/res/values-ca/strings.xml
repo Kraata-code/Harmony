@@ -278,4 +278,16 @@
     <string name="listen_history">Historial de reproducció</string>
     <string name="pause_listen_history">Atura la recopliació del historial de reproducció</string>
     <string name="clear_listen_history">Neteja l\'historial de reproducció</string>
+    <string name="version">versió</string>
+    <string name="checking_for_updates">S\'estan comprovant les actualitzacions…</string>
+    <string name="update_check_failed">No s\'han pogut comprovar les actualitzacions (toca per reintentar)</string>
+    <string name="update_available_title">Actualització de Harmony disponible</string>
+    <string name="update_available_version">Versió %1$s</string>
+    <string name="update_release_notes">Novetats</string>
+    <string name="update_release_notes_empty">No hi ha notes de la versió disponibles.</string>
+    <string name="update_download">Actualitza</string>
+    <string name="update_retry">Torna-ho a provar</string>
+    <string name="update_downloading">S\'està baixant: %1$d%%</string>
+    <string name="update_downloading_unknown">S\'està baixant…</string>
+    <string name="update_installing">S\'està instal·lant…</string>
 </resources>

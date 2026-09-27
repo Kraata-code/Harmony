@@ -1,5 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="music_recognition">Reconnaissance musicale</string>
+    <string name="music_recognition_placeholder_title">Identifier une chanson</string>
+    <string name="music_recognition_placeholder_description">Appuyez sur le microphone pour écouter la musique à proximité.</string>
+    <string name="music_recognition_start">Démarrer la reconnaissance musicale</string>
+    <string name="music_recognition_stop">Arrêter la reconnaissance musicale</string>
+    <string name="music_recognition_listening">Écoute en cours...</string>
     <string name="auto_playlist">Playlist Automatique</string>
     <string name="recent_activity">Activité récente</string>
     <string name="song_added_to_queue_end">\"%s\" ajouté à la fin de la file d\'attente</string>
@@ -268,4 +274,54 @@
     <string name="scanner_strict_file_paths_description">Désactive toute correspondance intelligente des métadonnées. Cela peut poser problème si des fichiers sont déplacés de votre stockage local, mais autorise le même titre dans différents dossiers</string>
     <string name="scanner_type_tooltip">L\'analyseur système est plus rapide, mais il peut extraire certaines métadonnées de manière incorrecte par rapport à d\'autres extracteurs. Veuillez noter que le changement d\'analyseur ne recharge pas automatiquement les métadonnées des titres existants.</string>
     <string name="restore_lm_tooltip">Lors d\'une nouvelle installation de l\'application, il se peut que les chemins de téléchargement personnalisés et d\'analyse des médias locaux ne fonctionnent pas. Pour résoudre ce problème, supprimez-les puis ajoutez-les à nouveau.</string>
+    <string name="music_recognition_data_required_title">Données de reconnaissance requises</string>
+    <string name="music_recognition_data_required_message">Téléchargez la base de données principale et une base de données régionale avant d’utiliser la reconnaissance musicale.</string>
+    <string name="music_recognition_data_install">Installer les données</string>
+    <string name="music_recognition_data_region">Régions utilisées pour la reconnaissance</string>
+    <string name="music_recognition_data_core">Base de données principale</string>
+    <string name="music_recognition_data_region_download">Base de données régionale sélectionnée</string>
+    <string name="music_recognition_data_mx">Mexique</string>
+    <string name="music_recognition_data_us_xa">États-Unis et autres régions</string>
+    <string name="music_recognition_data_installed">Installée</string>
+    <string name="music_recognition_data_not_installed">Appuyez pour télécharger</string>
+    <string name="music_recognition_data_selected">Sélectionnée pour la reconnaissance</string>
+    <string name="music_recognition_data_not_selected">Non sélectionnée</string>
+    <string name="music_recognition_data_no_region_selected">Aucune région sélectionnée</string>
+    <string name="music_recognition_data_error">Impossible de télécharger les données de reconnaissance.</string>
+    <string name="music_recognition_data_delete">Supprimer les données de reconnaissance</string>
+    <string name="music_recognition_data_delete_region_confirm">Supprimer les données téléchargées pour %1$s ?</string>
+    <string name="music_recognition_data_delete_error">Impossible de supprimer les données de reconnaissance.</string>
+    <string name="music_recognition_data_with_size">%1$s (~%2$s)</string>
+    <string name="music_recognition_history">Historique des reconnaissances</string>
+    <string name="music_recognition_recognizing">Vérification de l\'enregistrement...</string>
+    <string name="music_recognition_result">%1$s - %2$s</string>
+    <string name="music_recognition_no_match">Aucune correspondance trouvée.</string>
+    <string name="music_recognition_no_audio">Aucun son n\'a été capturé.</string>
+    <string name="music_recognition_permission_required">L\'autorisation du microphone est requise.</string>
+    <string name="music_recognition_error">Échec de la reconnaissance musicale.</string>
+    <string name="music_recognition_test_file">Tester le fichier local actuel</string>
+    <string name="music_recognition_data">Données de reconnaissance musicale</string>
+    <string name="acoustid_test">Mettre à jour les métadonnées locales</string>
+    <string name="acoustid_test_title">Mettre à jour les métadonnées locales</string>
+    <string name="acoustid_test_processing">Identification du fichier local complet et mise à jour de ses métadonnées...</string>
+    <string name="acoustid_test_match">Métadonnées mises à jour :
+%1$s - %2$s</string>
+    <string name="acoustid_test_no_match">AcoustID n\'a renvoyé aucune correspondance.</string>
+    <string name="acoustid_test_low_confidence">Correspondance ignorée car la confiance n\'était que de %d%%.</string>
+    <string name="acoustid_test_no_audio">Le fichier ne contient aucun son.</string>
+    <string name="acoustid_test_error">Échec de la mise à jour des métadonnées : %1$s</string>
+    <string name="edit_local_metadata">Modifier les métadonnées locales</string>
+    <string name="local_metadata_cover">Pochette locale</string>
+    <string name="local_metadata_select_cover">Sélectionner une pochette</string>
+    <string name="local_metadata_remove_cover">Supprimer la pochette</string>
+    <string name="local_metadata_no_cover">Aucune pochette sélectionnée</string>
+    <string name="local_metadata_cover_error">Impossible de lire la pochette : %1$s</string>
+    <string name="local_metadata_edit_error">Impossible d\'enregistrer les métadonnées : %1$s</string>
+    <string name="local_metadata_update_channel">Mises à jour des métadonnées</string>
+    <string name="local_metadata_update_title">Mise à jour des métadonnées locales</string>
+    <string name="local_metadata_update_in_progress">Une mise à jour des métadonnées locales est déjà en cours.</string>
+    <string name="local_metadata_update_confirm">Les métadonnées et les pochettes de tous les titres de ce dossier et de ses sous-dossiers peuvent être écrasées. Continuer ?</string>
+    <string name="local_metadata_update_progress">%1$d sur %2$d traités</string>
+    <string name="local_metadata_update_complete">Mise à jour des métadonnées locales terminée</string>
+    <string name="local_metadata_update_summary">Mises à jour : %1$d, sans correspondance : %2$d, faible confiance : %3$d, erreurs : %4$d</string>
 </resources>

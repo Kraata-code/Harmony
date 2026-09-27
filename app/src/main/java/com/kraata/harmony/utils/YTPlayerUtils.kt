@@ -25,6 +25,7 @@ import com.zionhuang.innertube.YouTube
 import com.zionhuang.innertube.models.YouTubeClient
 import com.zionhuang.innertube.models.YouTubeClient.Companion.ANDROID_VR_NO_AUTH
 import com.zionhuang.innertube.models.YouTubeClient.Companion.IOS
+import com.zionhuang.innertube.models.YouTubeClient.Companion.VISIONOS
 import com.zionhuang.innertube.models.YouTubeClient.Companion.WEB_REMIX
 import com.zionhuang.innertube.models.response.PlayerResponse
 import okhttp3.OkHttpClient
@@ -55,12 +56,8 @@ object YTPlayerUtils {
      * Clients used for fallback streams in case the streams of the main client do not work.
      */
     private val STREAM_FALLBACK_CLIENTS: Array<YouTubeClient> = arrayOf(
-        // Could not parse deobfuscation function
-//        WEB_REMIX,
-//        ANDROID,
-//        TVHTML5,
-//        TVHTML5_SIMPLY_EMBEDDED_PLAYER,
-        IOS, // recent api changes produce error 403 after 30 seconds
+        VISIONOS, // avoids the current ANDROID_VR SABR response
+        IOS, // last resort; recent api changes can produce 403 after 30 seconds
     )
 
 
@@ -255,10 +252,12 @@ object YTPlayerUtils {
     private fun validateStatus(url: String): Boolean {
         try {
             val requestBuilder = okhttp3.Request.Builder()
-                .head()
+                .get()
+                .header("Range", "bytes=0-0")
                 .url(url)
-            val response = httpClient.newCall(requestBuilder.build()).execute()
-            return response.isSuccessful
+            httpClient.newCall(requestBuilder.build()).execute().use { response ->
+                return response.isSuccessful
+            }
         } catch (e: Exception) {
             reportException(e)
         }

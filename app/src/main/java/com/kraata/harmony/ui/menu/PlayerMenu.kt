@@ -98,6 +98,7 @@ import com.kraata.harmony.LocalPlayerConnection
 import com.kraata.harmony.R
 import com.kraata.harmony.constants.ShowLyricsKey
 import com.kraata.harmony.models.MediaMetadata
+import com.kraata.harmony.models.toMediaMetadata
 import com.kraata.harmony.playback.ExoDownloadService
 import com.kraata.harmony.playback.queues.YouTubeQueue
 import com.kraata.harmony.ui.component.BigSeekBar
@@ -146,6 +147,10 @@ fun PlayerMenu(
     val currentFormatState = database.format(mediaMetadata.id).collectAsState(initial = null)
     val currentFormat = currentFormatState.value
     val librarySong by database.song(mediaMetadata.id).collectAsState(initial = null)
+    val currentMetadata = librarySong
+        ?.takeIf { it.song.isLocal }
+        ?.toMediaMetadata()
+        ?: mediaMetadata
     val coroutineScope = rememberCoroutineScope()
 
     val download by LocalDownloadUtil.current.getDownload(mediaMetadata.id).collectAsState(initial = null)
@@ -390,7 +395,7 @@ fun PlayerMenu(
 
     if (showDetailsDialog) {
         DetailsDialog(
-            mediaMetadata = mediaMetadata,
+            mediaMetadata = currentMetadata,
             currentFormat = currentFormat,
             currentPlayCount = librarySong?.playCount?.fastSumBy { it.count } ?: 0,
             clipboardManager = clipboardManager,
@@ -427,12 +432,12 @@ fun PlayerMenu(
             bottom = 8.dp + WindowInsets.systemBars.asPaddingValues().calculateBottomPadding()
         )
     ) {
-        if (!mediaMetadata.isLocal)
+        if (!currentMetadata.isLocal)
             GridMenuItem(
                 icon = Icons.Rounded.Radio,
                 title = R.string.start_radio
             ) {
-                playerConnection.playQueue(YouTubeQueue.radio(mediaMetadata), isRadio = true)
+                playerConnection.playQueue(YouTubeQueue.radio(currentMetadata), isRadio = true)
                 onDismiss()
             }
         GridMenuItem(
@@ -447,20 +452,20 @@ fun PlayerMenu(
         ) {
             showChoosePlaylistDialog = true
         }
-        if (!mediaMetadata.isLocal)
+        if (!currentMetadata.isLocal)
             DownloadGridMenu(
                 localDateTime = download,
                 onDownload = {
                     database.transaction {
-                        insert(mediaMetadata)
+                        insert(currentMetadata)
                     }
-                    downloadUtil.download(mediaMetadata)
+                    downloadUtil.download(currentMetadata)
                 },
                 onRemoveDownload = {
                     DownloadService.sendRemoveDownload(
                         context,
                         ExoDownloadService::class.java,
-                        mediaMetadata.id,
+                        currentMetadata.id,
                         false
                     )
                 }
@@ -471,17 +476,17 @@ fun PlayerMenu(
                 title = R.string.remove_from_library,
             ) {
                 database.query {
-                    toggleInLibrary(mediaMetadata.id, null)
+                    toggleInLibrary(currentMetadata.id, null)
                 }
             }
-        } else if (!mediaMetadata.isLocal) {
+        } else if (!currentMetadata.isLocal) {
             GridMenuItem(
                 icon = Icons.Rounded.LibraryAdd,
                 title = R.string.add_to_library,
             ) {
                 database.transaction {
-                    insert(mediaMetadata)
-                    toggleInLibrary(mediaMetadata.id, LocalDateTime.now())
+                    insert(currentMetadata)
+                    toggleInLibrary(currentMetadata.id, LocalDateTime.now())
                 }
             }
         }
@@ -489,26 +494,26 @@ fun PlayerMenu(
             icon = R.drawable.artist,
             title = R.string.view_artist
         ) {
-            if (mediaMetadata.artists.size == 1) {
-                navController.navigate("artist/${mediaMetadata.artists[0].id}")
+            if (currentMetadata.artists.size == 1) {
+                navController.navigate("artist/${currentMetadata.artists[0].id}")
                 playerBottomSheetState.collapseSoft()
                 onDismiss()
             } else {
                 showSelectArtistDialog = true
             }
         }
-        if (mediaMetadata.album != null && !mediaMetadata.isLocal) {
+        if (currentMetadata.album != null && !currentMetadata.isLocal) {
             GridMenuItem(
                 icon = R.drawable.album,
                 title = R.string.view_album
             ) {
-                navController.navigate("album/${mediaMetadata.album.id}")
+                navController.navigate("album/${currentMetadata.album.id}")
                 playerBottomSheetState.collapseSoft()
                 onDismiss()
             }
         }
 
-        if (!mediaMetadata.isLocal)
+        if (!currentMetadata.isLocal)
             GridMenuItem(
                 icon = Icons.Rounded.Share,
                 title = R.string.share
@@ -516,7 +521,7 @@ fun PlayerMenu(
                 val intent = Intent().apply {
                     action = Intent.ACTION_SEND
                     type = "text/plain"
-                    putExtra(Intent.EXTRA_TEXT, "https://music.youtube.com/watch?v=${mediaMetadata.id}")
+                    putExtra(Intent.EXTRA_TEXT, "https://music.youtube.com/watch?v=${currentMetadata.id}")
                 }
                 context.startActivity(Intent.createChooser(intent, null))
                 onDismiss()
@@ -574,7 +579,7 @@ fun PlayerMenu(
             onAdd = { queueName ->
                 val q = playerConnection.service.queueBoard.addQueue(
                     queueName,
-                    listOf(mediaMetadata),
+                    listOf(currentMetadata),
                     forceInsert = true,
                     delta = false
                 )
@@ -592,15 +597,15 @@ fun PlayerMenu(
     if (showChoosePlaylistDialog) {
         AddToPlaylistDialog(
             navController = navController,
-            songIds = listOf(mediaMetadata.id),
+            songIds = listOf(currentMetadata.id),
             onPreAdd = { playlist ->
                 database.transaction {
-                    insert(mediaMetadata)
+                    insert(currentMetadata)
                 }
 
-                playlist.playlist.browseId?.let { YouTube.addToPlaylist(it, mediaMetadata.id) }
+                playlist.playlist.browseId?.let { YouTube.addToPlaylist(it, currentMetadata.id) }
 
-                listOf(mediaMetadata.id)
+                listOf(currentMetadata.id)
             },
             onDismiss = {
                 showChoosePlaylistDialog = false
@@ -611,7 +616,7 @@ fun PlayerMenu(
     if (showSelectArtistDialog) {
         ArtistDialog(
             navController = navController,
-            artists = mediaMetadata.artists,
+            artists = currentMetadata.artists,
             onDismiss = {
                 playerBottomSheetState.collapseSoft()
                 showSelectArtistDialog = false

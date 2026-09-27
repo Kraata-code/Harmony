@@ -64,8 +64,50 @@ Basado en [InnerTune](https://github.com/z-huang/InnerTune) y el ecosistema de O
 - 🎤 **Letras sincronizadas** — LRC / TTML / SRT con modo karaoke palabra por palabra.
 - 🎛️ **Múltiples colas de reproducción.**
 - 🚗 **Android Auto** — integración nativa.
-- 🏷️ **Metadatos mejorados** — TagLib / FFmpeg / MediaStore según configuración.
+- 🎙️ **Reconocimiento musical** — identifica canciones cercanas con el micrófono y guarda un historial.
+- 🏷️ **Metadatos locales** — identifica archivos con huellas acústicas y actualiza etiquetas y carátulas.
+- ✏️ **Edición de archivos locales** — cambia título, artista y portada desde el menú de una canción.
+- 🔄 **Actualizador integrado** — comprueba releases de GitHub, muestra sus notas y descarga el APK.
 - 🤖 **Modo AI experimental** — LLM local vía `llama.cpp` (modelo: Qwen2-500m).
+
+---
+
+## Reconocimiento y metadatos locales
+
+### Reconocimiento musical
+
+La sección **Más** permite reconocer una canción usando el micrófono. El
+reconocimiento necesita permiso de grabación y dos tipos de datos descargables:
+una base principal y al menos una base regional. Puedes seleccionarlas,
+descargarlas o eliminarlas desde **Ajustes > Almacenamiento**. Los resultados
+pueden reproducirse y se guardan en el historial de reconocimiento.
+
+### Actualización de metadatos
+
+Desde el menú de una canción local puedes editar:
+
+- El título y el artista.
+- La portada, incluyendo su sustitución o eliminación.
+
+Desde la pantalla de una carpeta puedes actualizar todas sus canciones y
+subcarpetas en segundo plano mediante Chromaprint, AcoustID y MusicBrainz. Si
+hay una carátula disponible, también se guarda en el archivo local.
+
+La actualización automática de carpetas requiere conexión a Internet y permiso
+de escritura sobre la carpeta. Muestra progreso, reanuda trabajos interrumpidos
+y resume coincidencias, canciones sin coincidencia, resultados de baja confianza
+y errores. **Puede sobrescribir los metadatos y las carátulas existentes**, por
+lo que conviene hacer una copia de seguridad antes de iniciarla.
+
+---
+
+## Actualizaciones de la aplicación
+
+Harmony comprueba las nuevas versiones publicadas en GitHub. Cuando hay una
+actualización disponible, la aplicación muestra la versión y sus notas, permite
+descargar el APK con progreso y abre el instalador de Android. La primera
+instalación puede pedir permiso para instalar aplicaciones desconocidas en los
+ajustes del sistema.
 
 ---
 
@@ -138,12 +180,22 @@ git clone https://github.com/mikooomich/ffmpeg-android-maker-prebuilt/ \
 
 ---
 
+## Contribuir
+
+Consulta la [guía de contribución](CONTRIBUTING.md) para preparar el entorno,
+crear commits y abrir pull requests. Las reglas para agentes de IA están en
+[AGENTS.md](AGENTS.md). Para reportes de seguridad, consulta la
+[Política de seguridad](SECURITY.md).
+
+---
+
 ## Estructura de módulos
 
 | Módulo | Descripción |
 |---|---|
 | `app` | Aplicación principal: UI (Compose), reproducción, Room, configuración. |
 | `innertube` | Cliente/API para YouTube Music. |
+| `music_identifier` | Huellas acústicas y reconocimiento musical nativo. |
 | `kugou` | Integración de letras vía KuGou. |
 | `lrclib` | Integración de letras vía LrcLib. |
 | `ffMetadataEx` | Integración nativa NDK/CMake con FFmpeg para metadatos. |
@@ -154,7 +206,7 @@ git clone https://github.com/mikooomich/ffmpeg-android-maker-prebuilt/ \
 
 ## Tecnologías
 
-`Kotlin` · `Jetpack Compose` · `Media3 / ExoPlayer` · `Room` · `Hilt` · `Ktor` · `NDK / CMake` · `llama.cpp` · `FFmpeg` · `TagLib`
+`Kotlin` · `Jetpack Compose` · `Media3 / ExoPlayer` · `Room` · `Hilt` · `Ktor` · `NDK / CMake` · `Chromaprint` · `llama.cpp` · `FFmpeg` · `TagLib`
 
 ---
 

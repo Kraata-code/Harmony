@@ -172,4 +172,17 @@
     <string name="login_failed">Login പരാജയപ്പെട്ടു</string>
     <string name="action_logout">Logout</string>
     <string name="discord_information">നിങ്ങളുടെ Discord അക്കൗണ്ടിന്റെ സ്റ്റാറ്റസ് സജ്ജീകരിക്കാൻ OuterTune KizzyRPC ലൈബ്രറി ഉപയോഗിക്കുന്നു. ഇതിൽ Discord ഗേറ്റ്‌വേ കണക്ഷൻ ഉപയോഗിക്കുന്നത് ഉൾപ്പെടുന്നു, ഇത് Discord-ന്റെ TOS-ന്റെ ലംഘനമായി കണക്കാക്കാം. എന്നിരുന്നാലും, ഈ കാരണത്താൽ ഉപയോക്തൃ അക്കൗണ്ടുകൾ താൽക്കാലികമായി നിർത്തിവച്ചതായി അറിയപ്പെടുന്ന കേസുകളൊന്നുമില്ല. നിങ്ങളുടെ സ്വന്തം ഉത്തരവാദിത്തത്തിൽ ഉപയോഗിക്കുക.\n\nOuterTune നിങ്ങളുടെ ടോക്കൺ മാത്രമേ എക്‌സ്‌ട്രാക്‌റ്റ് ചെയ്യുകയുള്ളൂ, മറ്റെല്ലാം പ്രാദേശികമായി സംഭരിക്കപ്പെടും.</string>
+    <string name="version">പതിപ്പ്</string>
+    <string name="new_version_available">പുതിയ പതിപ്പ് ലഭ്യമാണ്</string>
+    <string name="checking_for_updates">അപ്‌ഡേറ്റുകൾ പരിശോധിക്കുന്നു…</string>
+    <string name="update_check_failed">അപ്‌ഡേറ്റുകൾ പരിശോധിക്കാനായില്ല (വീണ്ടും ശ്രമിക്കാൻ ടാപ്പ് ചെയ്യുക)</string>
+    <string name="update_available_title">Harmony അപ്‌ഡേറ്റ് ലഭ്യമാണ്</string>
+    <string name="update_available_version">പതിപ്പ് %1$s</string>
+    <string name="update_release_notes">പുതിയത്</string>
+    <string name="update_release_notes_empty">റിലീസ് കുറിപ്പുകൾ ലഭ്യമല്ല.</string>
+    <string name="update_download">അപ്‌ഡേറ്റ്</string>
+    <string name="update_retry">വീണ്ടും ശ്രമിക്കുക</string>
+    <string name="update_downloading">ഡൗൺലോഡ് ചെയ്യുന്നു: %1$d%%</string>
+    <string name="update_downloading_unknown">ഡൗൺലോഡ് ചെയ്യുന്നു…</string>
+    <string name="update_installing">ഇൻസ്റ്റാൾ ചെയ്യുന്നു…</string>
 </resources>

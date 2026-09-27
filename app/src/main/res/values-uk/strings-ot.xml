@@ -1,5 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="music_recognition">Розпізнавання музики</string>
+    <string name="music_recognition_placeholder_title">Розпізнати пісню</string>
+    <string name="music_recognition_placeholder_description">Натисніть на мікрофон, щоб прослухати музику поблизу.</string>
+    <string name="music_recognition_start">Почати розпізнавання музики</string>
+    <string name="music_recognition_stop">Зупинити розпізнавання музики</string>
+    <string name="music_recognition_listening">Слухаємо...</string>
     <string name="recent_activity">Нещодавна активність</string>
     <string name="sort_by_like_date">Коли сподобалося</string>
     <string name="attrib_zhuang">Zion Huang за InnerTune</string>
@@ -271,4 +277,54 @@
     <string name="scanner_strict_file_paths_description">Вимикає інтелектуальне зіставлення метаданих. Це може спричинити проблеми, якщо файли переміщуються в локальному сховищі, але дозволяє зберігати одну й ту ж пісню в різних теках</string>
     <string name="scanner_type_tooltip">Системний сканер працює швидше, але може некоректно витягувати деякі метадані порівняно з іншими видобувачами. Зверніть увагу, що зміна сканера не призведе до автоматичного перезавантаження метаданих наявних пісень.</string>
     <string name="restore_lm_tooltip">Для нових встановлень програми шляхи завантаження та сканування локальних медіафайлів можуть не працювати. Щоб вирішити цю проблему, видаліть і знову додайте їх.</string>
+    <string name="music_recognition_data_required_title">Потрібні дані розпізнавання</string>
+    <string name="music_recognition_data_required_message">Завантажте основну базу даних і регіональну базу даних перед використанням розпізнавання музики.</string>
+    <string name="music_recognition_data_install">Установити дані</string>
+    <string name="music_recognition_data_region">Регіони, що використовуються для розпізнавання</string>
+    <string name="music_recognition_data_core">Основна база даних</string>
+    <string name="music_recognition_data_region_download">Вибрана регіональна база даних</string>
+    <string name="music_recognition_data_mx">Мексика</string>
+    <string name="music_recognition_data_us_xa">Сполучені Штати та інші регіони</string>
+    <string name="music_recognition_data_installed">Установлено</string>
+    <string name="music_recognition_data_not_installed">Торкніться, щоб завантажити</string>
+    <string name="music_recognition_data_selected">Вибрано для розпізнавання</string>
+    <string name="music_recognition_data_not_selected">Не вибрано</string>
+    <string name="music_recognition_data_no_region_selected">Регіон не вибрано</string>
+    <string name="music_recognition_data_error">Не вдалося завантажити дані розпізнавання.</string>
+    <string name="music_recognition_data_delete">Видалити дані розпізнавання</string>
+    <string name="music_recognition_data_delete_region_confirm">Видалити завантажені дані для %1$s?</string>
+    <string name="music_recognition_data_delete_error">Не вдалося видалити дані розпізнавання.</string>
+    <string name="music_recognition_data_with_size">%1$s (~%2$s)</string>
+    <string name="music_recognition_history">Історія розпізнавання</string>
+    <string name="music_recognition_recognizing">Перевірка запису...</string>
+    <string name="music_recognition_result">%1$s - %2$s</string>
+    <string name="music_recognition_no_match">Збігів не знайдено.</string>
+    <string name="music_recognition_no_audio">Аудіо не записано.</string>
+    <string name="music_recognition_permission_required">Потрібен дозвіл на мікрофон.</string>
+    <string name="music_recognition_error">Не вдалося розпізнати музику.</string>
+    <string name="music_recognition_test_file">Перевірити поточний локальний файл</string>
+    <string name="music_recognition_data">Дані розпізнавання музики</string>
+    <string name="acoustid_test">Оновити локальні метадані</string>
+    <string name="acoustid_test_title">Оновити локальні метадані</string>
+    <string name="acoustid_test_processing">Визначення повного локального файлу та оновлення його метаданих...</string>
+    <string name="acoustid_test_match">Метадані оновлено:
+%1$s - %2$s</string>
+    <string name="acoustid_test_no_match">AcoustID не повернув збігів.</string>
+    <string name="acoustid_test_low_confidence">Збіг пропущено, оскільки рівень впевненості становив лише %d%%.</string>
+    <string name="acoustid_test_no_audio">Файл не містить аудіо.</string>
+    <string name="acoustid_test_error">Не вдалося оновити метадані: %1$s</string>
+    <string name="edit_local_metadata">Редагувати локальні метадані</string>
+    <string name="local_metadata_cover">Локальна обкладинка</string>
+    <string name="local_metadata_select_cover">Вибрати обкладинку</string>
+    <string name="local_metadata_remove_cover">Видалити обкладинку</string>
+    <string name="local_metadata_no_cover">Обкладинку не вибрано</string>
+    <string name="local_metadata_cover_error">Не вдалося прочитати обкладинку: %1$s</string>
+    <string name="local_metadata_edit_error">Не вдалося зберегти метадані: %1$s</string>
+    <string name="local_metadata_update_channel">Оновлення метаданих</string>
+    <string name="local_metadata_update_title">Оновлення локальних метаданих</string>
+    <string name="local_metadata_update_in_progress">Оновлення локальних метаданих уже триває.</string>
+    <string name="local_metadata_update_confirm">Метадані та обкладинки всіх пісень у цій папці та її підпапках можуть бути перезаписані. Продовжити?</string>
+    <string name="local_metadata_update_progress">Оброблено %1$d із %2$d</string>
+    <string name="local_metadata_update_complete">Оновлення локальних метаданих завершено</string>
+    <string name="local_metadata_update_summary">Оновлено: %1$d, без збігу: %2$d, низька впевненість: %3$d, помилки: %4$d</string>
 </resources>

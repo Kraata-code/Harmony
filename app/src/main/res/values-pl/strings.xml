@@ -297,4 +297,16 @@
     <string name="use_login_for_browse">Zaloguj się, aby przeglądać treści</string>
     <string name="use_login_for_browse_desc">Może mieć wpływ na to, jakie treści widzisz i np. pokazuje albumy tylko premium, jeśli jesteś zalogowany na konto Premium</string>
     <string name="action_login">Zaloguj</string>
+    <string name="version">wersja</string>
+    <string name="checking_for_updates">Sprawdzanie aktualizacji…</string>
+    <string name="update_check_failed">Nie można sprawdzić aktualizacji (dotknij, aby spróbować ponownie)</string>
+    <string name="update_available_title">Dostępna aktualizacja Harmony</string>
+    <string name="update_available_version">Wersja %1$s</string>
+    <string name="update_release_notes">Co nowego</string>
+    <string name="update_release_notes_empty">Brak dostępnych informacji o wydaniu.</string>
+    <string name="update_download">Aktualizuj</string>
+    <string name="update_retry">Spróbuj ponownie</string>
+    <string name="update_downloading">Pobieranie: %1$d%%</string>
+    <string name="update_downloading_unknown">Pobieranie…</string>
+    <string name="update_installing">Instalowanie…</string>
 </resources>

@@ -41,4 +41,17 @@
     <string name="filter_albums">Albumi</string>
     <string name="filter_artists">Izvajalci</string>
     <string name="filter_playlists">Seznami predvajanja</string>
+    <string name="version">različica</string>
+    <string name="new_version_available">Na voljo je nova različica</string>
+    <string name="checking_for_updates">Preverjanje posodobitev…</string>
+    <string name="update_check_failed">Posodobitev ni bilo mogoče preveriti (tapnite za ponovni poskus)</string>
+    <string name="update_available_title">Na voljo je posodobitev Harmony</string>
+    <string name="update_available_version">Različica %1$s</string>
+    <string name="update_release_notes">Kaj je novega</string>
+    <string name="update_release_notes_empty">Opombe ob izdaji niso na voljo.</string>
+    <string name="update_download">Posodobi</string>
+    <string name="update_retry">Poskusi znova</string>
+    <string name="update_downloading">Prenašanje: %1$d%%</string>
+    <string name="update_downloading_unknown">Prenašanje…</string>
+    <string name="update_installing">Nameščanje…</string>
 </resources>

@@ -1,5 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="music_recognition">זיהוי מוזיקה</string>
+    <string name="music_recognition_placeholder_title">זיהוי שיר</string>
+    <string name="music_recognition_placeholder_description">הקש על המיקרופון כדי להאזין למוזיקה בסביבה.</string>
+    <string name="music_recognition_start">התחלת זיהוי מוזיקה</string>
+    <string name="music_recognition_stop">עצירת זיהוי מוזיקה</string>
+    <string name="music_recognition_listening">מאזין...</string>
     <string name="folders">תיקיות</string>
     <string name="recent_activity">פעילות אחרונה</string>
     <string name="queue_local_history">היסטוריה (מקומי)</string>
@@ -247,4 +253,54 @@
         <item quantity="other"/>
     </plurals>
     <string name="library_filter">מסנן ספרייה</string>
+    <string name="music_recognition_data_required_title">נדרשים נתוני זיהוי</string>
+    <string name="music_recognition_data_required_message">הורד את מסד הנתונים הראשי ומסד נתונים אזורי לפני השימוש בזיהוי מוזיקה.</string>
+    <string name="music_recognition_data_install">התקנת נתונים</string>
+    <string name="music_recognition_data_region">אזורים המשמשים לזיהוי</string>
+    <string name="music_recognition_data_core">מסד נתונים ראשי</string>
+    <string name="music_recognition_data_region_download">מסד נתונים אזורי שנבחר</string>
+    <string name="music_recognition_data_mx">מקסיקו</string>
+    <string name="music_recognition_data_us_xa">ארצות הברית ואזורים נוספים</string>
+    <string name="music_recognition_data_installed">מותקן</string>
+    <string name="music_recognition_data_not_installed">הקש כדי להוריד</string>
+    <string name="music_recognition_data_selected">נבחר לזיהוי</string>
+    <string name="music_recognition_data_not_selected">לא נבחר</string>
+    <string name="music_recognition_data_no_region_selected">לא נבחר אזור</string>
+    <string name="music_recognition_data_error">לא ניתן להוריד את נתוני הזיהוי.</string>
+    <string name="music_recognition_data_delete">מחיקת נתוני זיהוי</string>
+    <string name="music_recognition_data_delete_region_confirm">למחוק את הנתונים שהורדו עבור %1$s?</string>
+    <string name="music_recognition_data_delete_error">לא ניתן למחוק את נתוני הזיהוי.</string>
+    <string name="music_recognition_data_with_size">%1$s (~%2$s)</string>
+    <string name="music_recognition_history">היסטוריית זיהוי</string>
+    <string name="music_recognition_recognizing">בודק את ההקלטה...</string>
+    <string name="music_recognition_result">%1$s - %2$s</string>
+    <string name="music_recognition_no_match">לא נמצאה התאמה.</string>
+    <string name="music_recognition_no_audio">לא נקלט אודיו.</string>
+    <string name="music_recognition_permission_required">נדרשת הרשאה למיקרופון.</string>
+    <string name="music_recognition_error">זיהוי המוזיקה נכשל.</string>
+    <string name="music_recognition_test_file">בדוק את הקובץ המקומי הנוכחי</string>
+    <string name="music_recognition_data">נתוני זיהוי מוזיקה</string>
+    <string name="acoustid_test">עדכון מטא-נתונים מקומיים</string>
+    <string name="acoustid_test_title">עדכון מטא-נתונים מקומיים</string>
+    <string name="acoustid_test_processing">מזהה את הקובץ המקומי המלא ומעדכן את המטא-נתונים שלו...</string>
+    <string name="acoustid_test_match">המטא-נתונים עודכנו:
+%1$s - %2$s</string>
+    <string name="acoustid_test_no_match">AcoustID לא החזיר התאמה.</string>
+    <string name="acoustid_test_low_confidence">ההתאמה דולגה כי רמת הביטחון הייתה רק %d%%.</string>
+    <string name="acoustid_test_no_audio">הקובץ אינו מכיל אודיו.</string>
+    <string name="acoustid_test_error">עדכון המטא-נתונים נכשל: %1$s</string>
+    <string name="edit_local_metadata">עריכת מטא-נתונים מקומיים</string>
+    <string name="local_metadata_cover">עטיפת אלבום מקומית</string>
+    <string name="local_metadata_select_cover">בחירת עטיפה</string>
+    <string name="local_metadata_remove_cover">הסרת עטיפה</string>
+    <string name="local_metadata_no_cover">לא נבחרה עטיפה</string>
+    <string name="local_metadata_cover_error">לא ניתן לקרוא את עטיפת האלבום: %1$s</string>
+    <string name="local_metadata_edit_error">לא ניתן לשמור את המטא-נתונים: %1$s</string>
+    <string name="local_metadata_update_channel">עדכוני מטא-נתונים</string>
+    <string name="local_metadata_update_title">מעדכן מטא-נתונים מקומיים</string>
+    <string name="local_metadata_update_in_progress">עדכון מטא-נתונים מקומי כבר מתבצע.</string>
+    <string name="local_metadata_update_confirm">ייתכן שהמטא-נתונים ועטיפות האלבום של כל השירים בתיקייה זו ובתיקיות המשנה שלה יוחלפו. להמשיך?</string>
+    <string name="local_metadata_update_progress">עובדו %1$d מתוך %2$d</string>
+    <string name="local_metadata_update_complete">עדכון המטא-נתונים המקומיים הושלם</string>
+    <string name="local_metadata_update_summary">עודכנו: %1$d, ללא התאמה: %2$d, ביטחון נמוך: %3$d, שגיאות: %4$d</string>
 </resources>

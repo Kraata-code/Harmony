@@ -74,6 +74,7 @@ interface SongsDao {
         WHERE id IN (SELECT songId
                      FROM event
                      WHERE timestamp > :fromTimeStamp
+                       AND playTime > 0
                      GROUP BY songId
                      ORDER BY SUM(playTime) DESC
                      LIMIT :limit
@@ -193,7 +194,7 @@ interface SongsDao {
     }
 
     @Transaction
-    @Query("SELECT * FROM song WHERE isLocal = 1 and inLibrary IS NOT NULL AND localpath LIKE :filter || '%'")
+    @Query("SELECT * FROM song WHERE isLocal = 1 and inLibrary IS NOT NULL AND substr(localPath, 1, length(:filter)) COLLATE BINARY = :filter ORDER BY localPath COLLATE BINARY ASC, id ASC")
     fun _localSongsInDirDeep(filter: String): List<Song>
 
     @Transaction

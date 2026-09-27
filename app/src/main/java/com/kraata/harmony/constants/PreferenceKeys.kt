@@ -107,6 +107,7 @@ val DownloadExtraPathKey = stringPreferencesKey("dlExtraPath") // previously "do
 val DownloadPathKey = stringPreferencesKey("dlPath") // previously "downloadPath"
 val MaxImageCacheSizeKey = intPreferencesKey("maxImageCacheSize")
 val MaxSongCacheSizeKey = intPreferencesKey("maxSongCacheSize")
+val NowPlayingShardGroupKey = stringPreferencesKey("nowPlayingShardGroup")
 
 
 /**
@@ -139,6 +140,18 @@ val LookupYtmArtistsKey = booleanPreferencesKey("lookupYtmArtists")
 val ScanPathsKey = stringPreferencesKey("inclScanPaths") // previously "scanPaths"
 val ExcludedScanPathsKey = stringPreferencesKey("exclScanPaths") // previously "excludedScanPaths"
 val LastLocalScanKey = longPreferencesKey("lastLocalScan")
+val LocalMetadataUpdateFolderKey = stringPreferencesKey("localMetadataUpdateFolder")
+val LocalMetadataUpdateLastCompletedSongIdKey = stringPreferencesKey("localMetadataUpdateLastCompletedSongId")
+val LocalMetadataUpdateProcessedKey = longPreferencesKey("localMetadataUpdateProcessed")
+val LocalMetadataUpdateUpdatedKey = longPreferencesKey("localMetadataUpdateUpdated")
+val LocalMetadataUpdateNoMatchKey = longPreferencesKey("localMetadataUpdateNoMatch")
+val LocalMetadataUpdateLowConfidenceKey = longPreferencesKey("localMetadataUpdateLowConfidence")
+val LocalMetadataUpdateErrorsKey = longPreferencesKey("localMetadataUpdateErrors")
+val LocalMetadataUpdatePendingFolderKey = stringPreferencesKey("localMetadataUpdatePendingFolder")
+val LocalMetadataUpdatePendingUpdatedKey = intPreferencesKey("localMetadataUpdatePendingUpdated")
+val LocalMetadataUpdatePendingNoMatchKey = intPreferencesKey("localMetadataUpdatePendingNoMatch")
+val LocalMetadataUpdatePendingLowConfidenceKey = intPreferencesKey("localMetadataUpdatePendingLowConfidence")
+val LocalMetadataUpdatePendingErrorsKey = intPreferencesKey("localMetadataUpdatePendingErrors")
 
 /**
  * Experimental settings

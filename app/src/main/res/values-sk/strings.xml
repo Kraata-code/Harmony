@@ -297,4 +297,16 @@
     <string name="new_version_available">Nová verzia je dostupná</string>
     <string name="translation_models">Prekladové modely</string>
     <string name="clear_translation_models">Jasné modely prekladu</string>
+    <string name="version">verzia</string>
+    <string name="checking_for_updates">Kontrolujú sa aktualizácie…</string>
+    <string name="update_check_failed">Aktualizácie sa nepodarilo skontrolovať (klepnutím to skúste znova)</string>
+    <string name="update_available_title">Je k dispozícii aktualizácia Harmony</string>
+    <string name="update_available_version">Verzia %1$s</string>
+    <string name="update_release_notes">Čo je nové</string>
+    <string name="update_release_notes_empty">Nie sú k dispozícii žiadne poznámky k vydaniu.</string>
+    <string name="update_download">Aktualizovať</string>
+    <string name="update_retry">Skúsiť znova</string>
+    <string name="update_downloading">Sťahovanie: %1$d%%</string>
+    <string name="update_downloading_unknown">Sťahovanie…</string>
+    <string name="update_installing">Inštalácia…</string>
 </resources>

@@ -27,11 +27,18 @@ class NetworkConnectivityObserver(context: Context) {
 
     private val networkCallback = object : ConnectivityManager.NetworkCallback() {
         override fun onAvailable(network: Network) {
-            _networkStatus.trySend(true)
+            updateNetworkStatus()
+        }
+
+        override fun onCapabilitiesChanged(
+            network: Network,
+            networkCapabilities: NetworkCapabilities,
+        ) {
+            updateNetworkStatus()
         }
 
         override fun onLost(network: Network) {
-            _networkStatus.trySend(false)
+            updateNetworkStatus()
         }
     }
 
@@ -40,6 +47,14 @@ class NetworkConnectivityObserver(context: Context) {
             .addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
             .build()
         connectivityManager.registerNetworkCallback(request, networkCallback)
+        updateNetworkStatus()
+    }
+
+    private fun updateNetworkStatus() {
+        val isConnected = connectivityManager.activeNetwork
+            ?.let(connectivityManager::getNetworkCapabilities)
+            ?.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED) == true
+        _networkStatus.trySend(isConnected)
     }
 
     fun unregister() {
