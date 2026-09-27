@@ -1,5 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="music_recognition">Musiqinin tanınması</string>
+    <string name="music_recognition_placeholder_title">Mahnını müəyyən et</string>
+    <string name="music_recognition_placeholder_description">Yaxınlıqdakı musiqini dinləmək üçün mikrofona toxunun.</string>
+    <string name="music_recognition_start">Musiqinin tanınmasını başladın</string>
+    <string name="music_recognition_stop">Musiqinin tanınmasını dayandırın</string>
+    <string name="music_recognition_listening">Dinlənilir...</string>
     <string name="err_stop_on_too_many_errors">Daha çox səhvlər. Səslənmə dayandırıldı</string>
     <string name="folders">Qovluqlar</string>
     <string name="library">Kitabxana</string>
@@ -67,4 +73,54 @@
     <string name="device_info_title">Cihaz məlumatları</string>
     <string name="help_bug_report_action">Xəta bildir</string>
     <string name="help_support_forum">Dəstək</string>
+    <string name="music_recognition_data_required_title">Tanıma məlumatları tələb olunur</string>
+    <string name="music_recognition_data_required_message">Musiqi tanıma funksiyasından istifadə etməzdən əvvəl əsas verilənlər bazasını və regional verilənlər bazasını endirin.</string>
+    <string name="music_recognition_data_install">Məlumatları quraşdır</string>
+    <string name="music_recognition_data_region">Tanıma üçün istifadə olunan regionlar</string>
+    <string name="music_recognition_data_core">Əsas verilənlər bazası</string>
+    <string name="music_recognition_data_region_download">Seçilmiş regional verilənlər bazası</string>
+    <string name="music_recognition_data_mx">Meksika</string>
+    <string name="music_recognition_data_us_xa">ABŞ və digər regionlar</string>
+    <string name="music_recognition_data_installed">Quraşdırılıb</string>
+    <string name="music_recognition_data_not_installed">Endirmək üçün toxunun</string>
+    <string name="music_recognition_data_selected">Tanıma üçün seçilib</string>
+    <string name="music_recognition_data_not_selected">Seçilməyib</string>
+    <string name="music_recognition_data_no_region_selected">Heç bir region seçilməyib</string>
+    <string name="music_recognition_data_error">Tanıma məlumatlarını endirmək mümkün olmadı.</string>
+    <string name="music_recognition_data_delete">Tanıma məlumatlarını sil</string>
+    <string name="music_recognition_data_delete_region_confirm">%1$s üçün endirilmiş məlumatlar silinsin?</string>
+    <string name="music_recognition_data_delete_error">Tanıma məlumatlarını silmək mümkün olmadı.</string>
+    <string name="music_recognition_data_with_size">%1$s (~%2$s)</string>
+    <string name="music_recognition_history">Tanınma tarixçəsi</string>
+    <string name="music_recognition_recognizing">Qeyd yoxlanılır...</string>
+    <string name="music_recognition_result">%1$s - %2$s</string>
+    <string name="music_recognition_no_match">Uyğunluq tapılmadı.</string>
+    <string name="music_recognition_no_audio">Səs yazılmadı.</string>
+    <string name="music_recognition_permission_required">Mikrofon icazəsi tələb olunur.</string>
+    <string name="music_recognition_error">Musiqinin tanınması uğursuz oldu.</string>
+    <string name="music_recognition_test_file">Cari yerli faylı yoxla</string>
+    <string name="music_recognition_data">Musiqinin tanınması məlumatları</string>
+    <string name="acoustid_test">Yerli metadatanı yenilə</string>
+    <string name="acoustid_test_title">Yerli metadatanı yenilə</string>
+    <string name="acoustid_test_processing">Yerli fayl tam müəyyən edilir və metadatası yenilənir...</string>
+    <string name="acoustid_test_match">Metadata yeniləndi:
+%1$s - %2$s</string>
+    <string name="acoustid_test_no_match">AcoustID heç bir uyğunluq qaytarmadı.</string>
+    <string name="acoustid_test_low_confidence">Güvən səviyyəsi yalnız %d%% olduğuna görə uyğunluq ötürüldü.</string>
+    <string name="acoustid_test_no_audio">Faylda audio yoxdur.</string>
+    <string name="acoustid_test_error">Metadata yenilənmədi: %1$s</string>
+    <string name="edit_local_metadata">Yerli metadatanı redaktə et</string>
+    <string name="local_metadata_cover">Yerli üz qabığı</string>
+    <string name="local_metadata_select_cover">Üz qabığını seç</string>
+    <string name="local_metadata_remove_cover">Üz qabığını sil</string>
+    <string name="local_metadata_no_cover">Üz qabığı seçilməyib</string>
+    <string name="local_metadata_cover_error">Üz qabığını oxumaq mümkün olmadı: %1$s</string>
+    <string name="local_metadata_edit_error">Metadatanı saxlamaq mümkün olmadı: %1$s</string>
+    <string name="local_metadata_update_channel">Metadata yeniləmələri</string>
+    <string name="local_metadata_update_title">Yerli metadata yenilənir</string>
+    <string name="local_metadata_update_in_progress">Yerli metadata yeniləməsi artıq davam edir.</string>
+    <string name="local_metadata_update_confirm">Bu qovluqdakı və onun alt qovluqlarındakı bütün mahnıların metadatası və üz qabığı üzərinə yazıla bilər. Davam edilsin?</string>
+    <string name="local_metadata_update_progress">%1$d/%2$d emal edildi</string>
+    <string name="local_metadata_update_complete">Yerli metadata yeniləməsi tamamlandı</string>
+    <string name="local_metadata_update_summary">Yeniləndi: %1$d, uyğunluq yoxdur: %2$d, aşağı güvən: %3$d, xətalar: %4$d</string>
 </resources>

@@ -270,4 +270,16 @@
     <string name="use_login_for_browse">Đăng nhập để xem nội dung</string>
     <string name="use_login_for_browse_desc">Điều này có thể ảnh hưởng đến nội dung bạn nhìn thấy, ví dụ như hiện những album dành riêng cho premium nếu bạn đăng nhập với tài khoản Premium</string>
     <string name="action_login">Đăng nhập</string>
+    <string name="version">phiên bản</string>
+    <string name="checking_for_updates">Đang kiểm tra bản cập nhật…</string>
+    <string name="update_check_failed">Không thể kiểm tra bản cập nhật (nhấn để thử lại)</string>
+    <string name="update_available_title">Có bản cập nhật Harmony</string>
+    <string name="update_available_version">Phiên bản %1$s</string>
+    <string name="update_release_notes">Có gì mới</string>
+    <string name="update_release_notes_empty">Không có ghi chú phát hành.</string>
+    <string name="update_download">Cập nhật</string>
+    <string name="update_retry">Thử lại</string>
+    <string name="update_downloading">Đang tải xuống: %1$d%%</string>
+    <string name="update_downloading_unknown">Đang tải xuống…</string>
+    <string name="update_installing">Đang cài đặt…</string>
 </resources>

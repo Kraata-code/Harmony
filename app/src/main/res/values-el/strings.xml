@@ -276,4 +276,16 @@
     <string name="auto_load_more">Αυτόματη φόρτωση περισσότερων τραγουδιών</string>
     <string name="search_history">Ιστορικό αναζήτησης</string>
     <string name="disable_screenshot">Απενεργοποίηση στιγμιότυπων οθόνης</string>
+    <string name="version">έκδοση</string>
+    <string name="checking_for_updates">Έλεγχος για ενημερώσεις…</string>
+    <string name="update_check_failed">Δεν ήταν δυνατός ο έλεγχος για ενημερώσεις (πατήστε για επανάληψη)</string>
+    <string name="update_available_title">Διαθέσιμη ενημέρωση Harmony</string>
+    <string name="update_available_version">Έκδοση %1$s</string>
+    <string name="update_release_notes">Τι νέο υπάρχει</string>
+    <string name="update_release_notes_empty">Δεν υπάρχουν διαθέσιμες σημειώσεις έκδοσης.</string>
+    <string name="update_download">Ενημέρωση</string>
+    <string name="update_retry">Επανάληψη</string>
+    <string name="update_downloading">Λήψη: %1$d%%</string>
+    <string name="update_downloading_unknown">Λήψη…</string>
+    <string name="update_installing">Εγκατάσταση…</string>
 </resources>

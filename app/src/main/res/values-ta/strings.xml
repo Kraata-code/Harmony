@@ -279,4 +279,16 @@
         <item quantity="other">%d தேர்ந்தெடுக்கப்பட்டன</item>
     </plurals>
     <string name="action_login">புகுபதிகை</string>
+    <string name="version">பதிப்பு</string>
+    <string name="checking_for_updates">புதுப்பிப்புகள் உள்ளதா எனச் சரிபார்க்கிறது…</string>
+    <string name="update_check_failed">புதுப்பிப்புகளைச் சரிபார்க்க முடியவில்லை (மீண்டும் முயற்சிக்கத் தட்டவும்)</string>
+    <string name="update_available_title">Harmony புதுப்பிப்பு உள்ளது</string>
+    <string name="update_available_version">பதிப்பு %1$s</string>
+    <string name="update_release_notes">புதிதாக என்ன</string>
+    <string name="update_release_notes_empty">வெளியீட்டு குறிப்புகள் கிடைக்கவில்லை.</string>
+    <string name="update_download">புதுப்பி</string>
+    <string name="update_retry">மீண்டும் முயற்சி</string>
+    <string name="update_downloading">பதிவிறக்குகிறது: %1$d%%</string>
+    <string name="update_downloading_unknown">பதிவிறக்குகிறது…</string>
+    <string name="update_installing">நிறுவுகிறது…</string>
 </resources>

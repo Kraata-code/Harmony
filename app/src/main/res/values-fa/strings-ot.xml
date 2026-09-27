@@ -1,5 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="music_recognition">شناسایی موسیقی</string>
+    <string name="music_recognition_placeholder_title">شناسایی یک آهنگ</string>
+    <string name="music_recognition_placeholder_description">برای شنیدن موسیقی اطراف، روی میکروفون ضربه بزنید.</string>
+    <string name="music_recognition_start">شروع شناسایی موسیقی</string>
+    <string name="music_recognition_stop">توقف شناسایی موسیقی</string>
+    <string name="music_recognition_listening">در حال گوش دادن...</string>
     <string name="android_auto">اندروید اتو</string>
     <string name="folders">پوشه ها</string>
     <string name="library">کتابخانه</string>
@@ -246,4 +252,54 @@
         <item quantity="one">%d ثانی</item>
         <item quantity="other">%d ثانیه</item>
     </plurals>
+    <string name="music_recognition_data_required_title">داده‌های شناسایی لازم است</string>
+    <string name="music_recognition_data_required_message">پیش از استفاده از شناسایی موسیقی، پایگاه‌داده اصلی و یک پایگاه‌داده منطقه‌ای را دانلود کنید.</string>
+    <string name="music_recognition_data_install">نصب داده‌ها</string>
+    <string name="music_recognition_data_region">منطقه‌های استفاده‌شده برای شناسایی</string>
+    <string name="music_recognition_data_core">پایگاه‌داده اصلی</string>
+    <string name="music_recognition_data_region_download">پایگاه‌داده منطقه‌ای انتخاب‌شده</string>
+    <string name="music_recognition_data_mx">مکزیک</string>
+    <string name="music_recognition_data_us_xa">ایالات متحده و دیگر منطقه‌ها</string>
+    <string name="music_recognition_data_installed">نصب‌شده</string>
+    <string name="music_recognition_data_not_installed">برای دانلود ضربه بزنید</string>
+    <string name="music_recognition_data_selected">انتخاب‌شده برای شناسایی</string>
+    <string name="music_recognition_data_not_selected">انتخاب‌نشده</string>
+    <string name="music_recognition_data_no_region_selected">هیچ منطقه‌ای انتخاب نشده است</string>
+    <string name="music_recognition_data_error">دانلود داده‌های شناسایی ممکن نیست.</string>
+    <string name="music_recognition_data_delete">حذف داده‌های شناسایی</string>
+    <string name="music_recognition_data_delete_region_confirm">داده‌های دانلودشده برای %1$s حذف شود؟</string>
+    <string name="music_recognition_data_delete_error">حذف داده‌های شناسایی ممکن نیست.</string>
+    <string name="music_recognition_data_with_size">%1$s (~%2$s)</string>
+    <string name="music_recognition_history">تاریخچه شناسایی</string>
+    <string name="music_recognition_recognizing">در حال بررسی ضبط...</string>
+    <string name="music_recognition_result">%1$s - %2$s</string>
+    <string name="music_recognition_no_match">تطبیقی یافت نشد.</string>
+    <string name="music_recognition_no_audio">هیچ صدایی ضبط نشد.</string>
+    <string name="music_recognition_permission_required">مجوز میکروفون لازم است.</string>
+    <string name="music_recognition_error">شناسایی موسیقی ناموفق بود.</string>
+    <string name="music_recognition_test_file">آزمایش فایل محلی فعلی</string>
+    <string name="music_recognition_data">داده‌های شناسایی موسیقی</string>
+    <string name="acoustid_test">به‌روزرسانی فراداده محلی</string>
+    <string name="acoustid_test_title">به‌روزرسانی فراداده محلی</string>
+    <string name="acoustid_test_processing">در حال شناسایی کامل فایل محلی و به‌روزرسانی فراداده آن...</string>
+    <string name="acoustid_test_match">فراداده به‌روز شد:
+%1$s - %2$s</string>
+    <string name="acoustid_test_no_match">AcoustID هیچ تطبیقی برنگرداند.</string>
+    <string name="acoustid_test_low_confidence">تطبیق رد شد چون میزان اطمینان فقط %d%% بود.</string>
+    <string name="acoustid_test_no_audio">فایل صوتی ندارد.</string>
+    <string name="acoustid_test_error">به‌روزرسانی فراداده ناموفق بود: %1$s</string>
+    <string name="edit_local_metadata">ویرایش فراداده محلی</string>
+    <string name="local_metadata_cover">جلد محلی</string>
+    <string name="local_metadata_select_cover">انتخاب جلد</string>
+    <string name="local_metadata_remove_cover">حذف جلد</string>
+    <string name="local_metadata_no_cover">جلدی انتخاب نشده است</string>
+    <string name="local_metadata_cover_error">خواندن جلد ممکن نیست: %1$s</string>
+    <string name="local_metadata_edit_error">ذخیره فراداده ممکن نیست: %1$s</string>
+    <string name="local_metadata_update_channel">به‌روزرسانی‌های فراداده</string>
+    <string name="local_metadata_update_title">در حال به‌روزرسانی فراداده محلی</string>
+    <string name="local_metadata_update_in_progress">به‌روزرسانی فراداده محلی در حال انجام است.</string>
+    <string name="local_metadata_update_confirm">ممکن است فراداده و جلد همه آهنگ‌های این پوشه و زیرپوشه‌های آن بازنویسی شوند. ادامه می‌دهید؟</string>
+    <string name="local_metadata_update_progress">%1$d از %2$d پردازش شد</string>
+    <string name="local_metadata_update_complete">به‌روزرسانی فراداده محلی کامل شد</string>
+    <string name="local_metadata_update_summary">به‌روزرسانی‌شده: %1$d، بدون تطبیق: %2$d، اطمینان کم: %3$d، خطاها: %4$d</string>
 </resources>

@@ -14,6 +14,21 @@ plugins {
     alias(libs.plugins.aboutlibraries)
 }
 
+val acoustIdClientKey = providers.gradleProperty("acoustidClientKey").orNull.orEmpty()
+val nowPlayingBaseUrl = providers.gradleProperty("nowPlayingBaseUrl")
+    .orElse("https://github.com/Kraata-code/Harmony/releases/latest/download")
+    .get()
+val updateApiBaseUrl = providers.gradleProperty("updateApiBaseUrl")
+    .orElse("https://api.github.com")
+    .get()
+val updateTestVersionCode = providers.gradleProperty("updateTestVersionCode")
+    .orNull
+    ?.toInt()
+    ?: 2
+val updateTestVersionName = providers.gradleProperty("updateTestVersionName")
+    .orElse("1.1.0")
+    .get()
+
 // Configuración de keystore con manejo seguro
 val keystorePropertiesFile = rootProject.file("keystore.properties")
 val keystoreProperties = Properties()
@@ -28,9 +43,20 @@ android {
         applicationId = "com.kraata.harmony"
         minSdk = 24
         targetSdk = 36
-        versionCode = 1
-        versionName = "1.0.0"
+        versionCode = updateTestVersionCode
+        versionName = updateTestVersionName
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        buildConfigField(
+            "String",
+            "UPDATE_API_BASE_URL",
+            "\"${updateApiBaseUrl.replace("\\", "\\\\").replace("\"", "\\\"")}\""
+        )
+        buildConfigField("String", "ACOUSTID_CLIENT_KEY", "\"$acoustIdClientKey\"")
+        buildConfigField(
+            "String",
+            "NOW_PLAYING_BASE_URL",
+            "\"${nowPlayingBaseUrl.replace("\\", "\\\\").replace("\"", "\\\"")}\"",
+        )
 
         ndk {
             //noinspection ChromeOsAbiSupport
@@ -39,17 +65,22 @@ android {
         externalNativeBuild {
             cmake {
                 cppFlags("-std=c++17")
-               arguments(
-            "-DGGML_USE_CPU=ON",
-            "-DLLAMA_BUILD_EXAMPLES=OFF", // Desactiva ejemplos
-            "-DLLAMA_BUILD_TESTS=OFF",     // Desactiva tests
-            "-DLLAMA_BUILD_SERVER=OFF",    // Desactiva el servidor HTTP
-            "-DLLAMA_CURL=OFF",            // Ya lo teníamos
-            "-DLLAMA_BUILD_COMMON=ON",     // Solo lo necesario para la lib
-            "-DLLAMA_BUILD_CLI=OFF",       // <--- ESTO ES CLAVE: Desactiva llama-cli
-            "-DLLAMA_BUILD_MTMD=OFF",      // <--- ESTO ELIMINA EL ERROR DE 'mtmd.h'
-            "-DANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES=ON"
-        )
+                arguments(
+                    "-DBUILD_SHARED_LIBS=ON",
+                    "-DGGML_BACKEND_DL=ON",
+                    "-DGGML_CPU_ALL_VARIANTS=ON",
+                    "-DGGML_NATIVE=OFF",
+                    "-DGGML_OPENMP=OFF",
+                    "-DGGML_LLAMAFILE=OFF",
+                    "-DLLAMA_BUILD_EXAMPLES=OFF",
+                    "-DLLAMA_BUILD_TESTS=OFF",
+                    "-DLLAMA_BUILD_SERVER=OFF",
+                    "-DLLAMA_BUILD_COMMON=ON",
+                    "-DLLAMA_BUILD_CLI=OFF",
+                    "-DLLAMA_BUILD_MTMD=OFF",
+                    "-DLLAMA_CURL=OFF",
+                    "-DANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES=ON"
+                )
             }
         }
     }
@@ -197,6 +228,7 @@ android {
                 "BSD-3-Clause",
                 "GNU LESSER GENERAL PUBLIC LICENSE, Version 2.1",
                 "GPL-3.0-only",
+                "GPL-3.0-or-later",
                 "EPL-2.0",
                 "MIT",
                 "MPL-2.0",
@@ -235,7 +267,7 @@ android {
     externalNativeBuild {
         cmake {
             path = file("CMakeLists.txt")
-            version = "3.22.1"
+            version = "3.31.6"
         }
     }
 }
@@ -266,6 +298,7 @@ dependencies {
     implementation(libs.activity)
     implementation(libs.hilt.navigation)
     implementation(libs.datastore)
+    implementation(libs.work.runtime.ktx)
 
     // Machine Learning
     implementation(libs.onnxruntime.android)
@@ -325,6 +358,7 @@ dependencies {
 
     // Módulos del proyecto
     implementation(project(":innertube"))
+    implementation(project(":music_identifier"))
     implementation(project(":kugou"))
     implementation(project(":lrclib"))
     implementation(project(":material-color-utilities"))
@@ -336,6 +370,11 @@ dependencies {
 
     // Bibliotecas de información
     implementation(libs.aboutlibraries.compose.m3)
+
+    testImplementation(libs.junit)
+    testImplementation("androidx.test:core:1.6.1")
+    testImplementation("com.squareup.okhttp3:mockwebserver:5.1.0")
+    testImplementation("org.robolectric:robolectric:4.14.1")
 
     // Soporte para Android N (SDK 24)
     // WebKit 1.14.0 es la última versión compatible con minSdk 24

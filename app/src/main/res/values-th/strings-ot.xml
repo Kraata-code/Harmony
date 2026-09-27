@@ -1,5 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="music_recognition">การระบุเพลง</string>
+    <string name="music_recognition_placeholder_title">ระบุเพลง</string>
+    <string name="music_recognition_placeholder_description">แตะไมโครโฟนเพื่อฟังเพลงที่อยู่ใกล้เคียง</string>
+    <string name="music_recognition_start">เริ่มการระบุเพลง</string>
+    <string name="music_recognition_stop">หยุดการระบุเพลง</string>
+    <string name="music_recognition_listening">กำลังฟัง...</string>
     <string name="android_auto">แอนดรอยด์ออโต้</string>
     <string name="folders">โฟลเดอร์</string>
     <string name="library">ไลบรารี</string>
@@ -34,4 +40,54 @@
     <string name="create_sync_playlist_description">หมายเหตุ: วิธีนี้ช่วยให้สามารถซิงค์กับ YouTube Music ได้ แต่คุณไม่สามารถเพิ่มเพลงในเครื่องลงในเพลย์ลิสต์ที่ซิงค์นี้ได้</string>
     <string name="disc_number">เพลงที่</string>
     <string name="extra_details">รายละเอียดเพิ่มเติม</string>
+    <string name="music_recognition_data_required_title">ต้องใช้ข้อมูลการระบุเพลง</string>
+    <string name="music_recognition_data_required_message">ดาวน์โหลดฐานข้อมูลหลักและฐานข้อมูลภูมิภาคก่อนใช้การระบุเพลง</string>
+    <string name="music_recognition_data_install">ติดตั้งข้อมูล</string>
+    <string name="music_recognition_data_region">ภูมิภาคที่ใช้สำหรับการระบุเพลง</string>
+    <string name="music_recognition_data_core">ฐานข้อมูลหลัก</string>
+    <string name="music_recognition_data_region_download">ฐานข้อมูลภูมิภาคที่เลือก</string>
+    <string name="music_recognition_data_mx">เม็กซิโก</string>
+    <string name="music_recognition_data_us_xa">สหรัฐอเมริกาและภูมิภาคอื่นๆ</string>
+    <string name="music_recognition_data_installed">ติดตั้งแล้ว</string>
+    <string name="music_recognition_data_not_installed">แตะเพื่อดาวน์โหลด</string>
+    <string name="music_recognition_data_selected">เลือกเพื่อใช้ระบุเพลง</string>
+    <string name="music_recognition_data_not_selected">ไม่ได้เลือก</string>
+    <string name="music_recognition_data_no_region_selected">ยังไม่ได้เลือกภูมิภาค</string>
+    <string name="music_recognition_data_error">ดาวน์โหลดข้อมูลการระบุเพลงไม่ได้</string>
+    <string name="music_recognition_data_delete">ลบข้อมูลการระบุเพลง</string>
+    <string name="music_recognition_data_delete_region_confirm">ลบข้อมูลที่ดาวน์โหลดสำหรับ %1$s ไหม</string>
+    <string name="music_recognition_data_delete_error">ลบข้อมูลการระบุเพลงไม่ได้</string>
+    <string name="music_recognition_data_with_size">%1$s (~%2$s)</string>
+    <string name="music_recognition_history">ประวัติการระบุเพลง</string>
+    <string name="music_recognition_recognizing">กำลังตรวจสอบการบันทึก...</string>
+    <string name="music_recognition_result">%1$s - %2$s</string>
+    <string name="music_recognition_no_match">ไม่พบรายการที่ตรงกัน</string>
+    <string name="music_recognition_no_audio">ไม่มีเสียงที่บันทึกได้</string>
+    <string name="music_recognition_permission_required">ต้องอนุญาตให้ใช้ไมโครโฟน</string>
+    <string name="music_recognition_error">การระบุเพลงล้มเหลว</string>
+    <string name="music_recognition_test_file">ทดสอบไฟล์ในเครื่องปัจจุบัน</string>
+    <string name="music_recognition_data">ข้อมูลการระบุเพลง</string>
+    <string name="acoustid_test">อัปเดตข้อมูลเมตาในเครื่อง</string>
+    <string name="acoustid_test_title">อัปเดตข้อมูลเมตาในเครื่อง</string>
+    <string name="acoustid_test_processing">กำลังระบุไฟล์ในเครื่องทั้งหมดและอัปเดตข้อมูลเมตา...</string>
+    <string name="acoustid_test_match">อัปเดตข้อมูลเมตาแล้ว:
+%1$s - %2$s</string>
+    <string name="acoustid_test_no_match">AcoustID ไม่พบรายการที่ตรงกัน</string>
+    <string name="acoustid_test_low_confidence">ข้ามรายการที่ตรงกันเนื่องจากความเชื่อมั่นมีเพียง %d%%</string>
+    <string name="acoustid_test_no_audio">ไฟล์ไม่มีเสียง</string>
+    <string name="acoustid_test_error">อัปเดตข้อมูลเมตาล้มเหลว: %1$s</string>
+    <string name="edit_local_metadata">แก้ไขข้อมูลเมตาในเครื่อง</string>
+    <string name="local_metadata_cover">ปกอัลบั้มในเครื่อง</string>
+    <string name="local_metadata_select_cover">เลือกปก</string>
+    <string name="local_metadata_remove_cover">ลบปก</string>
+    <string name="local_metadata_no_cover">ยังไม่ได้เลือกปก</string>
+    <string name="local_metadata_cover_error">อ่านปกไม่ได้: %1$s</string>
+    <string name="local_metadata_edit_error">บันทึกข้อมูลเมตาไม่ได้: %1$s</string>
+    <string name="local_metadata_update_channel">การอัปเดตข้อมูลเมตา</string>
+    <string name="local_metadata_update_title">กำลังอัปเดตข้อมูลเมตาในเครื่อง</string>
+    <string name="local_metadata_update_in_progress">มีการอัปเดตข้อมูลเมตาในเครื่องอยู่แล้ว</string>
+    <string name="local_metadata_update_confirm">ข้อมูลเมตาและปกของเพลงทั้งหมดในโฟลเดอร์นี้และโฟลเดอร์ย่อยอาจถูกเขียนทับ ดำเนินการต่อไหม</string>
+    <string name="local_metadata_update_progress">ประมวลผลแล้ว %1$d จาก %2$d</string>
+    <string name="local_metadata_update_complete">อัปเดตข้อมูลเมตาในเครื่องเสร็จสมบูรณ์</string>
+    <string name="local_metadata_update_summary">อัปเดตแล้ว: %1$d, ไม่ตรงกัน: %2$d, ความเชื่อมั่นต่ำ: %3$d, ข้อผิดพลาด: %4$d</string>
 </resources>

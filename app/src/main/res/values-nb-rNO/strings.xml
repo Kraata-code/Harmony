@@ -276,4 +276,16 @@
     <string name="discord_information">OuterTune bruker KizzyRPC for å stille inn statusen på Discord-kontoen din. Dette innebærer bruk ave Discord Gateway-portneren, som kan anses som et brudd på Discords tjenestevilkår. Det finnes dog ingen kjente tilfelle av suspenderte brukerkonter på denne grunnen. Bruk på egen risiko. \n \nOuterTune henter bare inn symbolet ditt, og alt annet blir lagret lokalt.</string>
     <string name="preview">Forhåndsvisning</string>
     <string name="about">Om</string>
+    <string name="version">versjon</string>
+    <string name="checking_for_updates">Ser etter oppdateringer…</string>
+    <string name="update_check_failed">Kunne ikke se etter oppdateringer (trykk for å prøve på nytt)</string>
+    <string name="update_available_title">Harmony-oppdatering tilgjengelig</string>
+    <string name="update_available_version">Versjon %1$s</string>
+    <string name="update_release_notes">Hva er nytt</string>
+    <string name="update_release_notes_empty">Ingen versjonsmerknader tilgjengelig.</string>
+    <string name="update_download">Oppdater</string>
+    <string name="update_retry">Prøv på nytt</string>
+    <string name="update_downloading">Laster ned: %1$d%%</string>
+    <string name="update_downloading_unknown">Laster ned…</string>
+    <string name="update_installing">Installerer…</string>
 </resources>

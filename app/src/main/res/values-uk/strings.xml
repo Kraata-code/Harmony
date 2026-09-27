@@ -297,4 +297,16 @@
     <string name="use_login_for_browse_desc">Це може вплинути на те, який вміст ви бачите, і, наприклад, показує лише платні альбоми, якщо ви ввійшли в обліковий запис Premium</string>
     <string name="use_login_for_browse">Використовуйте логін для перегляду вмісту</string>
     <string name="action_login">Увійти</string>
+    <string name="version">версія</string>
+    <string name="checking_for_updates">Перевірка оновлень…</string>
+    <string name="update_check_failed">Не вдалося перевірити оновлення (натисніть, щоб повторити)</string>
+    <string name="update_available_title">Доступне оновлення Harmony</string>
+    <string name="update_available_version">Версія %1$s</string>
+    <string name="update_release_notes">Що нового</string>
+    <string name="update_release_notes_empty">Примітки до випуску відсутні.</string>
+    <string name="update_download">Оновити</string>
+    <string name="update_retry">Повторити</string>
+    <string name="update_downloading">Завантаження: %1$d%%</string>
+    <string name="update_downloading_unknown">Завантаження…</string>
+    <string name="update_installing">Встановлення…</string>
 </resources>

@@ -30,6 +30,7 @@ import com.kraata.harmony.db.entities.AlbumWithSongs
 import com.kraata.harmony.db.entities.ArtistEntity
 import com.kraata.harmony.db.entities.Song
 import com.kraata.harmony.db.entities.SongAlbumMap
+import com.kraata.harmony.db.entities.SongEntity
 import com.kraata.harmony.extensions.reversed
 import com.zionhuang.innertube.models.AlbumItem
 import kotlinx.coroutines.flow.Flow
@@ -122,6 +123,7 @@ interface AlbumsDao : ArtistsDao {
             JOIN song ON album.id = song.albumId
             JOIN event ON song.id = event.songId
         WHERE event.timestamp > :fromTimeStamp
+          AND event.playTime > 0
         GROUP BY album.id
         ORDER BY SUM(event.playTime) DESC
         LIMIT :limit OFFSET :offset;
@@ -140,7 +142,15 @@ interface AlbumsDao : ArtistsDao {
     """)
     fun artistAlbumsPreview(artistId: String, previewSize: Int = 6): Flow<List<Album>>
 
-    @RawQuery(observedEntities = [AlbumEntity::class])
+    @RawQuery(
+        observedEntities = [
+            AlbumEntity::class,
+            AlbumArtistMap::class,
+            ArtistEntity::class,
+            SongAlbumMap::class,
+            SongEntity::class,
+        ]
+    )
     fun _getAlbum(query: SupportSQLiteQuery): Flow<List<Album>>
 
     fun albums(filter: AlbumFilter, sortType: AlbumSortType, descending: Boolean): Flow<List<Album>> {
@@ -194,11 +204,13 @@ interface AlbumsDao : ArtistsDao {
                        JOIN
                    (SELECT songId, SUM(playTime) AS newPlayTime
                     FROM event
-                    WHERE timestamp > (:now - 86400000 * 30 * 1)
+                     WHERE timestamp > (:now - 86400000 * 30 * 1)
+                       AND playTime > 0
                     GROUP BY songId
                     ORDER BY newPlayTime) as n
                    ON event.songId = n.songId
-              WHERE timestamp < (:now - 86400000 * 30 * 1)
+               WHERE timestamp < (:now - 86400000 * 30 * 1)
+                 AND playTime > 0
               GROUP BY n.songId
               ORDER BY oldPlayTime) AS t
                  JOIN song on song.id = t.eid
@@ -215,6 +227,7 @@ interface AlbumsDao : ArtistsDao {
                  JOIN
              song ON event.songId = song.id
         WHERE event.timestamp > (:now - 86400000 * 7 * 2)
+          AND event.playTime > 0
         GROUP BY song.albumId
         HAVING song.albumId IS NOT NULL
         ORDER BY sum(event.playTime) DESC
@@ -298,6 +311,10 @@ interface AlbumsDao : ArtistsDao {
     @Transaction
     @Query("DELETE FROM song_genre_map WHERE songId = :songID")
     fun unlinkSongGenres(songID: String)
+
+    @Transaction
+    @Query("DELETE FROM album_artist_map WHERE albumId = :albumID")
+    fun unlinkAlbumArtists(albumID: String)
     // endregion
 
     // region Deletes

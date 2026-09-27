@@ -201,4 +201,17 @@
     <string name="restore_failed">ব্যাকআপ থেকে পুনরুদ্ধার করতে অক্ষম</string>
     <string name="about">সম্পর্কিত</string>
     <string name="app_version">অ্যাপ সংস্করণ</string>
+    <string name="version">সংস্করণ</string>
+    <string name="new_version_available">নতুন সংস্করণ উপলব্ধ</string>
+    <string name="checking_for_updates">আপডেট খোঁজা হচ্ছে…</string>
+    <string name="update_check_failed">আপডেট খোঁজা যায়নি (আবার চেষ্টা করতে ট্যাপ করুন)</string>
+    <string name="update_available_title">Harmony-এর আপডেট উপলব্ধ</string>
+    <string name="update_available_version">সংস্করণ %1$s</string>
+    <string name="update_release_notes">নতুন কী</string>
+    <string name="update_release_notes_empty">কোনো রিলিজ নোট নেই।</string>
+    <string name="update_download">আপডেট</string>
+    <string name="update_retry">আবার চেষ্টা</string>
+    <string name="update_downloading">ডাউনলোড হচ্ছে: %1$d%%</string>
+    <string name="update_downloading_unknown">ডাউনলোড হচ্ছে…</string>
+    <string name="update_installing">ইনস্টল হচ্ছে…</string>
 </resources>

@@ -270,4 +270,16 @@
     <string name="use_login_for_browse_desc">例えば、Premiumのアカウントでログインした時に、Premium限定のアルバムが表示されるようになります</string>
     <string name="use_login_for_browse">表示されるコンテンツをアカウントと結び付ける</string>
     <string name="action_login">ログイン</string>
+    <string name="version">バージョン</string>
+    <string name="checking_for_updates">更新を確認しています…</string>
+    <string name="update_check_failed">更新を確認できませんでした（タップして再試行）</string>
+    <string name="update_available_title">Harmonyの更新があります</string>
+    <string name="update_available_version">バージョン %1$s</string>
+    <string name="update_release_notes">新機能</string>
+    <string name="update_release_notes_empty">リリースノートはありません。</string>
+    <string name="update_download">更新</string>
+    <string name="update_retry">再試行</string>
+    <string name="update_downloading">ダウンロード中: %1$d%%</string>
+    <string name="update_downloading_unknown">ダウンロード中…</string>
+    <string name="update_installing">インストール中…</string>
 </resources>

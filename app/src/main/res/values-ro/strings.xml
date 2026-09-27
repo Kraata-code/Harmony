@@ -288,4 +288,16 @@
     <string name="refetch">Reîncarcă</string>
     <string name="sided">Într-o parte</string>
     <string name="remove_download_playlist_confirm">Sigur vrei să ștergi toate cele %s (de) melodii din playlist din Melodii descărcate?</string>
+    <string name="version">versiune</string>
+    <string name="checking_for_updates">Se verifică actualizările…</string>
+    <string name="update_check_failed">Nu s-au putut verifica actualizările (atinge pentru a reîncerca)</string>
+    <string name="update_available_title">Actualizare Harmony disponibilă</string>
+    <string name="update_available_version">Versiunea %1$s</string>
+    <string name="update_release_notes">Noutăți</string>
+    <string name="update_release_notes_empty">Nu există note de lansare disponibile.</string>
+    <string name="update_download">Actualizează</string>
+    <string name="update_retry">Reîncearcă</string>
+    <string name="update_downloading">Se descarcă: %1$d%%</string>
+    <string name="update_downloading_unknown">Se descarcă…</string>
+    <string name="update_installing">Se instalează…</string>
 </resources>

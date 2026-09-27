@@ -15,6 +15,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kraata.harmony.constants.HistorySource
 import com.kraata.harmony.db.MusicDatabase
+import com.kraata.harmony.db.entities.EventWithSong
 import com.kraata.harmony.utils.reportException
 import com.zionhuang.innertube.YouTube
 import com.zionhuang.innertube.pages.HistoryPage
@@ -39,36 +40,19 @@ class HistoryViewModel @Inject constructor(
     private val today = LocalDate.now()
     private val thisMonday = today.with(DayOfWeek.MONDAY)
     private val lastMonday = thisMonday.minusDays(7)
-    val historyPage = mutableStateOf<HistoryPage?>(null)
 
-    val events = database.events()
-        .map { events ->
-            events.groupBy {
-                val date = it.event.timestamp.toLocalDate()
-                val daysAgo = ChronoUnit.DAYS.between(date, today).toInt()
-                when {
-                    daysAgo == 0 -> DateAgo.Today
-                    daysAgo == 1 -> DateAgo.Yesterday
-                    date >= thisMonday -> DateAgo.ThisWeek
-                    date >= lastMonday -> DateAgo.LastWeek
-                    else -> DateAgo.Other(date.withDayOfMonth(1))
-                }
-            }.toSortedMap(compareBy { dateAgo ->
-                when (dateAgo) {
-                    DateAgo.Today -> 0L
-                    DateAgo.Yesterday -> 1L
-                    DateAgo.ThisWeek -> 2L
-                    DateAgo.LastWeek -> 3L
-                    is DateAgo.Other -> ChronoUnit.DAYS.between(dateAgo.date, today)
-                }
-            })
-        }
+    val events = database.events().map(::groupEvents)
         .stateIn(viewModelScope, SharingStarted.Lazily, emptyMap())
+
+    val recognitionEvents = database.recognitionEvents().map(::groupEvents)
+        .stateIn(viewModelScope, SharingStarted.Lazily, emptyMap())
+
+    val historyPage = mutableStateOf<HistoryPage?>(null)
 
     init {
         fetchRemoteHistory()
     }
-    
+
     fun fetchRemoteHistory() {
         viewModelScope.launch(Dispatchers.IO) {
             YouTube.musicHistory().onSuccess {
@@ -78,6 +62,27 @@ class HistoryViewModel @Inject constructor(
             }
         }
     }
+
+    private fun groupEvents(events: List<EventWithSong>) = events
+        .groupBy {
+            val date = it.event.timestamp.toLocalDate()
+            val daysAgo = ChronoUnit.DAYS.between(date, today).toInt()
+            when {
+                daysAgo == 0 -> DateAgo.Today
+                daysAgo == 1 -> DateAgo.Yesterday
+                date >= thisMonday -> DateAgo.ThisWeek
+                date >= lastMonday -> DateAgo.LastWeek
+                else -> DateAgo.Other(date.withDayOfMonth(1))
+            }
+        }.toSortedMap(compareBy { dateAgo ->
+            when (dateAgo) {
+                DateAgo.Today -> 0L
+                DateAgo.Yesterday -> 1L
+                DateAgo.ThisWeek -> 2L
+                DateAgo.LastWeek -> 3L
+                is DateAgo.Other -> ChronoUnit.DAYS.between(dateAgo.date, today)
+            }
+        })
 }
 
 sealed class DateAgo {

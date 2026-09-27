@@ -4,8 +4,8 @@
 # DESCRIPCIÓN: Este es TU archivo principal de CMake
 # ============================================
 
-cmake_minimum_required(VERSION 3.22.1)
-project("harmony_outertune" CXX C)
+cmake_minimum_required(VERSION 3.31.6)
+project("harmony" CXX C)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -39,6 +39,7 @@ set(LLAMA_LLGUIDANCE OFF CACHE BOOL "" FORCE)
 # CONFIGURACIÓN DE GGML
 # ============================================
 
+set(BUILD_SHARED_LIBS ON CACHE BOOL "" FORCE)
 set(GGML_CUDA OFF CACHE BOOL "" FORCE)
 set(GGML_METAL OFF CACHE BOOL "" FORCE)
 set(GGML_VULKAN OFF CACHE BOOL "" FORCE)
@@ -47,11 +48,19 @@ set(GGML_RPC OFF CACHE BOOL "" FORCE)
 set(GGML_KOMPUTE OFF CACHE BOOL "" FORCE)
 set(GGML_CPU ON CACHE BOOL "" FORCE)
 set(GGML_OPENMP OFF CACHE BOOL "" FORCE)
+set(GGML_BACKEND_DL ON CACHE BOOL "" FORCE)
+set(GGML_CPU_ALL_VARIANTS ON CACHE BOOL "" FORCE)
+set(GGML_NATIVE OFF CACHE BOOL "" FORCE)
+set(GGML_LLAMAFILE OFF CACHE BOOL "" FORCE)
 
-# Optimizaciones ARM64
 if(ANDROID_ABI STREQUAL "arm64-v8a")
-    message(STATUS "Configurando optimizaciones ARM64")
-    add_compile_definitions(GGML_USE_CPU)
+    set(GGML_CPU_KLEIDIAI ON CACHE BOOL "" FORCE)
+    message(STATUS "KleidiAI habilitado para arm64-v8a")
+elseif(ANDROID_ABI STREQUAL "x86_64")
+    set(GGML_CPU_KLEIDIAI OFF CACHE BOOL "" FORCE)
+    message(STATUS "KleidiAI deshabilitado para x86_64")
+else()
+    message(FATAL_ERROR "ABI no soportada para la integración de llama.cpp: ${ANDROID_ABI}")
 endif()
 
 # ============================================
@@ -96,6 +105,10 @@ message(STATUS "=== Compilando librería JNI ===")
 
 # Crear la librería JNI que carga llama.cpp
 add_library(llama-jni-lib SHARED
+    src/main/llama.cpp/HardwareUtils.cpp
+    src/main/llama.cpp/LlamaCommon.cpp
+    src/main/llama.cpp/LlamaPrompt.cpp
+    src/main/llama.cpp/LlamaSession.cpp
     src/main/llama.cpp/llama-jni.cpp
 )
 
@@ -117,15 +130,6 @@ set_target_properties(llama-jni-lib PROPERTIES
     CXX_STANDARD 17
     CXX_STANDARD_REQUIRED ON
 )
-
-# Optimizaciones de tamaño para ARM64
-if(ANDROID_ABI STREQUAL "arm64-v8a")
-    target_compile_options(llama-jni-lib PRIVATE
-        -O3
-        -march=armv8-a
-        -mtune=cortex-a53
-    )
-endif()
 
 message(STATUS "✓ Librería JNI 'llama-jni-lib' configurada")
 

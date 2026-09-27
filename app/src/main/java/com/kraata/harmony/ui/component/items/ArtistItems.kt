@@ -29,6 +29,7 @@ import coil3.compose.AsyncImage
 import com.kraata.harmony.constants.ListThumbnailSize
 import com.kraata.harmony.db.entities.Artist
 import com.kraata.harmony.ui.utils.getNSongsString
+import com.kraata.harmony.utils.getThumbnailModel
 
 @Composable
 fun ArtistListItem(
@@ -68,7 +69,7 @@ fun ArtistListItem(
     badges = badges,
     thumbnailContent = {
         AsyncImage(
-            model = artist.artist.thumbnailUrl,
+            model = getThumbnailModel(artist.artist.thumbnailUrl),
             contentDescription = null,
             modifier = Modifier
                 .size(ListThumbnailSize)
@@ -117,7 +118,7 @@ fun ArtistGridItem(
     badges = badges,
     thumbnailContent = {
         AsyncImage(
-            model = artist.artist.thumbnailUrl,
+            model = getThumbnailModel(artist.artist.thumbnailUrl),
             contentDescription = null,
             contentScale = ContentScale.Companion.Crop,
             modifier = Modifier
@@ -128,4 +129,3 @@ fun ArtistGridItem(
     fillMaxWidth = fillMaxWidth,
     modifier = modifier
 )
-

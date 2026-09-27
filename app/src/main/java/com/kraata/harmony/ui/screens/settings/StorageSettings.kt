@@ -39,6 +39,7 @@ import com.kraata.harmony.ui.component.PreferenceGroupTitle
 import com.kraata.harmony.ui.component.button.IconButton
 import com.kraata.harmony.ui.screens.settings.fragments.DownloadsFrag
 import com.kraata.harmony.ui.screens.settings.fragments.ImageCacheFrag
+import com.kraata.harmony.ui.screens.settings.fragments.NowPlayingAssetsFrag
 import com.kraata.harmony.ui.screens.settings.fragments.SongCacheFrag
 import com.kraata.harmony.ui.utils.backToMain
 
@@ -65,6 +66,17 @@ fun StorageSettings(
             modifier = Modifier.fillMaxWidth().animateContentSize()
         ) {
             DownloadsFrag()
+        }
+        Spacer(modifier = Modifier.height(16.dp))
+
+        PreferenceGroupTitle(
+            title = stringResource(R.string.music_recognition_data)
+        )
+
+        ElevatedCard(
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            NowPlayingAssetsFrag()
         }
         Spacer(modifier = Modifier.height(16.dp))
 

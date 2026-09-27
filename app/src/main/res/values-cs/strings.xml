@@ -288,4 +288,16 @@
     <string name="use_login_for_browse">Použít účet pro procházení obsahu</string>
     <string name="use_login_for_browse_desc">Může ovlivnit obsah, který se vám zobrazí – při přihlášení například mohou být zobrazena například alba, která jsou dostupná pouze s Premium účtem</string>
     <string name="action_login">Přihlásit se</string>
+    <string name="version">verze</string>
+    <string name="checking_for_updates">Kontrola aktualizací…</string>
+    <string name="update_check_failed">Aktualizace se nepodařilo zkontrolovat (klepnutím to zkuste znovu)</string>
+    <string name="update_available_title">Je k dispozici aktualizace Harmony</string>
+    <string name="update_available_version">Verze %1$s</string>
+    <string name="update_release_notes">Co je nového</string>
+    <string name="update_release_notes_empty">Nejsou k dispozici žádné poznámky k vydání.</string>
+    <string name="update_download">Aktualizovat</string>
+    <string name="update_retry">Zkusit znovu</string>
+    <string name="update_downloading">Stahování: %1$d%%</string>
+    <string name="update_downloading_unknown">Stahování…</string>
+    <string name="update_installing">Instalace…</string>
 </resources>

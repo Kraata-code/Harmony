@@ -11,7 +11,12 @@ import okio.Buffer
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
 
+@RunWith(RobolectricTestRunner::class)
+@Config(sdk = [35])
 class UpdateCheckerTest {
 
     @Test
@@ -48,6 +53,7 @@ class UpdateCheckerTest {
         assertTrue(state is UpdateCheckState.UpdateAvailable)
         val info = (state as UpdateCheckState.UpdateAvailable).info
         assertEquals("1.1.0", info.latestVersionName)
+        assertEquals("Bug fixes", info.releaseNotes)
         assertEquals(
             "https://example.com/Harmony-1.1.0-core-release-2.apk",
             info.downloadUrl

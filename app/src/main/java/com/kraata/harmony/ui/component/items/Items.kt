@@ -94,8 +94,8 @@ import com.kraata.harmony.models.toMediaMetadata
 import com.kraata.harmony.playback.queues.ListQueue
 import com.kraata.harmony.ui.component.PlayingIndicator
 import com.kraata.harmony.ui.component.PlayingIndicatorBox
-import com.kraata.harmony.utils.LocalArtworkPath
 import com.kraata.harmony.utils.getDownloadState
+import com.kraata.harmony.utils.getThumbnailModel
 import com.kraata.harmony.utils.joinByBullet
 import com.kraata.harmony.utils.makeTimeString
 import com.kraata.harmony.utils.reportException
@@ -330,41 +330,49 @@ fun MediaMetadataListItem(
     showDownloadIcon: Boolean = true,
     preferredSize: Int,
     trailingContent: @Composable RowScope.() -> Unit = {},
-) = ListItem(
-    title = mediaMetadata.title,
-    subtitle = joinByBullet(
-        mediaMetadata.artists.joinToString { it.name },
-        makeTimeString(mediaMetadata.duration * 1000L)
-    ),
-    badges = {
-        if (showLikedIcon && mediaMetadata.liked) {
-            Icon.Favorite()
-        }
-        if (showInLibraryIcon && mediaMetadata.isLocal) {
-            Icon.FolderCopy()
-        } else if (showInLibraryIcon && mediaMetadata.inLibrary != null) {
-            Icon.Library()
-        }
-        if (showDownloadIcon && !mediaMetadata.isLocal) {
-            val download by LocalDownloadUtil.current.getDownload(mediaMetadata.id).collectAsState(initial = null)
-            Icon.Download(download)
-        }
-    },
-    thumbnailContent = {
-        ItemThumbnail(
-            thumbnailUrl = mediaMetadata.thumbnailUrl,
-            preferredSize = preferredSize,
-            isActive = isActive,
-            isPlaying = isPlaying,
-            shape = RoundedCornerShape(ThumbnailCornerRadius),
-            modifier = Modifier.size(ListThumbnailSize)
-        )
-    },
-    trailingContent = trailingContent,
-    modifier = modifier,
-    isSelected = isSelected,
-    isActive = isActive,
-)
+) {
+    val librarySong by LocalDatabase.current.song(mediaMetadata.id).collectAsState(initial = null)
+    val displayedMetadata = librarySong
+        ?.takeIf { it.song.isLocal }
+        ?.toMediaMetadata()
+        ?: mediaMetadata
+
+    ListItem(
+        title = displayedMetadata.title,
+        subtitle = joinByBullet(
+            displayedMetadata.artists.joinToString { it.name },
+            makeTimeString(displayedMetadata.duration * 1000L)
+        ),
+        badges = {
+            if (showLikedIcon && displayedMetadata.liked) {
+                Icon.Favorite()
+            }
+            if (showInLibraryIcon && displayedMetadata.isLocal) {
+                Icon.FolderCopy()
+            } else if (showInLibraryIcon && displayedMetadata.inLibrary != null) {
+                Icon.Library()
+            }
+            if (showDownloadIcon && !displayedMetadata.isLocal) {
+                val download by LocalDownloadUtil.current.getDownload(displayedMetadata.id).collectAsState(initial = null)
+                Icon.Download(download)
+            }
+        },
+        thumbnailContent = {
+            ItemThumbnail(
+                thumbnailUrl = displayedMetadata.thumbnailUrl,
+                preferredSize = preferredSize,
+                isActive = isActive,
+                isPlaying = isPlaying,
+                shape = RoundedCornerShape(ThumbnailCornerRadius),
+                modifier = Modifier.size(ListThumbnailSize)
+            )
+        },
+        trailingContent = trailingContent,
+        modifier = modifier,
+        isSelected = isSelected,
+        isActive = isActive,
+    )
+}
 
 @Composable
 fun QueueListItem(
@@ -602,7 +610,7 @@ fun YouTubeCardItem(
                 val thumbnailRatio = 1f
 
                 AsyncImage(
-                    model = item.thumbnail,
+                    model = getThumbnailModel(item.thumbnail),
                     contentDescription = null,
                     modifier = Modifier
                         .fillMaxSize()
@@ -674,11 +682,8 @@ fun ItemThumbnail(
     ) {
         AsyncImage(
             imageLoader = context.imageLoader,
-            model = if (thumbnailUrl?.startsWith("/storage") == true) {
-                LocalArtworkPath(thumbnailUrl, preferredSize, preferredSize)
-            } else {
-                thumbnailUrl
-            },
+            model = getThumbnailModel(thumbnailUrl, preferredSize, preferredSize)
+                ?: R.drawable.placeholder_icon,
 //            placeholder = rememberVectorPainter(placeholderIcon),
             contentDescription = null,
             modifier = Modifier

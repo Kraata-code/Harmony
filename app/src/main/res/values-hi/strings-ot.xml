@@ -1,5 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="music_recognition">संगीत की पहचान</string>
+    <string name="music_recognition_placeholder_title">गाने की पहचान करें</string>
+    <string name="music_recognition_placeholder_description">आस-पास का संगीत सुनने के लिए माइक्रोफ़ोन पर टैप करें।</string>
+    <string name="music_recognition_start">संगीत की पहचान शुरू करें</string>
+    <string name="music_recognition_stop">संगीत की पहचान रोकें</string>
+    <string name="music_recognition_listening">सुन रहा है...</string>
     <string name="library_empty">यहाँ आपकी संग्रह की सामग्री दिखाई देगी</string>
     <string name="android_auto">एंड्रॉइड ऑटो</string>
     <string name="folders">फ़ोल्डर</string>
@@ -182,4 +188,54 @@
     <string name="scanner_type_title">मेटाडाटा निकालना</string>
     <string name="scanner_type_taglib">एकीकृत TagLib से मेटाडाटा निकालना</string>
     <string name="scanner_variant_rescan">पूरा संग्रह फ़िरसे स्कैन करें और सभी गानों के मेटाडाटा को फिर से लोड करें</string>
+    <string name="music_recognition_data_required_title">पहचान डेटा आवश्यक है</string>
+    <string name="music_recognition_data_required_message">संगीत पहचान का उपयोग करने से पहले मुख्य डेटाबेस और क्षेत्रीय डेटाबेस डाउनलोड करें।</string>
+    <string name="music_recognition_data_install">डेटा इंस्टॉल करें</string>
+    <string name="music_recognition_data_region">पहचान के लिए उपयोग किए जाने वाले क्षेत्र</string>
+    <string name="music_recognition_data_core">मुख्य डेटाबेस</string>
+    <string name="music_recognition_data_region_download">चयनित क्षेत्रीय डेटाबेस</string>
+    <string name="music_recognition_data_mx">मेक्सिको</string>
+    <string name="music_recognition_data_us_xa">संयुक्त राज्य और अन्य क्षेत्र</string>
+    <string name="music_recognition_data_installed">इंस्टॉल किया गया</string>
+    <string name="music_recognition_data_not_installed">डाउनलोड करने के लिए टैप करें</string>
+    <string name="music_recognition_data_selected">पहचान के लिए चयनित</string>
+    <string name="music_recognition_data_not_selected">चयनित नहीं</string>
+    <string name="music_recognition_data_no_region_selected">कोई क्षेत्र चयनित नहीं</string>
+    <string name="music_recognition_data_error">पहचान डेटा डाउनलोड नहीं किया जा सका।</string>
+    <string name="music_recognition_data_delete">पहचान डेटा मिटाएँ</string>
+    <string name="music_recognition_data_delete_region_confirm">%1$s के लिए डाउनलोड किया गया डेटा मिटाएँ?</string>
+    <string name="music_recognition_data_delete_error">पहचान डेटा मिटाया नहीं जा सका।</string>
+    <string name="music_recognition_data_with_size">%1$s (~%2$s)</string>
+    <string name="music_recognition_history">पहचान इतिहास</string>
+    <string name="music_recognition_recognizing">रिकॉर्डिंग की जाँच की जा रही है...</string>
+    <string name="music_recognition_result">%1$s - %2$s</string>
+    <string name="music_recognition_no_match">कोई मिलान नहीं मिला।</string>
+    <string name="music_recognition_no_audio">कोई ऑडियो कैप्चर नहीं हुआ।</string>
+    <string name="music_recognition_permission_required">माइक्रोफ़ोन की अनुमति आवश्यक है।</string>
+    <string name="music_recognition_error">संगीत पहचान विफल रही।</string>
+    <string name="music_recognition_test_file">वर्तमान स्थानीय फ़ाइल का परीक्षण करें</string>
+    <string name="music_recognition_data">संगीत पहचान डेटा</string>
+    <string name="acoustid_test">स्थानीय मेटाडेटा अपडेट करें</string>
+    <string name="acoustid_test_title">स्थानीय मेटाडेटा अपडेट करें</string>
+    <string name="acoustid_test_processing">पूरी स्थानीय फ़ाइल की पहचान करके उसके मेटाडेटा को अपडेट किया जा रहा है...</string>
+    <string name="acoustid_test_match">मेटाडेटा अपडेट किया गया:
+%1$s - %2$s</string>
+    <string name="acoustid_test_no_match">AcoustID ने कोई मिलान नहीं लौटाया।</string>
+    <string name="acoustid_test_low_confidence">मिलान छोड़ा गया क्योंकि विश्वसनीयता केवल %d%% थी।</string>
+    <string name="acoustid_test_no_audio">फ़ाइल में कोई ऑडियो नहीं है।</string>
+    <string name="acoustid_test_error">मेटाडेटा अपडेट विफल: %1$s</string>
+    <string name="edit_local_metadata">स्थानीय मेटाडेटा संपादित करें</string>
+    <string name="local_metadata_cover">स्थानीय कवर आर्ट</string>
+    <string name="local_metadata_select_cover">कवर चुनें</string>
+    <string name="local_metadata_remove_cover">कवर हटाएँ</string>
+    <string name="local_metadata_no_cover">कोई कवर चयनित नहीं है</string>
+    <string name="local_metadata_cover_error">कवर आर्ट पढ़ी नहीं जा सकी: %1$s</string>
+    <string name="local_metadata_edit_error">मेटाडेटा सहेजा नहीं जा सका: %1$s</string>
+    <string name="local_metadata_update_channel">मेटाडेटा अपडेट</string>
+    <string name="local_metadata_update_title">स्थानीय मेटाडेटा अपडेट हो रहा है</string>
+    <string name="local_metadata_update_in_progress">स्थानीय मेटाडेटा अपडेट पहले से जारी है।</string>
+    <string name="local_metadata_update_confirm">इस फ़ोल्डर और उसके सबफ़ोल्डर के सभी गानों का मेटाडेटा और कवर आर्ट ओवरराइट किया जा सकता है। जारी रखें?</string>
+    <string name="local_metadata_update_progress">%1$d में से %2$d संसाधित</string>
+    <string name="local_metadata_update_complete">स्थानीय मेटाडेटा अपडेट पूरा</string>
+    <string name="local_metadata_update_summary">अपडेट किए गए: %1$d, कोई मिलान नहीं: %2$d, कम विश्वसनीयता: %3$d, त्रुटियाँ: %4$d</string>
 </resources>

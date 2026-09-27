@@ -279,4 +279,16 @@
     <string name="new_version_available">Uusi versio saatavilla</string>
     <string name="translation_models">Käännösmallit</string>
     <string name="clear_translation_models">Tyhjennä käännösmallit</string>
+    <string name="version">versio</string>
+    <string name="checking_for_updates">Tarkistetaan päivityksiä…</string>
+    <string name="update_check_failed">Päivitysten tarkistaminen epäonnistui (yritä uudelleen napauttamalla)</string>
+    <string name="update_available_title">Harmony-päivitys saatavilla</string>
+    <string name="update_available_version">Versio %1$s</string>
+    <string name="update_release_notes">Uutta</string>
+    <string name="update_release_notes_empty">Julkaisutietoja ei ole saatavilla.</string>
+    <string name="update_download">Päivitä</string>
+    <string name="update_retry">Yritä uudelleen</string>
+    <string name="update_downloading">Ladataan: %1$d%%</string>
+    <string name="update_downloading_unknown">Ladataan…</string>
+    <string name="update_installing">Asennetaan…</string>
 </resources>

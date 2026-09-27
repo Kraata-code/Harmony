@@ -17,6 +17,10 @@ import android.util.Log
  * Handles JNI calls for LLM operations
  */
 class LlamaBridge {
+    /**
+     * Initialize the llama.cpp runtime and load backend variants from the app's native library dir.
+     */
+    external fun initRuntime(nativeLibDir: String)
 
     /**
      * Initialize the LLM model from file

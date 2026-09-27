@@ -1,5 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="music_recognition">Разпознаване на музика</string>
+    <string name="music_recognition_placeholder_title">Разпознаване на песен</string>
+    <string name="music_recognition_placeholder_description">Докоснете микрофона, за да слушате музика наблизо.</string>
+    <string name="music_recognition_start">Стартиране на разпознаването на музика</string>
+    <string name="music_recognition_stop">Спиране на разпознаването на музика</string>
+    <string name="music_recognition_listening">Слушане...</string>
     <string name="swipe2Queue">Плъзнете за добавите в опашка</string>
     <string name="lyrics_multiline_title">Четене на многоредов текст</string>
     <string name="lyrics_trim_title">Премахнете интервалите около текстовете</string>
@@ -266,4 +272,54 @@
     <string name="scanner_strict_file_paths_description">Деактивира всяко интелигентно съпоставяне на метаданни. Това може да причини проблеми, ако файловете се преместват в локалното ви хранилище, но позволява една и съща песен в различни папки.</string>
     <string name="scanner_type_tooltip">Системният скенер е по-бърз, но може да извлече някои метаданни неправилно в сравнение с други инструменти за извличане. Моля, обърнете внимание, че превключването на скенери няма автоматично да презареди метаданните на съществуващите песни.</string>
     <string name="restore_lm_tooltip">За нови инсталации на приложението, персонализираното изтегляне и пътищата за сканиране на локални медии може да не работят. За да разрешите това, премахнете ги и ги добавете отново.</string>
+    <string name="music_recognition_data_required_title">Необходими са данни за разпознаване</string>
+    <string name="music_recognition_data_required_message">Изтеглете основната база данни и регионална база данни, преди да използвате разпознаването на музика.</string>
+    <string name="music_recognition_data_install">Инсталиране на данни</string>
+    <string name="music_recognition_data_region">Региони, използвани за разпознаване</string>
+    <string name="music_recognition_data_core">Основна база данни</string>
+    <string name="music_recognition_data_region_download">Избрана регионална база данни</string>
+    <string name="music_recognition_data_mx">Мексико</string>
+    <string name="music_recognition_data_us_xa">Съединените щати и други региони</string>
+    <string name="music_recognition_data_installed">Инсталирано</string>
+    <string name="music_recognition_data_not_installed">Докоснете за изтегляне</string>
+    <string name="music_recognition_data_selected">Избрано за разпознаване</string>
+    <string name="music_recognition_data_not_selected">Не е избрано</string>
+    <string name="music_recognition_data_no_region_selected">Няма избран регион</string>
+    <string name="music_recognition_data_error">Данните за разпознаване не могат да бъдат изтеглени.</string>
+    <string name="music_recognition_data_delete">Изтриване на данните за разпознаване</string>
+    <string name="music_recognition_data_delete_region_confirm">Да се изтрият ли изтеглените данни за %1$s?</string>
+    <string name="music_recognition_data_delete_error">Данните за разпознаване не могат да бъдат изтрити.</string>
+    <string name="music_recognition_data_with_size">%1$s (~%2$s)</string>
+    <string name="music_recognition_history">История на разпознаването</string>
+    <string name="music_recognition_recognizing">Проверка на записа...</string>
+    <string name="music_recognition_result">%1$s - %2$s</string>
+    <string name="music_recognition_no_match">Няма намерено съвпадение.</string>
+    <string name="music_recognition_no_audio">Не е заснет звук.</string>
+    <string name="music_recognition_permission_required">Изисква се разрешение за микрофона.</string>
+    <string name="music_recognition_error">Разпознаването на музика не бе успешно.</string>
+    <string name="music_recognition_test_file">Тестване на текущия локален файл</string>
+    <string name="music_recognition_data">Данни за разпознаване на музика</string>
+    <string name="acoustid_test">Актуализиране на локалните метаданни</string>
+    <string name="acoustid_test_title">Актуализиране на локалните метаданни</string>
+    <string name="acoustid_test_processing">Идентифициране на целия локален файл и актуализиране на метаданните му...</string>
+    <string name="acoustid_test_match">Метаданните са актуализирани:
+%1$s - %2$s</string>
+    <string name="acoustid_test_no_match">AcoustID не върна съвпадение.</string>
+    <string name="acoustid_test_low_confidence">Съвпадението е пропуснато, защото увереността е само %d%%.</string>
+    <string name="acoustid_test_no_audio">Файлът не съдържа аудио.</string>
+    <string name="acoustid_test_error">Неуспешно актуализиране на метаданните: %1$s</string>
+    <string name="edit_local_metadata">Редактиране на локалните метаданни</string>
+    <string name="local_metadata_cover">Локална обложка</string>
+    <string name="local_metadata_select_cover">Избиране на обложка</string>
+    <string name="local_metadata_remove_cover">Премахване на обложка</string>
+    <string name="local_metadata_no_cover">Не е избрана обложка</string>
+    <string name="local_metadata_cover_error">Не може да се прочете обложката: %1$s</string>
+    <string name="local_metadata_edit_error">Не може да се запазят метаданните: %1$s</string>
+    <string name="local_metadata_update_channel">Актуализации на метаданните</string>
+    <string name="local_metadata_update_title">Актуализиране на локалните метаданни</string>
+    <string name="local_metadata_update_in_progress">Вече се извършва актуализация на локалните метаданни.</string>
+    <string name="local_metadata_update_confirm">Метаданните и обложките на всички песни в тази папка и нейните подпапки може да бъдат презаписани. Продължаване?</string>
+    <string name="local_metadata_update_progress">Обработени са %1$d от %2$d</string>
+    <string name="local_metadata_update_complete">Актуализацията на локалните метаданни завърши</string>
+    <string name="local_metadata_update_summary">Актуализирани: %1$d, без съвпадение: %2$d, ниска увереност: %3$d, грешки: %4$d</string>
 </resources>

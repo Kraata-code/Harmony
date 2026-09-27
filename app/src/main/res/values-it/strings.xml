@@ -288,4 +288,16 @@
     <string name="enable_discord_rpc">Abilita Rich Presence</string>
     <string name="dismiss">Ignorare</string>
     <string name="action_login">Accedi</string>
+    <string name="version">versione</string>
+    <string name="checking_for_updates">Controllo degli aggiornamenti…</string>
+    <string name="update_check_failed">Impossibile controllare gli aggiornamenti (tocca per riprovare)</string>
+    <string name="update_available_title">Aggiornamento Harmony disponibile</string>
+    <string name="update_available_version">Versione %1$s</string>
+    <string name="update_release_notes">Novità</string>
+    <string name="update_release_notes_empty">Nessuna nota di rilascio disponibile.</string>
+    <string name="update_download">Aggiorna</string>
+    <string name="update_retry">Riprova</string>
+    <string name="update_downloading">Download: %1$d%%</string>
+    <string name="update_downloading_unknown">Download…</string>
+    <string name="update_installing">Installazione…</string>
 </resources>

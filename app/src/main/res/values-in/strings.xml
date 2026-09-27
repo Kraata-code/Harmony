@@ -270,4 +270,16 @@
     <string name="use_login_for_browse">Masuk untuk menjelajahi konten</string>
     <string name="use_login_for_browse_desc">Hal ini dapat memengaruhi konten yang Anda lihat dan misalnya menampilkan album khusus premium jika Anda masuk dengan akun Premium</string>
     <string name="action_login">Masuk</string>
+    <string name="version">versi</string>
+    <string name="checking_for_updates">Memeriksa pembaruan…</string>
+    <string name="update_check_failed">Tidak dapat memeriksa pembaruan (ketuk untuk mencoba lagi)</string>
+    <string name="update_available_title">Pembaruan Harmony tersedia</string>
+    <string name="update_available_version">Versi %1$s</string>
+    <string name="update_release_notes">Yang baru</string>
+    <string name="update_release_notes_empty">Catatan rilis tidak tersedia.</string>
+    <string name="update_download">Perbarui</string>
+    <string name="update_retry">Coba lagi</string>
+    <string name="update_downloading">Mengunduh: %1$d%%</string>
+    <string name="update_downloading_unknown">Mengunduh…</string>
+    <string name="update_installing">Menginstal…</string>
 </resources>

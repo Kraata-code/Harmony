@@ -231,4 +231,16 @@
     <string name="new_version_available">Даступная новая версія</string>
     <string name="translation_models">Мадэлі перакладу</string>
     <string name="clear_translation_models">Ачысціць мадэлі перакладу</string>
+    <string name="version">версія</string>
+    <string name="checking_for_updates">Праверка абнаўленняў…</string>
+    <string name="update_check_failed">Не ўдалося праверыць абнаўленні (націсніце, каб паўтарыць)</string>
+    <string name="update_available_title">Даступна абнаўленне Harmony</string>
+    <string name="update_available_version">Версія %1$s</string>
+    <string name="update_release_notes">Што новага</string>
+    <string name="update_release_notes_empty">Няма нататак да выпуску.</string>
+    <string name="update_download">Абнавіць</string>
+    <string name="update_retry">Паўтарыць</string>
+    <string name="update_downloading">Спампоўванне: %1$d%%</string>
+    <string name="update_downloading_unknown">Спампоўванне…</string>
+    <string name="update_installing">Усталяванне…</string>
 </resources>

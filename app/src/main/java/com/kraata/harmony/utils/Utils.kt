@@ -18,6 +18,7 @@ import com.kraata.harmony.constants.MAX_LM_SCANNER_JOBS
 import com.kraata.harmony.constants.MAX_YTM_CONTENT_JOBS
 import com.kraata.harmony.constants.MAX_YTM_SYNC_JOBS
 import com.kraata.harmony.playback.DownloadUtil
+import com.kraata.harmony.ui.utils.resize
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.newFixedThreadPoolContext
@@ -87,10 +88,14 @@ fun getDownloadState(localDateTimes: List<LocalDateTime?>): Int {
     }
 }
 
-fun getThumbnailModel(thumbnailUrl: String, sizeX: Int = -1, sizeY: Int = -1): Any? {
+fun getThumbnailModel(thumbnailUrl: String?, sizeX: Int = -1, sizeY: Int = -1): Any? {
+    if (thumbnailUrl == null) return null
     return if (thumbnailUrl.startsWith("/storage/")) {
         LocalArtworkPath(thumbnailUrl, sizeX, sizeY)
     } else {
-        thumbnailUrl
+        thumbnailUrl.resize(
+            sizeX.takeIf { it > 0 } ?: 544,
+            sizeY.takeIf { it > 0 } ?: 544,
+        )
     }
 }

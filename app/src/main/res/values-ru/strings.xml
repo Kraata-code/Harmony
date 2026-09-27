@@ -297,4 +297,16 @@
     <string name="use_login_for_browse">Авторизуйтесь для просмотра контента</string>
     <string name="use_login_for_browse_desc">Это влияет на отображение контента и, в частности, открывает доступ к премиум-альбомам при входе с премиум-учётной записью</string>
     <string name="action_login">Войти</string>
+    <string name="version">версия</string>
+    <string name="checking_for_updates">Проверка обновлений…</string>
+    <string name="update_check_failed">Не удалось проверить обновления (нажмите, чтобы повторить)</string>
+    <string name="update_available_title">Доступно обновление Harmony</string>
+    <string name="update_available_version">Версия %1$s</string>
+    <string name="update_release_notes">Что нового</string>
+    <string name="update_release_notes_empty">Примечания к выпуску отсутствуют.</string>
+    <string name="update_download">Обновить</string>
+    <string name="update_retry">Повторить</string>
+    <string name="update_downloading">Загрузка: %1$d%%</string>
+    <string name="update_downloading_unknown">Загрузка…</string>
+    <string name="update_installing">Установка…</string>
 </resources>

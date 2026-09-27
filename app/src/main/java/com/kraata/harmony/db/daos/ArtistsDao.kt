@@ -27,6 +27,7 @@ import com.kraata.harmony.db.entities.Artist
 import com.kraata.harmony.db.entities.ArtistEntity
 import com.kraata.harmony.db.entities.Song
 import com.kraata.harmony.db.entities.SongArtistMap
+import com.kraata.harmony.db.entities.SongEntity
 import com.kraata.harmony.extensions.reversed
 import com.kraata.harmony.ui.utils.resize
 import com.zionhuang.innertube.pages.ArtistPage
@@ -137,7 +138,7 @@ interface ArtistsDao {
     """)
     fun mostPlayedArtists(fromYear: Int, fromMonth: Int, limit: Int = 6): Flow<List<Artist>>
 
-    @RawQuery(observedEntities = [ArtistEntity::class])
+    @RawQuery(observedEntities = [ArtistEntity::class, SongEntity::class, SongArtistMap::class])
     fun _getArtists(query: SupportSQLiteQuery): Flow<List<Artist>>
 
     fun artists(filter: ArtistFilter, sortType: ArtistSortType, descending: Boolean, localOnly: Boolean? = null): Flow<List<Artist>> {

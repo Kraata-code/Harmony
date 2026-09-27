@@ -200,4 +200,17 @@
     <string name="small">छोटा</string>
     <string name="big">बड़ा</string>
     <string name="clear_all_downloads">सभी डौन्लोडस निकाल दे</string>
+    <string name="version">संस्करण</string>
+    <string name="new_version_available">नया संस्करण उपलब्ध है</string>
+    <string name="checking_for_updates">अपडेट की जाँच की जा रही है…</string>
+    <string name="update_check_failed">अपडेट की जाँच नहीं हो सकी (फिर से कोशिश करने के लिए टैप करें)</string>
+    <string name="update_available_title">Harmony अपडेट उपलब्ध है</string>
+    <string name="update_available_version">संस्करण %1$s</string>
+    <string name="update_release_notes">नया क्या है</string>
+    <string name="update_release_notes_empty">रिलीज़ नोट उपलब्ध नहीं हैं।</string>
+    <string name="update_download">अपडेट करें</string>
+    <string name="update_retry">फिर कोशिश करें</string>
+    <string name="update_downloading">डाउनलोड हो रहा है: %1$d%%</string>
+    <string name="update_downloading_unknown">डाउनलोड हो रहा है…</string>
+    <string name="update_installing">इंस्टॉल हो रहा है…</string>
 </resources>
